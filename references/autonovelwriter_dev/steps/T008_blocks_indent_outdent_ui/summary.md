@@ -24,3 +24,9 @@ Verification (no TCP binds):
 - Scaffolded a minimal PWA i18n system in `autonovelwriter/pwa/app.js` with language detection via `?lang=` / localStorage (`anw_lang`) / browser locale.
 - Migrated the new `Indent`/`Outdent` UI strings and core UI labels/tooltips/placeholders to `data-i18n*` keys in `autonovelwriter/pwa/index.html`.
 - Added translations for required UI languages: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar` (RTL via `dir=rtl`), `fr`, `es`, `ru`, `de`.
+
+## Next
+1. Add explicit loop editing in the Blocks UI: create/delete loop blocks, edit repeat count, and “wrap selection in LOOP N” (so indent/outdent isn’t the only way to form loops).
+2. Include `pipeline_ast` in WS `pipeline_updated` (or add a lightweight `/api/pipeline/ast` endpoint) to avoid validate round-trips and improve resilience when backend validation is slow.
+3. Make selection stable with node IDs (persisted in AST) instead of index-path keys; keep selection across reorder/validate.
+4. Expand i18n coverage to dynamic runtime messages (e.g., `addMsg` titles/bodies) and add a language switcher in Settings.

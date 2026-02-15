@@ -787,13 +787,22 @@ Constraints:
 	  - nested rounds/loops (indentation) in pipeline representation + UI drag indent/outdent
 	  - default Scratch-like canvas layout (first load) with clear indentation:
 	    - ROUND <n_rounds> (editable repeat count in UI)
-	      - STEP meta_tasks_generate (editable meta-task prompt; writes a new tasks batch folder each run)
-	      - FOREACH_TASK (iterates current task list)
-	        - STEP plan
-	        - STEP write
-	        - STEP critique_story / fix_story / critique_tone / fix_tone / critique_dialogue / fix_dialogue / critique_character / fix_character
-	        - STEP summary / log / update_readme / commit_push
+	      - STEP meta_tasks_generate (generates tasks for THIS round; emits an explicit artifact/result that later blocks consume)
+	      - FOREACH_TASK (for task in tasks)
+	        - FOREACH_ACTION (for action in task.actions; explicit data passing between actions)
+	          - IF / ELSE (optional; Scratch-like conditional blocks)
+	          - STEP <action_id> (an action from the Action Library)
 	  - in-app meta task generation (generate next tasks from materials + feedback)
+	  - Action Library (Scratch-like “My Blocks”):
+	    - default actions are immutable templates
+	    - editing a default action must create a new action (copy-on-edit) and switch the pipeline to reference it
+	    - actions declare inputs/outputs and tool bindings (codex prompt, shell, stubs for other SDKs)
+	  - explicit dataflow between blocks:
+	    - each action must record a structured ActionResult (inputs + outputs + artifact paths) in runner state
+	    - the next action receives the previous action outputs explicitly (like Scratch variables), not by scanning folders
+	  - add/delete blocks in UI (not just reorder/indent):
+	    - inserting a container (ROUND/FOREACH_TASK/FOREACH_ACTION/IF/ELSE) should be a first-class UI action
+	    - deleting a block should be possible from the canvas
 	  - materials management (multiple folders/files, standard layout, indexing)
 	  - novel-writing settings (novel language + other writing UX options), separate from UI language
 	  - in-app runner can actually write: produce drafts/revisions into the standardized output folders
@@ -978,11 +987,20 @@ Overall goal (repeat for every step):
   ROUND <n_rounds>
     STEP meta_tasks_generate
     FOREACH_TASK
-      STEP plan
-      STEP write
-      STEP critique_story / fix_story / critique_tone / fix_tone / critique_dialogue / fix_dialogue / critique_character / fix_character
-      STEP summary / log / update_readme / commit_push
+      FOREACH_ACTION
+        STEP <action_id>
 - The above layout must remain fully changeable by the user (edit rounds, edit meta-task prompts, reorder/disable blocks).
+- The pipeline language and UI must support:
+  - metatasks action: STEP meta_tasks_generate (produces explicit task+artifact outputs)
+  - for-loops: ROUND / LOOP / FOREACH_TASK / FOREACH_ACTION
+  - if/else: IF / ELSE blocks (Scratch-like conditional container)
+- Action Library semantics (Scratch-like “My Blocks”):
+  - default actions are immutable templates
+  - when a user edits a default action, create a new action (copy-on-edit) and switch references
+  - blocks reference an action_id, not a hard-coded built-in behavior
+- Explicit dataflow between actions:
+  - each action execution must emit/persist a structured ActionResult (inputs + outputs + artifacts)
+  - the next action consumes prior outputs explicitly (like Scratch variables), not by scanning folders
 - Pipeline blocks must be flexible and editable:
   - per-block action/tool selection (codex + other SDK stubs + shell scripts)
   - per-block editable prompts/templates and parameters

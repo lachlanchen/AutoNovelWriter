@@ -1504,6 +1504,9 @@ class Runner:
         cur = self._cursor if isinstance(self._cursor, dict) else None
         if not cur:
             return {}
+        pending = cur.get("pending")
+        if not isinstance(pending, dict):
+            pending = None
         stack = cur.get("stack")
         if not isinstance(stack, list) or not stack:
             return {}
@@ -1524,9 +1527,14 @@ class Runner:
             out["round_index"] = int(round_f.get("repeat_i") or 0)
             out["round_repeat_total"] = int(round_f.get("repeat_total") or 1)
         # Expose a stable-ish pointer for debug/telemetry.
-        top = stack[-1] if isinstance(stack[-1], dict) else {}
-        out["ast_path"] = top.get("path")
-        out["child_i"] = top.get("child_i")
+        # If we have a pending step, report its node path (not a container frame path).
+        if pending and isinstance(pending.get("node_path"), list):
+            out["ast_path"] = pending.get("node_path")
+            out["child_i"] = pending.get("child_i")
+        else:
+            top = stack[-1] if isinstance(stack[-1], dict) else {}
+            out["ast_path"] = top.get("path")
+            out["child_i"] = top.get("child_i")
         return out
 
     def _save_state(self) -> None:
@@ -1657,7 +1665,7 @@ class Runner:
             return f"__global_round_{ri}_of_{rt}"
         return "__global__"
 
-    def _task_mark_running(self, task_id: str, st: dict) -> None:
+    def _task_mark_running(self, task_id: str, st: dict, ctx: dict | None = None, block: str | None = None) -> None:
         st.setdefault(task_id, {})
         if not isinstance(st.get(task_id), dict):
             st[task_id] = {}
@@ -1666,9 +1674,18 @@ class Runner:
             return
         cur.update({"status": "running", "ts_ms": _now_ms()})
         self._save_task_status(st)
-        self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": task_id, "status": "running"})
+        extra = {}
+        if isinstance(self._cursor, dict) and isinstance(self._cursor.get("pipeline_hash"), str):
+            extra["pipeline_hash"] = self._cursor.get("pipeline_hash")
+        if isinstance(ctx, dict):
+            for k in ("phase", "round_index", "round_repeat_total"):
+                if k in ctx:
+                    extra[k] = ctx.get(k)
+        if isinstance(block, str) and block:
+            extra["block"] = block
+        self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": task_id, "status": "running", **extra})
 
-    def _task_mark_done(self, task_id: str, st: dict) -> None:
+    def _task_mark_done(self, task_id: str, st: dict, ctx: dict | None = None) -> None:
         st.setdefault(task_id, {})
         if not isinstance(st.get(task_id), dict):
             st[task_id] = {}
@@ -1677,26 +1694,53 @@ class Runner:
             return
         cur.update({"status": "done", "ts_ms": _now_ms()})
         self._save_task_status(st)
-        self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": task_id, "status": "done"})
+        extra = {}
+        if isinstance(self._cursor, dict) and isinstance(self._cursor.get("pipeline_hash"), str):
+            extra["pipeline_hash"] = self._cursor.get("pipeline_hash")
+        if isinstance(ctx, dict):
+            for k in ("phase", "round_index", "round_repeat_total"):
+                if k in ctx:
+                    extra[k] = ctx.get(k)
+        self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": task_id, "status": "done", **extra})
 
-    def _task_mark_error(self, task_id: str, st: dict, reason: str) -> None:
+    def _task_mark_error(self, task_id: str, st: dict, reason: str, ctx: dict | None = None, block: str | None = None) -> None:
         st.setdefault(task_id, {})
         if not isinstance(st.get(task_id), dict):
             st[task_id] = {}
         cur = st[task_id]
         cur.update({"status": "error", "ts_ms": _now_ms(), "error": reason})
         self._save_task_status(st)
-        self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": task_id, "status": "error", "error": reason})
+        extra = {}
+        if isinstance(self._cursor, dict) and isinstance(self._cursor.get("pipeline_hash"), str):
+            extra["pipeline_hash"] = self._cursor.get("pipeline_hash")
+        if isinstance(ctx, dict):
+            for k in ("phase", "round_index", "round_repeat_total"):
+                if k in ctx:
+                    extra[k] = ctx.get(k)
+        if isinstance(block, str) and block:
+            extra["block"] = block
+        self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": task_id, "status": "error", "error": reason, **extra})
 
     def _cursor_next_step(self, ast: dict, tasks: list, st: dict) -> dict | None:
         """
         Returns an executable step node with derived context, or None if complete.
-        Mutates self._cursor in-place (advances program counter).
+        Mutates self._cursor in-place (selects next step, and advances program counter only after commit).
         """
         cur = self._cursor if isinstance(self._cursor, dict) else None
         if not cur or not isinstance(cur.get("stack"), list) or not cur["stack"]:
             return None
         stack = cur["stack"]
+        pending = cur.get("pending")
+        if isinstance(pending, dict):
+            # If we already selected a step but haven't committed it yet, return it again.
+            node_path = pending.get("node_path")
+            ctx = pending.get("ctx")
+            if isinstance(node_path, list) and isinstance(ctx, dict):
+                node = self._node_by_path(ast, node_path)
+                if isinstance(node, dict) and node.get("kind") == "step":
+                    return {"node": node, "ctx": ctx}
+            # Pending entry is invalid/stale; drop it and continue.
+            cur.pop("pending", None)
 
         def task_at(i: int) -> str | None:
             if i < 0 or i >= len(tasks):
@@ -1748,7 +1792,16 @@ class Runner:
                 if frame["child_i"] >= len(kids):
                     tid = frame.get("task_id")
                     if isinstance(tid, str) and tid:
-                        self._task_mark_done(tid, st)
+                        round_f = self._round_from_stack(stack)
+                        self._task_mark_done(
+                            tid,
+                            st,
+                            ctx={
+                                "phase": "foreach",
+                                "round_index": int(round_f.get("repeat_i") or 0) if round_f else 0,
+                                "round_repeat_total": int(round_f.get("repeat_total") or 1) if round_f else 1,
+                            },
+                        )
                     frame["task_i"] += 1
                     frame["child_i"] = 0
                     frame["task_id"] = None
@@ -1789,13 +1842,16 @@ class Runner:
             node_path = list(parent_path) + [child_i]
 
             if k == "step":
-                frame["child_i"] = child_i + 1
+                t = node.get("type")
+                if not isinstance(t, str) or not t:
+                    # Malformed step; skip to avoid getting stuck on an un-executable node.
+                    frame["child_i"] = child_i + 1
+                    continue
                 if node.get("enabled", True) is False:
+                    frame["child_i"] = child_i + 1
                     continue
                 foreach_f = self._foreach_from_stack(stack)
                 task_id = foreach_f.get("task_id") if foreach_f else None
-                if isinstance(task_id, str) and task_id:
-                    self._task_mark_running(task_id, st)
                 round_f = self._round_from_stack(stack)
                 ctx = {
                     "task_id": task_id,
@@ -1804,6 +1860,15 @@ class Runner:
                     "round_repeat_total": int(round_f.get("repeat_total") or 1) if round_f else 1,
                     "ast_path": node_path,
                 }
+                # Mark this step as pending until it completes successfully; only then advance `child_i`.
+                cur["pending"] = {
+                    "frame_depth": len(stack) - 1,
+                    "child_i": child_i,
+                    "node_path": node_path,
+                    "ctx": ctx,
+                }
+                if isinstance(task_id, str) and task_id:
+                    self._task_mark_running(task_id, st, ctx=ctx, block=t)
                 return {"node": node, "ctx": ctx}
 
             if k == "round":
@@ -1828,6 +1893,35 @@ class Runner:
             continue
 
         return None
+
+    def _cursor_commit_pending(self) -> None:
+        """
+        Advance the cursor past the currently pending step.
+        Must be called only after the step has completed successfully.
+        """
+        cur = self._cursor if isinstance(self._cursor, dict) else None
+        if not cur:
+            return
+        pending = cur.get("pending")
+        stack = cur.get("stack")
+        if not isinstance(pending, dict) or not isinstance(stack, list) or not stack:
+            cur.pop("pending", None)
+            return
+        depth = pending.get("frame_depth")
+        child_i = pending.get("child_i")
+        if not isinstance(depth, int) or not isinstance(child_i, int):
+            cur.pop("pending", None)
+            return
+        if depth < 0 or depth >= len(stack):
+            cur.pop("pending", None)
+            return
+        frame = stack[depth]
+        if isinstance(frame, dict):
+            # Only advance if we are still pointing at the same child.
+            cur_child_i = int(frame.get("child_i") or 0)
+            if cur_child_i == child_i:
+                frame["child_i"] = child_i + 1
+        cur.pop("pending", None)
 
     def _maybe_run_codex_stub_once(self) -> None:
         if self._codex_stub_ran:
@@ -2010,7 +2104,7 @@ class Runner:
                 if not res.get("ok"):
                     reason = res.get("error") or f"{block_type}_failed"
                     if task_id:
-                        self._task_mark_error(task_id, st, reason)
+                        self._task_mark_error(task_id, st, reason, ctx=ctx, block=block_type)
                     self._log(f"[runner] block failed: {json.dumps(res)}")
                     async with self._lock:
                         self._status = "idle"
@@ -2020,6 +2114,8 @@ class Runner:
                         self._emit_status()
                     return
 
+                # Advance cursor only after successful completion so restarts do not skip unfinished work.
+                self._cursor_commit_pending()
                 self._log(f"[runner] round={round_idx}/{round_tot} phase={phase}{ttag} block={block_type} done")
 
                 async with self._lock:

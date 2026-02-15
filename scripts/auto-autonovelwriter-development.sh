@@ -876,31 +876,31 @@ EOF
       ;;
 	    fix)
 	      cat >> "$out_prompt" <<EOF
-	- Apply fixes for issues found in $step_dir/debug.md.
-	- Keep fixes minimal; rerun verification commands:
-	  - Do NOT bind TCP ports or start servers inside this Codex step.
-	  - Prefer syntax/import/build checks only.
-	- Append a \"## Fixes\" section to: $step_dir/summary.md
-	EOF
+- Apply fixes for issues found in $step_dir/debug.md.
+- Keep fixes minimal; rerun verification commands:
+  - Do NOT bind TCP ports or start servers inside this Codex step.
+  - Prefer syntax/import/build checks only.
+- Append a \"## Fixes\" section to: $step_dir/summary.md
+EOF
 	      ;;
 	    i18n)
 	      cat >> "$out_prompt" <<EOF
-	- Update UI localization for any new/changed user-facing strings introduced by this task.
-	- Required UI languages: en, zh-Hans, zh-Hant, ja, ko, vi, ar, fr, es, ru, de.
-	- If an i18n system does not exist yet, scaffold one in the PWA and migrate existing strings to keys.
-	- If no user-facing strings changed, explicitly note that in: $step_dir/summary.md (append section \"## I18N\").
-	- Keep translations short and natural; Arabic should be RTL-safe.
-	- Do NOT bind TCP ports or start servers inside this step.
-	- Append an \"## I18N\" section to: $step_dir/summary.md describing what you changed.
-	EOF
+- Update UI localization for any new/changed user-facing strings introduced by this task.
+- Required UI languages: en, zh-Hans, zh-Hant, ja, ko, vi, ar, fr, es, ru, de.
+- If an i18n system does not exist yet, scaffold one in the PWA and migrate existing strings to keys.
+- If no user-facing strings changed, explicitly note that in: $step_dir/summary.md (append section \"## I18N\").
+- Keep translations short and natural; Arabic should be RTL-safe.
+- Do NOT bind TCP ports or start servers inside this step.
+- Append an \"## I18N\" section to: $step_dir/summary.md describing what you changed.
+EOF
 	      ;;
 	    summary)
 	      cat >> "$out_prompt" <<EOF
-	- Do NOT modify app code in this stage unless strictly necessary for docs/logging.
-	- Ensure $step_dir/summary.md exists and is coherent.
-	- Add a short \"## Next\" section listing 2-4 concrete follow-ups.
-	EOF
-      ;;
+- Do NOT modify app code in this stage unless strictly necessary for docs/logging.
+- Ensure $step_dir/summary.md exists and is coherent.
+- Add a short \"## Next\" section listing 2-4 concrete follow-ups.
+EOF
+	      ;;
     update_readme)
       cat >> "$out_prompt" <<EOF
 - Do NOT modify app code in this stage.

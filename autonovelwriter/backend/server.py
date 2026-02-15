@@ -951,7 +951,7 @@ def _parse_created_utc_to_ms(s: str) -> int:
         return 0
 
 
-def list_task_batches(paths: dict, limit: int = 500) -> list[dict]:
+def list_task_batches(paths: dict, limit: int = 500, project_id: str | None = None) -> list[dict]:
     """
     Index batches under runtime/tasks/batches. Best-effort: prefers manifest.json.
     Returns newest-first.
@@ -971,6 +971,7 @@ def list_task_batches(paths: dict, limit: int = 500) -> list[dict]:
     except Exception:
         entries = []
 
+    want_pid = project_id.strip() if isinstance(project_id, str) else ""
     for d in entries:
         batch_id = d.name
         manifest_path = d / "manifest.json"
@@ -1012,8 +1013,11 @@ def list_task_batches(paths: dict, limit: int = 500) -> list[dict]:
             if tasks_jsonl_path.exists():
                 tasks_jsonl = str(tasks_jsonl_path)
         if task_count is None and tasks_jsonl and Path(tasks_jsonl).exists():
-            # Best-effort count: only reads a bounded amount.
+            # Best-effort count: only read reasonably small files.
             try:
+                if Path(tasks_jsonl).stat().st_size > 10_000_000:
+                    task_count = None
+                    raise RuntimeError("tasks_jsonl_too_large_to_count")
                 n = 0
                 with Path(tasks_jsonl).open("rb") as f:
                     for _ in f:
@@ -1047,7 +1051,11 @@ def list_task_batches(paths: dict, limit: int = 500) -> list[dict]:
                 rec[k] = extra.get(k)
         if errors:
             rec["errors"] = errors
-        out.append(rec)
+        if want_pid:
+            if rec.get("project_id") == want_pid:
+                out.append(rec)
+        else:
+            out.append(rec)
 
     out.sort(key=lambda r: int(r.get("_sort_ms") or 0), reverse=True)
     if len(out) > lim:
@@ -2498,8 +2506,10 @@ class TasksBatchesIndexHandler(BaseHandler):
             limit = int(self.get_query_argument("limit", default="500"))
         except Exception:
             limit = 500
+        q = self.get_query_argument("project", default="").strip()
+        pid = q if _is_safe_project_id(q) else ""
         batches_root = Path(self._paths["tasks"]) / "batches"
-        batches = list_task_batches(self._paths, limit=limit)
+        batches = list_task_batches(self._paths, limit=limit, project_id=pid or None)
         self.write_json({"ok": True, "batches_root": str(batches_root), "batches": batches})
 
 

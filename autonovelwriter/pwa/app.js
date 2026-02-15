@@ -1276,8 +1276,13 @@
     }
   }
 
-  async function loadTaskBatchesIndex() {
-    const url = backendApiUrl('/api/tasks/batches/index');
+  async function loadTaskBatchesIndex(opts) {
+    let suffix = '';
+    try {
+      const pid = String(opts?.project_id || '').trim();
+      if (pid) suffix = `?project=${encodeURIComponent(pid)}`;
+    } catch (_) {}
+    const url = backendApiUrl('/api/tasks/batches/index' + suffix);
     if (!url) return null;
     try {
       const res = await fetch(url, { method: 'GET' });
@@ -1306,7 +1311,8 @@
     if (batchesRefreshTimer) clearTimeout(batchesRefreshTimer);
     batchesRefreshTimer = setTimeout(() => {
       batchesRefreshTimer = null;
-      loadTaskBatchesIndex();
+      const pid = projectSelect ? String(projectSelect.value || '').trim() : '';
+      loadTaskBatchesIndex({ project_id: pid });
     }, Math.max(0, Number(delayMs || 0)));
   }
 
@@ -2503,7 +2509,7 @@
         if (activeProject) activeProject.textContent = String(obj.project_id);
         loadMaterialsIndex();
         loadOutputsIndex();
-        loadTaskBatchesIndex();
+        loadTaskBatchesIndex({ project_id: String(obj.project_id || '').trim() });
       } else if (obj && obj.type === 'output_created') {
         const rel = String(obj.project_rel_path || obj.path || '').trim();
         if (rel) addMsg('hello', t('outputs.title'), `${t('outputs.created')} ${rel}`);
@@ -2746,7 +2752,8 @@
     applyProjectsToUi(pj);
     loadMaterialsIndex();
     loadOutputsIndex();
-    loadTaskBatchesIndex();
+    const pid = projectSelect ? String(projectSelect.value || '').trim() : '';
+    loadTaskBatchesIndex({ project_id: pid });
   });
 
   // Poll materials index so dropping files shows up without reload.

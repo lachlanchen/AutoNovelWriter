@@ -21,3 +21,8 @@ Verification (no TCP binds):
 - Localized previously hard-coded per-block mini UI strings:
   - `pipeline.state_enabled`, `pipeline.state_disabled`
   - mini Indent/Outdent buttons now reuse existing `pipeline.indent(_title)` / `pipeline.outdent(_title)` keys.
+
+## Next
+1. Add an “insert mode” for container insertion (wrap vs insert-after-selection vs insert-into-selected-container) to reduce UX ambiguity.
+2. Consider collapsing the three “Add …” buttons into a single compact “Add” dropdown for small screens.
+3. Add a small, no-server unit check for AST edits: perform `insertContainer()` then assert `renderScriptFromAst()` contains the expected verb and indentation.

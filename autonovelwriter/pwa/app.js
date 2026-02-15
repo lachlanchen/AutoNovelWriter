@@ -41,6 +41,9 @@
       'outputs.title': 'Outputs',
       'outputs.empty': '(no outputs yet)',
       'outputs.created': 'Output created:',
+      'tasks_batches.title': 'Task Batches',
+      'tasks_batches.empty': '(no batches yet)',
+      'tasks_batches.created': 'Batch created:',
       'pipeline.indent': 'Indent',
       'pipeline.outdent': 'Outdent',
       'pipeline.indent_title': 'Indent selected block (Tab)',
@@ -117,6 +120,9 @@
       'outputs.title': '输出',
       'outputs.empty': '（暂无输出）',
       'outputs.created': '已生成输出：',
+      'tasks_batches.title': '任务批次',
+      'tasks_batches.empty': '（暂无批次）',
+      'tasks_batches.created': '已生成批次：',
       'pipeline.indent': '缩进',
       'pipeline.outdent': '取消缩进',
       'pipeline.indent_title': '缩进选中块 (Tab)',
@@ -193,6 +199,9 @@
       'outputs.title': '輸出',
       'outputs.empty': '（尚無輸出）',
       'outputs.created': '已產生輸出：',
+      'tasks_batches.title': '任務批次',
+      'tasks_batches.empty': '（尚無批次）',
+      'tasks_batches.created': '已產生批次：',
       'pipeline.indent': '縮排',
       'pipeline.outdent': '取消縮排',
       'pipeline.indent_title': '縮排所選區塊 (Tab)',
@@ -269,6 +278,9 @@
       'outputs.title': '出力',
       'outputs.empty': '（出力なし）',
       'outputs.created': '出力を作成:',
+      'tasks_batches.title': 'タスクバッチ',
+      'tasks_batches.empty': '（バッチなし）',
+      'tasks_batches.created': 'バッチ作成:',
       'pipeline.indent': 'インデント',
       'pipeline.outdent': 'アウトデント',
       'pipeline.indent_title': '選択ブロックをインデント (Tab)',
@@ -345,6 +357,9 @@
       'outputs.title': '출력',
       'outputs.empty': '(출력 없음)',
       'outputs.created': '출력 생성:',
+      'tasks_batches.title': '작업 배치',
+      'tasks_batches.empty': '(배치 없음)',
+      'tasks_batches.created': '배치 생성:',
       'pipeline.indent': '들여쓰기',
       'pipeline.outdent': '내어쓰기',
       'pipeline.indent_title': '선택 블록 들여쓰기 (Tab)',
@@ -421,6 +436,9 @@
       'outputs.title': 'Dau ra',
       'outputs.empty': '(chua co dau ra)',
       'outputs.created': 'Da tao dau ra:',
+      'tasks_batches.title': 'Lo batch',
+      'tasks_batches.empty': '(chua co batch)',
+      'tasks_batches.created': 'Da tao batch:',
       'pipeline.indent': 'Thut vao',
       'pipeline.outdent': 'Thut ra',
       'pipeline.indent_title': 'Thut vao khoi da chon (Tab)',
@@ -497,6 +515,9 @@
       'outputs.title': 'المخرجات',
       'outputs.empty': '(لا توجد مخرجات بعد)',
       'outputs.created': 'تم إنشاء مخرج:',
+      'tasks_batches.title': 'دفعات المهام',
+      'tasks_batches.empty': '(لا توجد دفعات بعد)',
+      'tasks_batches.created': 'تم إنشاء دفعة:',
       'pipeline.indent': 'إزاحة للداخل',
       'pipeline.outdent': 'إزاحة للخارج',
       'pipeline.indent_title': 'إزاحة الكتلة المحددة (Tab)',
@@ -573,6 +594,9 @@
       'outputs.title': 'Sorties',
       'outputs.empty': '(aucune sortie)',
       'outputs.created': 'Sortie créée :',
+      'tasks_batches.title': 'Lots de tâches',
+      'tasks_batches.empty': '(aucun lot)',
+      'tasks_batches.created': 'Lot créé :',
       'pipeline.indent': 'Indenter',
       'pipeline.outdent': 'Désindenter',
       'pipeline.indent_title': 'Indenter le bloc sélectionné (Tab)',
@@ -649,6 +673,9 @@
       'outputs.title': 'Salidas',
       'outputs.empty': '(sin salidas)',
       'outputs.created': 'Salida creada:',
+      'tasks_batches.title': 'Lotes de tareas',
+      'tasks_batches.empty': '(sin lotes)',
+      'tasks_batches.created': 'Lote creado:',
       'pipeline.indent': 'Indentar',
       'pipeline.outdent': 'Desindentar',
       'pipeline.indent_title': 'Indentar bloque seleccionado (Tab)',
@@ -725,6 +752,9 @@
       'outputs.title': 'Выходные файлы',
       'outputs.empty': '(нет выходных файлов)',
       'outputs.created': 'Создан выход:',
+      'tasks_batches.title': 'Пакеты задач',
+      'tasks_batches.empty': '(нет пакетов)',
+      'tasks_batches.created': 'Пакет создан:',
       'pipeline.indent': 'Вложить',
       'pipeline.outdent': 'Развернуть',
       'pipeline.indent_title': 'Вложить выбранный блок (Tab)',
@@ -801,6 +831,9 @@
       'outputs.title': 'Ausgaben',
       'outputs.empty': '(keine Ausgaben)',
       'outputs.created': 'Ausgabe erstellt:',
+      'tasks_batches.title': 'Aufgaben-Batches',
+      'tasks_batches.empty': '(keine Batches)',
+      'tasks_batches.created': 'Batch erstellt:',
       'pipeline.indent': 'Einrücken',
       'pipeline.outdent': 'Ausrücken',
       'pipeline.indent_title': 'Ausgewählten Block einrücken (Tab)',
@@ -949,6 +982,7 @@
   const projectSelect = $('projectSelect');
   const materialsList = $('materialsList');
   const outputsList = $('outputsList');
+  const batchesList = $('batchesList');
 
   const runPill = $('runPill');
   const runStart = $('runStart');
@@ -1197,6 +1231,65 @@
     }
   }
 
+  function renderTaskBatchesIndex(obj) {
+    if (!batchesList) return;
+    batchesList.innerHTML = '';
+    const batches = obj && Array.isArray(obj.batches) ? obj.batches : [];
+    if (!batches.length) {
+      const li = document.createElement('li');
+      li.className = 'mat';
+      const p = document.createElement('div');
+      p.className = 'path';
+      p.textContent = t('tasks_batches.empty');
+      const m = document.createElement('div');
+      m.className = 'meta';
+      m.textContent = '';
+      li.appendChild(p);
+      li.appendChild(m);
+      batchesList.appendChild(li);
+      return;
+    }
+
+    for (const b of batches.slice(0, 500)) {
+      if (!b || typeof b !== 'object') continue;
+      const li = document.createElement('li');
+      li.className = 'mat';
+
+      const p = document.createElement('div');
+      p.className = 'path';
+      p.textContent = String(b.batch_id || '').trim() || '(batch)';
+
+      const m = document.createElement('div');
+      m.className = 'meta';
+      const created = String(b.created_utc || '').trim();
+      const n = b.task_count === null || b.task_count === undefined ? '' : String(b.task_count);
+      const tj = String(b.tasks_jsonl || '').trim();
+      const parts = [];
+      if (created) parts.push(created);
+      if (n) parts.push(`tasks=${n}`);
+      if (tj) parts.push(tj);
+      m.textContent = parts.join('  ');
+
+      li.appendChild(p);
+      li.appendChild(m);
+      batchesList.appendChild(li);
+    }
+  }
+
+  async function loadTaskBatchesIndex() {
+    const url = backendApiUrl('/api/tasks/batches/index');
+    if (!url) return null;
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const obj = await res.json();
+      if (!obj || !obj.ok) return null;
+      renderTaskBatchesIndex(obj);
+      return obj;
+    } catch (_) {
+      return null;
+    }
+  }
+
   let outputsRefreshTimer = null;
   function scheduleOutputsRefresh(delayMs) {
     if (!outputsList) return;
@@ -1204,6 +1297,16 @@
     outputsRefreshTimer = setTimeout(() => {
       outputsRefreshTimer = null;
       loadOutputsIndex();
+    }, Math.max(0, Number(delayMs || 0)));
+  }
+
+  let batchesRefreshTimer = null;
+  function scheduleBatchesRefresh(delayMs) {
+    if (!batchesList) return;
+    if (batchesRefreshTimer) clearTimeout(batchesRefreshTimer);
+    batchesRefreshTimer = setTimeout(() => {
+      batchesRefreshTimer = null;
+      loadTaskBatchesIndex();
     }, Math.max(0, Number(delayMs || 0)));
   }
 
@@ -2400,10 +2503,16 @@
         if (activeProject) activeProject.textContent = String(obj.project_id);
         loadMaterialsIndex();
         loadOutputsIndex();
+        loadTaskBatchesIndex();
       } else if (obj && obj.type === 'output_created') {
         const rel = String(obj.project_rel_path || obj.path || '').trim();
         if (rel) addMsg('hello', t('outputs.title'), `${t('outputs.created')} ${rel}`);
         scheduleOutputsRefresh(350);
+      } else if (obj && obj.type === 'tasks_batch_created') {
+        const bid = String(obj.batch_id || '').trim();
+        if (bid) addMsg('hello', t('tasks_batches.title'), `${t('tasks_batches.created')} ${bid}`);
+        else addMsg('hello', t('tasks_batches.title'), t('tasks_batches.created'));
+        scheduleBatchesRefresh(500);
       } else if (obj && obj.type === 'run_status') {
         setRunStatus(obj.status, obj.task_id, obj.block);
       } else if (obj && obj.type === 'task_status') {
@@ -2637,6 +2746,7 @@
     applyProjectsToUi(pj);
     loadMaterialsIndex();
     loadOutputsIndex();
+    loadTaskBatchesIndex();
   });
 
   // Poll materials index so dropping files shows up without reload.

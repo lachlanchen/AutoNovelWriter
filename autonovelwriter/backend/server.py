@@ -63,6 +63,7 @@ def ensure_runtime_dirs(paths: dict) -> None:
     _safe_mkdir(Path(paths["io_inbox"]))
     _safe_mkdir(Path(paths["io_outbox"]))
     _safe_mkdir(Path(paths["tasks"]))
+    _safe_mkdir(Path(paths["tasks"]) / "batches")
     _safe_mkdir(Path(paths["logs"]))
     _safe_mkdir(Path(paths["state"]))
     _safe_mkdir(Path(paths["projects_root"]))
@@ -931,6 +932,129 @@ def _read_jsonl_tail(p: Path, limit: int = 50, max_bytes: int = 1_000_000) -> li
         if isinstance(obj, dict):
             objs.append(obj)
     return objs[-limit:]
+
+
+def _parse_created_utc_to_ms(s: str) -> int:
+    """
+    Best-effort parse for timestamps like '2026-02-15T23:15:34Z'.
+    Returns 0 on failure.
+    """
+    if not isinstance(s, str) or not s:
+        return 0
+    t = s.strip()
+    if t.endswith("Z"):
+        t = t[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(t)
+        return int(dt.timestamp() * 1000)
+    except Exception:
+        return 0
+
+
+def list_task_batches(paths: dict, limit: int = 500) -> list[dict]:
+    """
+    Index batches under runtime/tasks/batches. Best-effort: prefers manifest.json.
+    Returns newest-first.
+    """
+    out = []
+    try:
+        lim = int(limit)
+    except Exception:
+        lim = 500
+    lim = max(1, min(2000, lim))
+
+    batches_root = Path(paths["tasks"]) / "batches"
+    _safe_mkdir(batches_root)
+
+    try:
+        entries = [p for p in batches_root.iterdir() if p.is_dir()]
+    except Exception:
+        entries = []
+
+    for d in entries:
+        batch_id = d.name
+        manifest_path = d / "manifest.json"
+        tasks_jsonl_path = d / "tasks.jsonl"
+        created_utc = ""
+        task_count = None
+        tasks_jsonl = ""
+        extra = {}
+        errors = []
+
+        if manifest_path.exists():
+            try:
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            except Exception as e:
+                manifest = None
+                errors.append(f"manifest_read_failed:{e}")
+            if isinstance(manifest, dict):
+                created_utc = manifest.get("created_utc") if isinstance(manifest.get("created_utc"), str) else ""
+                try:
+                    task_count = int(manifest.get("task_count")) if manifest.get("task_count") is not None else None
+                except Exception:
+                    task_count = None
+                outputs = manifest.get("outputs") if isinstance(manifest.get("outputs"), dict) else {}
+                tj = outputs.get("tasks_jsonl") if isinstance(outputs.get("tasks_jsonl"), str) else ""
+                if tj:
+                    tasks_jsonl = tj
+                for k in ("project_id", "task_id", "block", "batch_id"):
+                    if k in manifest:
+                        extra[k] = manifest.get(k)
+
+        # Fallbacks when manifest is missing/bad.
+        if not created_utc:
+            try:
+                st = d.stat()
+                created_utc = datetime.utcfromtimestamp(st.st_mtime).isoformat(timespec="seconds") + "Z"
+            except Exception:
+                created_utc = ""
+        if not tasks_jsonl:
+            if tasks_jsonl_path.exists():
+                tasks_jsonl = str(tasks_jsonl_path)
+        if task_count is None and tasks_jsonl and Path(tasks_jsonl).exists():
+            # Best-effort count: only reads a bounded amount.
+            try:
+                n = 0
+                with Path(tasks_jsonl).open("rb") as f:
+                    for _ in f:
+                        n += 1
+                        if n > 100_000:
+                            break
+                task_count = n
+            except Exception:
+                task_count = None
+
+        created_ms = _parse_created_utc_to_ms(created_utc)
+        try:
+            mtime_ms = int(d.stat().st_mtime * 1000)
+        except Exception:
+            mtime_ms = 0
+        if not created_ms:
+            created_ms = mtime_ms
+
+        rec = {
+            "batch_id": extra.get("batch_id") if isinstance(extra.get("batch_id"), str) and extra.get("batch_id") else batch_id,
+            "batch_dir": str(d),
+            "tasks_jsonl": tasks_jsonl,
+            "task_count": int(task_count) if isinstance(task_count, int) and task_count >= 0 else None,
+            "created_utc": created_utc,
+            "manifest_path": str(manifest_path) if manifest_path.exists() else "",
+            "mtime_ms": mtime_ms,
+            "_sort_ms": created_ms,
+        }
+        for k in ("project_id", "task_id", "block"):
+            if isinstance(extra.get(k), str) and extra.get(k):
+                rec[k] = extra.get(k)
+        if errors:
+            rec["errors"] = errors
+        out.append(rec)
+
+    out.sort(key=lambda r: int(r.get("_sort_ms") or 0), reverse=True)
+    if len(out) > lim:
+        out = out[:lim]
+    for r in out:
+        r.pop("_sort_ms", None)
+    return out
 
 
 class InboxPoller:
@@ -2365,6 +2489,20 @@ class OutputsIndexHandler(BaseHandler):
         )
 
 
+class TasksBatchesIndexHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    def get(self):
+        try:
+            limit = int(self.get_query_argument("limit", default="500"))
+        except Exception:
+            limit = 500
+        batches_root = Path(self._paths["tasks"]) / "batches"
+        batches = list_task_batches(self._paths, limit=limit)
+        self.write_json({"ok": True, "batches_root": str(batches_root), "batches": batches})
+
+
 def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Application:
     hub = WebSocketHub()
     chat_store = ChatStore(Path(paths["chat_jsonl"]))
@@ -2377,6 +2515,7 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
         (r"/api/projects/active", ProjectActiveHandler, {"paths": paths, "hub": hub}),
         (r"/api/materials/index", MaterialsIndexHandler, {"paths": paths}),
         (r"/api/outputs/index", OutputsIndexHandler, {"paths": paths}),
+        (r"/api/tasks/batches/index", TasksBatchesIndexHandler, {"paths": paths}),
         (r"/api/pipeline", PipelineHandler, {"paths": paths, "hub": hub}),
         (r"/api/pipeline/validate", PipelineValidateHandler, {"paths": paths}),
         (r"/api/chat/history", ChatHistoryHandler, {"chat_store": chat_store}),

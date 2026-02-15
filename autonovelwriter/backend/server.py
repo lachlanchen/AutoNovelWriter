@@ -1172,8 +1172,9 @@ class Runner:
         self._block = None
         self._loop_active = False
         self._codex_stub_ran = False
-        # Run-session scoped: reuse the same generated batch for subsequent tasks.
-        self._meta_tasks_batch = None
+        # Run-session scoped: cache generated batches by execution key (e.g. per-round global id).
+        self._meta_tasks_batch = {}
+        self._cursor = None
 
         # Safe restart behavior: if previous run was 'running', come up paused.
         state = _load_json(Path(paths["runner_state_json"]), {})
@@ -1183,6 +1184,8 @@ class Runner:
         elif isinstance(state, dict) and isinstance(state.get("status"), str):
             self._status = state.get("status")
             self._paused = self._status == "paused"
+        if isinstance(state, dict) and isinstance(state.get("cursor"), dict):
+            self._cursor = state.get("cursor")
 
         self._save_state()
 
@@ -1295,14 +1298,11 @@ class Runner:
         return {"ok": True, "path": str(out_path), "project_rel_path": rel_path}
 
     def _write_tasks_batch_stub(self, task_id: str, block_type: str, st: dict) -> dict:
-        # Run-session idempotency: if we already created a batch in this runner session, reuse it.
-        if isinstance(self._meta_tasks_batch, dict):
-            out_paths = self._meta_tasks_batch.get("output_paths")
-            if (
-                isinstance(out_paths, list)
-                and out_paths
-                and all(isinstance(p, str) and p and Path(p).exists() for p in out_paths)
-            ):
+        # Run-session idempotency: if we already created a batch for this execution key, reuse it.
+        if isinstance(self._meta_tasks_batch, dict) and task_id in self._meta_tasks_batch:
+            rec = self._meta_tasks_batch.get(task_id) or {}
+            out_paths = rec.get("output_paths")
+            if isinstance(out_paths, list) and out_paths and all(isinstance(p, str) and p and Path(p).exists() for p in out_paths):
                 st.setdefault(task_id, {})
                 cur = st[task_id]
                 if not isinstance(cur, dict):
@@ -1315,18 +1315,18 @@ class Runner:
                     "status": "done",
                     "ts_ms": _now_ms(),
                     "output_paths": list(out_paths),
-                    "batch_id": self._meta_tasks_batch.get("batch_id"),
-                    "batch_dir": self._meta_tasks_batch.get("batch_dir"),
-                    "task_count": self._meta_tasks_batch.get("task_count"),
+                    "batch_id": rec.get("batch_id"),
+                    "batch_dir": rec.get("batch_dir"),
+                    "task_count": rec.get("task_count"),
                     "skipped": True,
                 }
-                self._log(f"[tasks] reused batch: {self._meta_tasks_batch.get('batch_dir')} for task={task_id}")
+                self._log(f"[tasks] reused batch: {rec.get('batch_dir')} for task={task_id}")
                 return {
                     "ok": True,
                     "skipped": True,
-                    "batch_dir": self._meta_tasks_batch.get("batch_dir"),
-                    "tasks_jsonl": self._meta_tasks_batch.get("tasks_jsonl"),
-                    "task_count": self._meta_tasks_batch.get("task_count"),
+                    "batch_dir": rec.get("batch_dir"),
+                    "tasks_jsonl": rec.get("tasks_jsonl"),
+                    "task_count": rec.get("task_count"),
                     "output_paths": list(out_paths),
                 }
 
@@ -1491,7 +1491,7 @@ class Runner:
         }
         self._hub.broadcast(evt)
         self._log(f"[tasks] created batch: {batch_dir} count={len(stub)}")
-        self._meta_tasks_batch = {
+        self._meta_tasks_batch[task_id] = {
             "batch_id": batch_id,
             "batch_dir": str(batch_dir),
             "tasks_jsonl": str(tasks_jsonl),
@@ -1500,7 +1500,37 @@ class Runner:
         }
         return {"ok": True, "batch_dir": str(batch_dir), "tasks_jsonl": str(tasks_jsonl), "task_count": len(stub)}
 
+    def _cursor_context(self) -> dict:
+        cur = self._cursor if isinstance(self._cursor, dict) else None
+        if not cur:
+            return {}
+        stack = cur.get("stack")
+        if not isinstance(stack, list) or not stack:
+            return {}
+        round_f = None
+        foreach_f = None
+        for f in stack:
+            if not isinstance(f, dict):
+                continue
+            if f.get("kind") == "round":
+                round_f = f
+            elif f.get("kind") == "foreach_task":
+                foreach_f = f
+        out = {
+            "pipeline_hash": cur.get("pipeline_hash"),
+            "phase": "foreach" if foreach_f else "global",
+        }
+        if round_f:
+            out["round_index"] = int(round_f.get("repeat_i") or 0)
+            out["round_repeat_total"] = int(round_f.get("repeat_total") or 1)
+        # Expose a stable-ish pointer for debug/telemetry.
+        top = stack[-1] if isinstance(stack[-1], dict) else {}
+        out["ast_path"] = top.get("path")
+        out["child_i"] = top.get("child_i")
+        return out
+
     def _save_state(self) -> None:
+        cursor = self._cursor if isinstance(self._cursor, dict) else None
         _save_json(
             Path(self._paths["runner_state_json"]),
             {
@@ -1508,10 +1538,12 @@ class Runner:
                 "ts_ms": _now_ms(),
                 "task_id": self._task_id,
                 "block": self._block,
+                "cursor": cursor,
             },
         )
 
     def _emit_status(self) -> None:
+        ctx = self._cursor_context()
         self._hub.broadcast(
             {
                 "type": "run_status",
@@ -1519,6 +1551,7 @@ class Runner:
                 "status": self._status,
                 "task_id": self._task_id,
                 "block": self._block,
+                **ctx,
             }
         )
 
@@ -1571,6 +1604,230 @@ class Runner:
         with p.open("a", encoding="utf-8") as f:
             f.write(line.rstrip("\n") + "\n")
         self._hub.broadcast({"type": "log", "ts_ms": _now_ms(), "line": line.rstrip("\n")})
+
+    def _pipeline_hash(self, script: str) -> str:
+        return _sha256_hex(script or "")
+
+    def _node_by_path(self, ast: dict, path: list) -> dict | None:
+        node = ast
+        if not isinstance(node, dict):
+            return None
+        for idx in path or []:
+            if not isinstance(idx, int):
+                return None
+            kids = node.get("children")
+            if not isinstance(kids, list) or idx < 0 or idx >= len(kids):
+                return None
+            node = kids[idx]
+            if not isinstance(node, dict):
+                return None
+        return node
+
+    def _frame_children(self, ast: dict, frame: dict) -> list:
+        kind = frame.get("kind")
+        if kind == "root":
+            node = ast
+        else:
+            node = self._node_by_path(ast, frame.get("path") or [])
+        kids = node.get("children") if isinstance(node, dict) else None
+        return kids if isinstance(kids, list) else []
+
+    def _init_cursor(self, pipeline_hash: str) -> dict:
+        return {"pipeline_hash": pipeline_hash, "stack": [{"kind": "root", "path": [], "child_i": 0}]}
+
+    def _round_from_stack(self, stack: list) -> dict | None:
+        out = None
+        for f in stack:
+            if isinstance(f, dict) and f.get("kind") == "round":
+                out = f
+        return out
+
+    def _foreach_from_stack(self, stack: list) -> dict | None:
+        out = None
+        for f in stack:
+            if isinstance(f, dict) and f.get("kind") == "foreach_task":
+                out = f
+        return out
+
+    def _global_exec_task_id(self, stack: list) -> str:
+        rf = self._round_from_stack(stack)
+        if rf:
+            ri = int(rf.get("repeat_i") or 0) + 1
+            rt = int(rf.get("repeat_total") or 1)
+            return f"__global_round_{ri}_of_{rt}"
+        return "__global__"
+
+    def _task_mark_running(self, task_id: str, st: dict) -> None:
+        st.setdefault(task_id, {})
+        if not isinstance(st.get(task_id), dict):
+            st[task_id] = {}
+        cur = st[task_id]
+        if cur.get("status") in ("running", "error"):
+            return
+        cur.update({"status": "running", "ts_ms": _now_ms()})
+        self._save_task_status(st)
+        self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": task_id, "status": "running"})
+
+    def _task_mark_done(self, task_id: str, st: dict) -> None:
+        st.setdefault(task_id, {})
+        if not isinstance(st.get(task_id), dict):
+            st[task_id] = {}
+        cur = st[task_id]
+        if cur.get("status") == "done":
+            return
+        cur.update({"status": "done", "ts_ms": _now_ms()})
+        self._save_task_status(st)
+        self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": task_id, "status": "done"})
+
+    def _task_mark_error(self, task_id: str, st: dict, reason: str) -> None:
+        st.setdefault(task_id, {})
+        if not isinstance(st.get(task_id), dict):
+            st[task_id] = {}
+        cur = st[task_id]
+        cur.update({"status": "error", "ts_ms": _now_ms(), "error": reason})
+        self._save_task_status(st)
+        self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": task_id, "status": "error", "error": reason})
+
+    def _cursor_next_step(self, ast: dict, tasks: list, st: dict) -> dict | None:
+        """
+        Returns an executable step node with derived context, or None if complete.
+        Mutates self._cursor in-place (advances program counter).
+        """
+        cur = self._cursor if isinstance(self._cursor, dict) else None
+        if not cur or not isinstance(cur.get("stack"), list) or not cur["stack"]:
+            return None
+        stack = cur["stack"]
+
+        def task_at(i: int) -> str | None:
+            if i < 0 or i >= len(tasks):
+                return None
+            t = tasks[i]
+            tid = t.get("id") if isinstance(t, dict) else None
+            return tid if isinstance(tid, str) and tid else None
+
+        while stack:
+            frame = stack[-1]
+            if not isinstance(frame, dict):
+                stack.pop()
+                continue
+
+            kids = self._frame_children(ast, frame)
+
+            # FOREACH: select a pending task and iterate children per task.
+            if frame.get("kind") == "foreach_task":
+                if not isinstance(frame.get("task_i"), int):
+                    frame["task_i"] = 0
+                if not isinstance(frame.get("child_i"), int):
+                    frame["child_i"] = 0
+
+                # Advance to next runnable task if needed.
+                popped = False
+                while True:
+                    if frame["task_i"] >= len(tasks):
+                        stack.pop()
+                        popped = True
+                        break
+                    tid = task_at(frame["task_i"])
+                    if not tid:
+                        frame["task_i"] += 1
+                        frame["child_i"] = 0
+                        continue
+                    status = st.get(tid, {}).get("status", "pending")
+                    if status == "error":
+                        # Skip errored tasks for now; runner will stop at first error from execution.
+                        frame["task_i"] += 1
+                        frame["child_i"] = 0
+                        continue
+                    frame["task_id"] = tid
+                    break
+                if popped:
+                    continue
+                if not stack:
+                    continue
+                # Task boundary completion.
+                if frame["child_i"] >= len(kids):
+                    tid = frame.get("task_id")
+                    if isinstance(tid, str) and tid:
+                        self._task_mark_done(tid, st)
+                    frame["task_i"] += 1
+                    frame["child_i"] = 0
+                    frame["task_id"] = None
+                    continue
+
+            # ROUND repetition.
+            if frame.get("kind") == "round":
+                if not isinstance(frame.get("repeat_total"), int):
+                    frame["repeat_total"] = 1
+                if not isinstance(frame.get("repeat_i"), int):
+                    frame["repeat_i"] = 0
+                if not isinstance(frame.get("child_i"), int):
+                    frame["child_i"] = 0
+
+            # Container completion.
+            child_i = int(frame.get("child_i") or 0)
+            if child_i >= len(kids):
+                if frame.get("kind") == "round":
+                    ri = int(frame.get("repeat_i") or 0)
+                    rt = int(frame.get("repeat_total") or 1)
+                    if (ri + 1) < rt:
+                        frame["repeat_i"] = ri + 1
+                        frame["child_i"] = 0
+                        continue
+                stack.pop()
+                continue
+
+            node = kids[child_i]
+            if not isinstance(node, dict):
+                frame["child_i"] = child_i + 1
+                continue
+            k = node.get("kind")
+
+            # Path to this child node (stable index path through children arrays).
+            parent_path = frame.get("path") or []
+            if frame.get("kind") == "root":
+                parent_path = []
+            node_path = list(parent_path) + [child_i]
+
+            if k == "step":
+                frame["child_i"] = child_i + 1
+                if node.get("enabled", True) is False:
+                    continue
+                foreach_f = self._foreach_from_stack(stack)
+                task_id = foreach_f.get("task_id") if foreach_f else None
+                if isinstance(task_id, str) and task_id:
+                    self._task_mark_running(task_id, st)
+                round_f = self._round_from_stack(stack)
+                ctx = {
+                    "task_id": task_id,
+                    "phase": "foreach" if foreach_f else "global",
+                    "round_index": int(round_f.get("repeat_i") or 0) if round_f else 0,
+                    "round_repeat_total": int(round_f.get("repeat_total") or 1) if round_f else 1,
+                    "ast_path": node_path,
+                }
+                return {"node": node, "ctx": ctx}
+
+            if k == "round":
+                frame["child_i"] = child_i + 1
+                repeat = node.get("repeat")
+                try:
+                    repeat_total = int(repeat)
+                except Exception:
+                    repeat_total = 1
+                if repeat_total < 1:
+                    repeat_total = 1
+                stack.append({"kind": "round", "path": node_path, "child_i": 0, "repeat_total": repeat_total, "repeat_i": 0})
+                continue
+
+            if k == "foreach_task":
+                frame["child_i"] = child_i + 1
+                stack.append({"kind": "foreach_task", "path": node_path, "child_i": 0, "task_i": 0, "task_id": None})
+                continue
+
+            # Unknown nodes: skip but never silently.
+            frame["child_i"] = child_i + 1
+            continue
+
+        return None
 
     def _maybe_run_codex_stub_once(self) -> None:
         if self._codex_stub_ran:
@@ -1650,133 +1907,111 @@ class Runner:
                     return
 
             while True:
-                task_failed = False
-                task_fail_reason = None
                 async with self._lock:
                     if self._stop:
                         self._status = "idle"
                         self._task_id = None
                         self._block = None
+                        self._cursor = None
                         self._save_state()
                         self._emit_status()
                         return
                     if self._paused or self._status != "running":
+                        # Cursor is preserved for resume.
                         self._save_state()
                         self._emit_status()
                         return
 
                 script = load_pipeline_script(self._paths)
-                pipeline, pipeline_ast, warnings, errors = parse_pipeline_script_v2(script)
+                _pipeline, pipeline_ast, warnings, errors = parse_pipeline_script_v2(script)
                 if errors:
-                    # Fail-safe: do not run an ambiguous pipeline. Require user correction.
                     self._log(f"[runner] pipeline parse errors (stopping run): {json.dumps(errors)}")
                     async with self._lock:
                         self._status = "idle"
                         self._task_id = None
                         self._block = None
+                        self._cursor = None
                         self._save_state()
                         self._emit_status()
                     return
                 if warnings:
                     self._log(f"[runner] pipeline parse warnings: {json.dumps(warnings)}")
-                blocks = [b for b in pipeline.get("blocks", []) if isinstance(b, dict) and b.get("enabled", True)]
+
+                pipeline_hash = self._pipeline_hash(script)
+                if not isinstance(self._cursor, dict):
+                    self._cursor = self._init_cursor(pipeline_hash)
+                elif self._cursor.get("pipeline_hash") != pipeline_hash:
+                    # Fail safe: cursor is invalid if the canonical script changed.
+                    self._log("[runner] pipeline changed since cursor was saved; stopping run (restart required)")
+                    async with self._lock:
+                        self._status = "idle"
+                        self._task_id = None
+                        self._block = None
+                        self._cursor = None
+                        self._save_state()
+                        self._emit_status()
+                    return
 
                 tasks = self._load_tasks()
                 st = self._load_task_status()
 
-                next_task = None
-                for t in tasks:
-                    tid = t.get("id")
-                    if not isinstance(tid, str) or not tid:
-                        continue
-                    status = st.get(tid, {}).get("status", "pending")
-                    if status in ("pending", "queued"):
-                        next_task = tid
-                        break
-
-                if not next_task:
-                    async with self._lock:
-                        self._status = "idle"
-                        self._task_id = None
-                        self._block = None
-                        self._save_state()
-                        self._emit_status()
-                    return
-
-                async with self._lock:
-                    self._task_id = next_task
-                    self._block = None
-                    self._save_state()
-                    self._emit_status()
-
-                st.setdefault(next_task, {})
-                st[next_task].update({"status": "running", "ts_ms": _now_ms()})
-                self._save_task_status(st)
-                self._hub.broadcast(
-                    {"type": "task_status", "ts_ms": _now_ms(), "task_id": next_task, "status": "running"}
-                )
-
                 # Optional, gated codex subprocess stub (does not run by default).
                 self._maybe_run_codex_stub_once()
 
-                for b in blocks:
+                nxt = self._cursor_next_step(pipeline_ast, tasks, st)
+                if not nxt:
                     async with self._lock:
-                        if self._stop:
-                            break
-                        if self._paused:
-                            break
-                        self._block = b.get("type")
-                        self._save_state()
-                        self._emit_status()
-
-                    self._log(f"[runner] task={next_task} block={self._block} start")
-                    if self._block == "meta_tasks_generate":
-                        res = self._write_tasks_batch_stub(next_task, self._block, st)
-                        self._save_task_status(st)
-                        if not res.get("ok"):
-                            self._log(f"[runner] meta_tasks_generate failed: {json.dumps(res)}")
-                            task_failed = True
-                            task_fail_reason = res.get("error") or "meta_tasks_generate_failed"
-                            break
-                    elif self._block == "write":
-                        res = self._write_draft_stub(next_task, self._block, st)
-                        self._save_task_status(st)
-                        if not res.get("ok"):
-                            self._log(f"[runner] write failed: {json.dumps(res)}")
-                            task_failed = True
-                            task_fail_reason = res.get("error") or "write_failed"
-                            break
-                    else:
-                        # Stub work unit (cooperative cancellation point).
-                        await tornado.gen.sleep(0.25)
-                    self._log(f"[runner] task={next_task} block={self._block} done")
-
-                async with self._lock:
-                    if self._stop:
                         self._status = "idle"
                         self._task_id = None
                         self._block = None
+                        self._cursor = None
                         self._save_state()
                         self._emit_status()
-                        return
-                    if self._paused:
-                        self._status = "paused"
-                        self._save_state()
-                        self._emit_status()
-                        return
+                    return
 
-                if task_failed:
-                    st[next_task].update({"status": "error", "ts_ms": _now_ms(), "error": task_fail_reason})
+                node = nxt.get("node") or {}
+                ctx = nxt.get("ctx") or {}
+                block_type = node.get("type")
+                if not isinstance(block_type, str) or not block_type:
+                    continue
+
+                task_id = ctx.get("task_id")
+                if not isinstance(task_id, str) or not task_id:
+                    task_id = None
+
+                async with self._lock:
+                    self._task_id = task_id
+                    self._block = block_type
+                    self._save_state()
+                    self._emit_status()
+
+                round_idx = int(ctx.get("round_index") or 0) + 1
+                round_tot = int(ctx.get("round_repeat_total") or 1)
+                phase = ctx.get("phase") or "global"
+                ttag = f" task={task_id}" if task_id else ""
+                self._log(f"[runner] round={round_idx}/{round_tot} phase={phase}{ttag} block={block_type} start")
+
+                res = {"ok": True}
+                if block_type == "meta_tasks_generate":
+                    exec_task_id = task_id or self._global_exec_task_id(self._cursor.get("stack") or [])
+                    res = self._write_tasks_batch_stub(exec_task_id, block_type, st)
                     self._save_task_status(st)
-                    self._hub.broadcast(
-                        {
-                            "type": "task_status",
-                            "ts_ms": _now_ms(),
-                            "task_id": next_task,
-                            "status": "error",
-                            "error": task_fail_reason,
-                        }
-                    )
+                elif block_type == "write":
+                    if not task_id:
+                        self._log("[runner] write skipped (no task context; place under FOREACH_TASK)")
+                        res = {"ok": True, "skipped": True}
+                    else:
+                        res = self._write_draft_stub(task_id, block_type, st)
+                        self._save_task_status(st)
+                else:
+                    # Stub work unit (cooperative cancellation point).
+                    await tornado.gen.sleep(0.25)
+
+                if not res.get("ok"):
+                    reason = res.get("error") or f"{block_type}_failed"
+                    if task_id:
+                        self._task_mark_error(task_id, st, reason)
+                    self._log(f"[runner] block failed: {json.dumps(res)}")
                     async with self._lock:
                         self._status = "idle"
                         self._task_id = None
@@ -1785,11 +2020,12 @@ class Runner:
                         self._emit_status()
                     return
 
-                st[next_task].update({"status": "done", "ts_ms": _now_ms()})
-                self._save_task_status(st)
-                self._hub.broadcast(
-                    {"type": "task_status", "ts_ms": _now_ms(), "task_id": next_task, "status": "done"}
-                )
+                self._log(f"[runner] round={round_idx}/{round_tot} phase={phase}{ttag} block={block_type} done")
+
+                async with self._lock:
+                    # Persist progress frequently for resumability.
+                    self._save_state()
+                    self._emit_status()
         finally:
             async with self._lock:
                 self._loop_active = False

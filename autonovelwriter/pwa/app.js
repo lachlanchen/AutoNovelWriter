@@ -1970,6 +1970,8 @@
           const cb = document.createElement('input');
           cb.type = 'checkbox';
           cb.checked = n.enabled !== false;
+          const lbl = document.createElement('span');
+          lbl.textContent = cb.checked ? t('pipeline.state_enabled') : t('pipeline.state_disabled');
           cb.addEventListener('change', (e) => {
             e.stopPropagation();
             n.enabled = !!cb.checked;
@@ -1977,8 +1979,6 @@
             updateDerivedFromAst({ writeScript: true });
             renderPipeline();
           });
-          const lbl = document.createElement('span');
-          lbl.textContent = t('pipeline.state_enabled');
           toggle.appendChild(cb);
           toggle.appendChild(lbl);
           side.appendChild(toggle);

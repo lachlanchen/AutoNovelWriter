@@ -11,3 +11,5 @@
 Verification (no TCP binds):
 - `node --check autonovelwriter/pwa/app.js`
 
+## Fixes
+- Step enable toggle label now reflects enabled vs disabled (localized) instead of always showing “enabled”.

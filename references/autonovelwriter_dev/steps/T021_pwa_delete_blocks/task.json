@@ -1,0 +1,20 @@
+{
+  "id": "T021_pwa_delete_blocks",
+  "title": "PWA: delete blocks (and containers)",
+  "notes": "Add first-class delete UI on the pipeline canvas (button per block + optional keyboard shortcut). Deleting a container should reparent its children sensibly (configurable: splice children up, or delete subtree). Must keep formatted pipeline script as canonical: update AST then re-render script.",
+  "acceptance": [
+    "Canvas shows a Delete control for each block (STEP/ROUND/LOOP/FOREACH_TASK).",
+    "Deleting a STEP removes it and updates AST+script deterministically.",
+    "Deleting a container splices its children into the parent (no orphan nodes) and updates AST+script.",
+    "If deleting would produce an empty required container, insert a safe default child STEP.",
+    "All new UI strings are localized for en, zh-Hans, zh-Hant, ja, ko, vi, ar, fr, es, ru, de.",
+    "No server start required; JS syntax check and a small AST transform test (unit-style) pass."
+  ],
+  "tags": [
+    "pwa",
+    "pipeline",
+    "blocks",
+    "ux",
+    "i18n"
+  ]
+}

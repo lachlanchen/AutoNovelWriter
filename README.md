@@ -154,11 +154,11 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-15T23:46:32Z
-- current: T020_tasks_batches_index_and_pwa_panel / update_readme — Task batches: index API + PWA panel
-- queue: total=20 done=19 pending=1
-- last_done: T019_pwa_insert_container_blocks — PWA: insert LOOP/ROUND/FOREACH_TASK blocks @ 2026-02-16T07:36:50+0800
-- latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260215_232137_b1
+- updated_utc: 2026-02-15T23:49:50Z
+- current: T021_pwa_delete_blocks / plan — PWA: delete blocks (and containers)
+- queue: total=26 done=20 pending=6
+- last_done: T020_tasks_batches_index_and_pwa_panel — Task batches: index API + PWA panel @ 2026-02-16T07:46:35+0800
+- latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_074635_b2
 - autoappdev_head: 8bc23a5
 <!-- AUTO_DEV_PROGRESS_END -->
 

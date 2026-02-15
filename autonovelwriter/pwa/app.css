@@ -150,6 +150,7 @@ code{ font-family: var(--mono); font-size: .92em; }
 
 .block[draggable="true"]{ cursor: grab; }
 .block.dragging{ opacity: .55; }
+.block.drop-target{ outline: 3px solid rgba(31,111,235,.22); outline-offset: 2px; }
 .block.disabled{
   opacity: .55;
   filter: saturate(.6);

@@ -52,7 +52,7 @@
     pipeStatus.textContent = state;
     pipeStatus.classList.remove('ok', 'warn');
     if (state === 'saved' || state === 'loaded') pipeStatus.classList.add('ok');
-    else if (state === 'dirty' || state === 'saving') pipeStatus.classList.add('warn');
+    else if (state === 'dirty' || state === 'saving' || state === 'local') pipeStatus.classList.add('warn');
   }
 
   function parseBackendWsUrl() {
@@ -132,6 +132,23 @@
   let pipeline = defaultPipeline();
   let dragFrom = null;
 
+  function clearDropTargets() {
+    const els = blocksEl.querySelectorAll('.drop-target');
+    for (const el of els) el.classList.remove('drop-target');
+  }
+
+  function moveBlock(from, to) {
+    if (from === to) return;
+    if (from < 0 || from >= pipeline.blocks.length) return;
+    if (to < 0) to = 0;
+    if (to > pipeline.blocks.length) to = pipeline.blocks.length;
+
+    const item = pipeline.blocks.splice(from, 1)[0];
+    // If moving down, the removal shifts the target index by -1.
+    if (to > from) to -= 1;
+    pipeline.blocks.splice(to, 0, item);
+  }
+
   function renderPipeline() {
     blocksEl.innerHTML = '';
 
@@ -188,28 +205,26 @@
       li.addEventListener('dragend', () => {
         dragFrom = null;
         li.classList.remove('dragging');
+        clearDropTargets();
       });
 
       li.addEventListener('dragover', (e) => {
         e.preventDefault();
         try { e.dataTransfer.dropEffect = 'move'; } catch (_) {}
+        clearDropTargets();
+        li.classList.add('drop-target');
       });
 
       li.addEventListener('drop', (e) => {
         e.preventDefault();
+        clearDropTargets();
         let from = dragFrom;
         if (from === null) {
           try { from = Number(e.dataTransfer.getData('text/plain')); } catch (_) {}
         }
         const to = i;
         if (typeof from !== 'number' || Number.isNaN(from)) return;
-        if (from === to) return;
-        const item = pipeline.blocks.splice(from, 1)[0];
-        let insertAt = to;
-        if (from < to) insertAt = to - 1;
-        if (insertAt < 0) insertAt = 0;
-        if (insertAt > pipeline.blocks.length) insertAt = pipeline.blocks.length;
-        pipeline.blocks.splice(insertAt, 0, item);
+        moveBlock(from, to);
         setPipeStatus('dirty');
         renderPipeline();
       });
@@ -219,6 +234,26 @@
 
     pipelineJson.textContent = JSON.stringify(pipeline, null, 2);
   }
+
+  blocksEl.addEventListener('dragover', (e) => {
+    // Allow dropping into empty list / after last element.
+    e.preventDefault();
+    try { e.dataTransfer.dropEffect = 'move'; } catch (_) {}
+  });
+
+  blocksEl.addEventListener('drop', (e) => {
+    // Drop on the list container appends to end.
+    e.preventDefault();
+    clearDropTargets();
+    let from = dragFrom;
+    if (from === null) {
+      try { from = Number(e.dataTransfer.getData('text/plain')); } catch (_) {}
+    }
+    if (typeof from !== 'number' || Number.isNaN(from)) return;
+    moveBlock(from, pipeline.blocks.length);
+    setPipeStatus('dirty');
+    renderPipeline();
+  });
 
   async function loadPipeline() {
     setPipeStatus('loading');
@@ -243,7 +278,7 @@
     try {
       const cached = JSON.parse(window.localStorage.getItem(LS_PIPELINE) || 'null');
       pipeline = normalizePipeline(cached);
-      setPipeStatus('loaded');
+      setPipeStatus('local');
       renderPipeline();
       return;
     } catch (_) {}
@@ -275,10 +310,10 @@
         setPipeStatus('saved');
         return;
       }
-      setPipeStatus('dirty');
+      setPipeStatus('local');
       addMsg('err', 'pipeline', `save failed: ${JSON.stringify(obj)}`);
     } catch (e) {
-      setPipeStatus('dirty');
+      setPipeStatus('local');
       addMsg('err', 'pipeline', `save error: ${String(e)}`);
     }
   }

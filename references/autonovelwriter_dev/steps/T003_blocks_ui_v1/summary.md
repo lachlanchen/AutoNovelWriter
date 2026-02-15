@@ -13,3 +13,8 @@
 
 Verification notes:
 - No TCP-binding tests were run in this sandbox. Syntax-only checks were used.
+
+## Fixes
+- Improved DnD operability: added a visible drop target outline and allowed dropping onto the list container to move a block to the end.
+- Reduced persistence ambiguity: when backend save/load fails, the pipeline status now shows `local` (loaded/saved via `localStorage`) instead of implying backend persistence succeeded.
+- Hardened `/api/pipeline` input: reject unknown block types and cap pipeline length (prevents silent typos and runaway payloads).

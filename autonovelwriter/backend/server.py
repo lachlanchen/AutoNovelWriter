@@ -95,24 +95,26 @@ def save_settings(paths: dict, settings: dict) -> None:
     p.write_text(json.dumps(settings, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+# Maps to the block types listed in docs/autonovelwriter_spec.md.
+PIPELINE_BLOCK_TYPES = [
+    "plan",
+    "write",
+    "critique_story",
+    "fix_story",
+    "critique_tone",
+    "fix_tone",
+    "critique_dialogue",
+    "fix_dialogue",
+    "critique_character",
+    "fix_character",
+    "summary",
+    "log",
+    "commit_push",
+]
+
+
 def default_pipeline() -> dict:
-    # Maps to the block types listed in docs/autonovelwriter_spec.md.
-    types = [
-        "plan",
-        "write",
-        "critique_story",
-        "fix_story",
-        "critique_tone",
-        "fix_tone",
-        "critique_dialogue",
-        "fix_dialogue",
-        "critique_character",
-        "fix_character",
-        "summary",
-        "log",
-        "commit_push",
-    ]
-    return {"blocks": [{"id": t, "type": t, "enabled": True} for t in types]}
+    return {"blocks": [{"id": t, "type": t, "enabled": True} for t in PIPELINE_BLOCK_TYPES]}
 
 
 def load_pipeline(paths: dict) -> dict:
@@ -211,14 +213,19 @@ class PipelineHandler(BaseHandler):
         blocks = body.get("blocks")
         if not isinstance(blocks, list):
             return self.write_json({"ok": False, "error": "expected_blocks_list"}, status=400)
+        if len(blocks) > 200:
+            return self.write_json({"ok": False, "error": "too_many_blocks"}, status=400)
 
         cleaned = []
+        allowed = set(PIPELINE_BLOCK_TYPES)
         for i, b in enumerate(blocks):
             if not isinstance(b, dict):
                 return self.write_json({"ok": False, "error": f"block_{i}_not_object"}, status=400)
             t = b.get("type")
             if not isinstance(t, str) or not t:
                 return self.write_json({"ok": False, "error": f"block_{i}_missing_type"}, status=400)
+            if t not in allowed:
+                return self.write_json({"ok": False, "error": f"block_{i}_unknown_type"}, status=400)
             bid = b.get("id")
             if not isinstance(bid, str) or not bid:
                 bid = t

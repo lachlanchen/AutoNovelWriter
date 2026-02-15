@@ -19,3 +19,6 @@ Verification (no TCP binds):
 1. Add a minimal PWA Outputs panel that calls `/api/outputs/index` and refreshes on `output_created`.
 2. Consider pagination/cursor support for outputs listing instead of a hard cap (or make the cap configurable).
 3. Add an API to download/view a specific output file (read-only) with safe path validation.
+
+## README
+- Added `GET /api/outputs/index` to the “Key Backend APIs” list in `README.md`.

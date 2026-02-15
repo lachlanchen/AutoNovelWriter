@@ -71,6 +71,7 @@ The PWA shows the script in a textarea (source of truth) and renders nested bloc
 - Settings: `GET/POST /api/settings`
 - Projects: `GET /api/projects`, `POST /api/projects/active`
 - Materials index (active project): `GET /api/materials/index`
+- Outputs index (active project): `GET /api/outputs/index`
 - Pipeline (canonical script + derived JSON): `GET/POST /api/pipeline`
 - Pipeline validate (preview only): `POST /api/pipeline/validate`
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`

@@ -580,12 +580,24 @@ class SettingsHandler(BaseHandler):
         self._paths = paths
         self._settings = settings
 
+    def _reload_from_disk(self) -> None:
+        # Keep disk as source of truth so POST doesn't clobber out-of-band edits.
+        server = self._settings.get("server") if isinstance(self._settings, dict) else {}
+        host = (
+            server.get("host", os.environ.get("AUTONOVELWRITER_HOST", "127.0.0.1"))
+            if isinstance(server, dict)
+            else "127.0.0.1"
+        )
+        port = (
+            server.get("port", int(os.environ.get("AUTONOVELWRITER_PORT", "8787")))
+            if isinstance(server, dict)
+            else int(os.environ.get("AUTONOVELWRITER_PORT", "8787"))
+        )
+        self._settings = load_settings(self._paths, host=host, port=int(port))
+
     def get(self):
         # Prefer disk as source of truth so UI always sees persisted values.
-        server = self._settings.get("server") if isinstance(self._settings, dict) else {}
-        host = server.get("host", os.environ.get("AUTONOVELWRITER_HOST", "127.0.0.1")) if isinstance(server, dict) else "127.0.0.1"
-        port = server.get("port", int(os.environ.get("AUTONOVELWRITER_PORT", "8787"))) if isinstance(server, dict) else int(os.environ.get("AUTONOVELWRITER_PORT", "8787"))
-        self._settings = load_settings(self._paths, host=host, port=int(port))
+        self._reload_from_disk()
         self.write_json({"ok": True, "settings": self._settings})
 
     def post(self):
@@ -596,6 +608,8 @@ class SettingsHandler(BaseHandler):
 
         if not isinstance(body, dict):
             return self.write_json({"ok": False, "error": "expected_object"}, status=400)
+
+        self._reload_from_disk()
 
         # Minimal: allow replacing top-level keys; deeper validation comes later.
         for k in ("paths", "agent", "novel"):

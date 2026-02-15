@@ -14,3 +14,6 @@
 Verification (no TCP binds):
 - `python3 -m py_compile autonovelwriter/backend/server.py`
 - `node --check autonovelwriter/pwa/app.js`
+
+## Fixes
+- Backend: changed `/api/settings` POST to reload settings from disk before shallow-merge/save, avoiding clobbering out-of-band changes (`autonovelwriter/backend/server.py`).

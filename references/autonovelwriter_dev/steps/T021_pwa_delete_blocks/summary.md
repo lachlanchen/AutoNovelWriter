@@ -11,3 +11,6 @@
 
 ## Fixes
 - Changed the keyboard shortcut to use `Delete` only (not `Backspace`) to reduce accidental deletes; updated the tooltip translations accordingly.
+
+## I18N
+- Added localized UI strings for the new Delete action: `pipeline.delete` and `pipeline.delete_title` in all required UI languages (en, zh-Hans, zh-Hant, ja, ko, vi, ar, fr, es, ru, de).

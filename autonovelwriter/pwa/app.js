@@ -1276,10 +1276,34 @@
       }
       return { kind: 'loop', repeat, children };
     };
+    const cleanRound = (n) => {
+      if (!n || typeof n !== 'object') return null;
+      const r = Number.isFinite(n.repeat) ? n.repeat : parseInt(String(n.repeat || '1'), 10);
+      const repeat = Number.isFinite(r) && r > 0 ? r : 1;
+      const kids = Array.isArray(n.children) ? n.children : [];
+      const children = [];
+      for (const c of kids) {
+        const cc = cleanNode(c);
+        if (cc) children.push(cc);
+      }
+      return { kind: 'round', repeat, children };
+    };
+    const cleanForeachTask = (n) => {
+      if (!n || typeof n !== 'object') return null;
+      const kids = Array.isArray(n.children) ? n.children : [];
+      const children = [];
+      for (const c of kids) {
+        const cc = cleanNode(c);
+        if (cc) children.push(cc);
+      }
+      return { kind: 'foreach_task', children };
+    };
     const cleanNode = (n) => {
       if (!n || typeof n !== 'object') return null;
       if (n.kind === 'step') return cleanStep(n);
       if (n.kind === 'loop') return cleanLoop(n);
+      if (n.kind === 'round') return cleanRound(n);
+      if (n.kind === 'foreach_task') return cleanForeachTask(n);
       return null;
     };
 
@@ -1302,7 +1326,7 @@
         out.push({ id: n.type, type: n.type, enabled: n.enabled !== false });
         return;
       }
-      if (n.kind === 'loop' && Array.isArray(n.children)) {
+      if ((n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task') && Array.isArray(n.children)) {
         for (const c of n.children) walk(c);
       }
     };
@@ -1314,7 +1338,7 @@
 
   function astHasLoop(n) {
     if (!n || typeof n !== 'object') return false;
-    if (n.kind === 'loop') return true;
+    if (n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task') return true;
     const kids = Array.isArray(n.children) ? n.children : [];
     for (const c of kids) {
       if (astHasLoop(c)) return true;
@@ -1338,6 +1362,19 @@
         lines.push(`${indent}LOOP ${repeat > 0 ? repeat : 1}`);
         const kids = Array.isArray(n.children) ? n.children : [];
         for (const c of kids) emit(c, level + 1);
+        return;
+      }
+      if (n.kind === 'round') {
+        const repeat = Number.isFinite(n.repeat) ? n.repeat : parseInt(String(n.repeat || '1'), 10);
+        lines.push(`${indent}ROUND ${repeat > 0 ? repeat : 1}`);
+        const kids = Array.isArray(n.children) ? n.children : [];
+        for (const c of kids) emit(c, level + 1);
+        return;
+      }
+      if (n.kind === 'foreach_task') {
+        lines.push(`${indent}FOREACH_TASK`);
+        const kids = Array.isArray(n.children) ? n.children : [];
+        for (const c of kids) emit(c, level + 1);
       }
     };
     const kids = ast && typeof ast === 'object' && Array.isArray(ast.children) ? ast.children : [];
@@ -1350,7 +1387,7 @@
     const errors = [];
 
     const root = { kind: 'root', version: 2, children: [] };
-    const stack = [{ level: 0, children: root.children, loopLine: null }];
+    const stack = [{ level: 0, children: root.children, containerLine: null, containerKind: null }];
 
     function curLevel() {
       return stack[stack.length - 1].level;
@@ -1359,8 +1396,11 @@
     function closeTo(level) {
       while (stack.length && level < stack[stack.length - 1].level) {
         const top = stack[stack.length - 1];
-        if (top.loopLine !== null && (!top.children || !top.children.length)) {
-          errors.push({ line: top.loopLine, code: 'loop_empty', text: 'LOOP' });
+        if (top.containerLine !== null && (!top.children || !top.children.length)) {
+          const kind = top.containerKind;
+          if (kind === 'loop') errors.push({ line: top.containerLine, code: 'loop_empty', text: 'LOOP' });
+          else if (kind === 'round') errors.push({ line: top.containerLine, code: 'round_empty', text: 'ROUND' });
+          else if (kind === 'foreach_task') errors.push({ line: top.containerLine, code: 'foreach_task_empty', text: 'FOREACH_TASK' });
         }
         stack.pop();
       }
@@ -1412,6 +1452,7 @@
           errors.push({ line: ln, code: 'loop_missing_repeat', text: raw });
           continue;
         }
+        if (parts.length > 2) warnings.push({ line: ln, code: 'too_many_tokens', text: raw });
         const repeat = parseInt(parts[1], 10);
         if (!Number.isFinite(repeat)) {
           errors.push({ line: ln, code: 'loop_repeat_not_int', text: raw });
@@ -1423,7 +1464,36 @@
         }
         const loop = { kind: 'loop', repeat, children: [] };
         stack[stack.length - 1].children.push(loop);
-        stack.push({ level: lvl + 1, children: loop.children, loopLine: ln });
+        stack.push({ level: lvl + 1, children: loop.children, containerLine: ln, containerKind: 'loop' });
+        continue;
+      }
+
+      if (verb === 'ROUND') {
+        if (parts.length < 2) {
+          errors.push({ line: ln, code: 'round_missing_repeat', text: raw });
+          continue;
+        }
+        if (parts.length > 2) warnings.push({ line: ln, code: 'too_many_tokens', text: raw });
+        const repeat = parseInt(parts[1], 10);
+        if (!Number.isFinite(repeat)) {
+          errors.push({ line: ln, code: 'round_repeat_not_int', text: raw });
+          continue;
+        }
+        if (repeat <= 0 || repeat > 10000) {
+          errors.push({ line: ln, code: 'round_repeat_out_of_range', text: raw });
+          continue;
+        }
+        const round = { kind: 'round', repeat, children: [] };
+        stack[stack.length - 1].children.push(round);
+        stack.push({ level: lvl + 1, children: round.children, containerLine: ln, containerKind: 'round' });
+        continue;
+      }
+
+      if (verb === 'FOREACH_TASK') {
+        if (parts.length > 1) warnings.push({ line: ln, code: 'too_many_tokens', text: raw });
+        const ft = { kind: 'foreach_task', children: [] };
+        stack[stack.length - 1].children.push(ft);
+        stack.push({ level: lvl + 1, children: ft.children, containerLine: ln, containerKind: 'foreach_task' });
         continue;
       }
 
@@ -1478,7 +1548,7 @@
     for (let d = 0; d < path.length - 1; d++) {
       const idx = path[d];
       const node = container[idx];
-      if (!node || typeof node !== 'object' || node.kind !== 'loop' || !Array.isArray(node.children)) return null;
+      if (!node || typeof node !== 'object' || (node.kind !== 'loop' && node.kind !== 'round' && node.kind !== 'foreach_task') || !Array.isArray(node.children)) return null;
       parent = node;
       container = node.children;
     }
@@ -1528,6 +1598,10 @@
     blocksEl.innerHTML = '';
     updateIndentButtons();
 
+    function isContainerKind(kind) {
+      return kind === 'loop' || kind === 'round' || kind === 'foreach_task';
+    }
+
     function attachContainerDrop(ol, parentPath) {
       const parentKey = pathKey(parentPath);
       ol.addEventListener('dragover', (e) => {
@@ -1565,7 +1639,7 @@
         const parentKey = pathKey(parentPath);
 
         const li = document.createElement('li');
-        li.className = 'block' + (key === selected ? ' selected' : '') + (n.kind === 'loop' ? ' loop' : '') + (n.enabled === false ? ' disabled' : '');
+        li.className = 'block' + (key === selected ? ' selected' : '') + (isContainerKind(n.kind) ? ' loop' : '') + (n.enabled === false ? ' disabled' : '');
         li.draggable = true;
         li.dataset.path = key;
         li.dataset.parent = parentKey;
@@ -1578,13 +1652,19 @@
         const mid = document.createElement('div');
         const title = document.createElement('div');
         title.className = 'btitle';
-        title.textContent = n.kind === 'loop' ? 'LOOP' : n.type;
+        title.textContent =
+          n.kind === 'loop' ? 'LOOP'
+            : n.kind === 'round' ? 'ROUND'
+              : n.kind === 'foreach_task' ? 'FOREACH_TASK'
+                : n.type;
         const meta = document.createElement('div');
         meta.className = 'btype';
-        if (n.kind === 'loop') {
+        if (n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task') {
           const badge = document.createElement('span');
           badge.className = 'badge';
-          badge.textContent = `x${n.repeat || 1}`;
+          badge.textContent =
+            n.kind === 'foreach_task' ? 'foreach'
+              : `x${n.repeat || 1}`;
           meta.appendChild(badge);
         } else {
           meta.textContent = n.enabled === false ? 'disabled' : 'enabled';
@@ -1695,7 +1775,7 @@
 
         ol.appendChild(li);
 
-        if (n.kind === 'loop' && Array.isArray(n.children)) {
+        if (isContainerKind(n.kind) && Array.isArray(n.children)) {
           const childOl = document.createElement('ol');
           childOl.className = 'blocks nested';
           attachContainerDrop(childOl, p);
@@ -1733,7 +1813,7 @@
     renderPipeline();
   }
 
-  function removeEmptyLoops(ast) {
+  function removeEmptyContainers(ast) {
     const prune = (n) => {
       if (!n || typeof n !== 'object') return;
       if (!Array.isArray(n.children)) return;
@@ -1741,7 +1821,7 @@
       for (const c of n.children) {
         if (!c || typeof c !== 'object') continue;
         prune(c);
-        if (c.kind === 'loop' && (!Array.isArray(c.children) || c.children.length === 0)) {
+        if ((c.kind === 'loop' || c.kind === 'round' || c.kind === 'foreach_task') && (!Array.isArray(c.children) || c.children.length === 0)) {
           continue;
         }
         next.push(c);
@@ -1761,7 +1841,7 @@
     if (index <= 0) return;
     const prev = container[index - 1];
     const node = container.splice(index, 1)[0];
-    if (prev && typeof prev === 'object' && prev.kind === 'loop' && Array.isArray(prev.children)) {
+    if (prev && typeof prev === 'object' && (prev.kind === 'loop' || prev.kind === 'round' || prev.kind === 'foreach_task') && Array.isArray(prev.children)) {
       prev.children.push(node);
       setSelected(pathKey(parentPath.concat([index - 1, prev.children.length - 1])));
     } else {
@@ -1771,7 +1851,7 @@
       setSelected(pathKey(parentPath.concat([index, 0])));
     }
     setPipeStatus('dirty');
-    removeEmptyLoops(pipelineAst);
+    removeEmptyContainers(pipelineAst);
     updateDerivedFromAst({ writeScript: true });
     renderPipeline();
   }
@@ -1783,29 +1863,29 @@
     const info = getContainerAndIndex(pipelineAst, path);
     if (!info) return;
     const { container, index, parentPath } = info;
-    // parentPath points to the parent loop node.
-    const loopPath = parentPath;
-    const loopInfo = getContainerAndIndex(pipelineAst, loopPath);
-    if (!loopInfo || !loopInfo.node || loopInfo.node.kind !== 'loop') return;
-    const loopNode = loopInfo.node;
-    const outerParentPath = loopInfo.parentPath;
+    // parentPath points to the parent container node.
+    const containerPath = parentPath;
+    const cInfo = getContainerAndIndex(pipelineAst, containerPath);
+    if (!cInfo || !cInfo.node || (cInfo.node.kind !== 'loop' && cInfo.node.kind !== 'round' && cInfo.node.kind !== 'foreach_task')) return;
+    const containerNode = cInfo.node;
+    const outerParentPath = cInfo.parentPath;
     const outerInfo = outerParentPath.length ? getContainerAndIndex(pipelineAst, outerParentPath) : null;
     const outerKids = outerParentPath.length
       ? (outerInfo && outerInfo.node && Array.isArray(outerInfo.node.children) ? outerInfo.node.children : null)
       : pipelineAst.children;
     if (!Array.isArray(outerKids)) return;
-    const loopIndex = loopInfo.index;
+    const containerIndex = cInfo.index;
     const node = container.splice(index, 1)[0];
-    outerKids.splice(loopIndex + 1, 0, node);
-    if (Array.isArray(loopNode.children) && loopNode.children.length === 0) {
-      // Avoid generating invalid scripts (backend rejects empty loops).
-      outerKids.splice(loopIndex, 1);
-      setSelected(pathKey(outerParentPath.concat([loopIndex])));
+    outerKids.splice(containerIndex + 1, 0, node);
+    if (Array.isArray(containerNode.children) && containerNode.children.length === 0) {
+      // Avoid generating invalid scripts (backend rejects empty containers).
+      outerKids.splice(containerIndex, 1);
+      setSelected(pathKey(outerParentPath.concat([containerIndex])));
     } else {
-      setSelected(pathKey(outerParentPath.concat([loopIndex + 1])));
+      setSelected(pathKey(outerParentPath.concat([containerIndex + 1])));
     }
     setPipeStatus('dirty');
-    removeEmptyLoops(pipelineAst);
+    removeEmptyContainers(pipelineAst);
     updateDerivedFromAst({ writeScript: true });
     renderPipeline();
   }

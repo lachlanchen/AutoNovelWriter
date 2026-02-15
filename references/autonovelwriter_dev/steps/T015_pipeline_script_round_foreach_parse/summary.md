@@ -18,3 +18,8 @@ Verification (no TCP binds):
 - `python3 -m py_compile autonovelwriter/backend/server.py`
 - `python3 - <<'PY'\nfrom autonovelwriter.backend import server as s\nscript='''ROUND 2\n  STEP plan\n  FOREACH_TASK\n    STEP write\n    STEP summary\n'''\np, ast, w, e = s.parse_pipeline_script_v2(script)\nassert not e\ncanon = s.render_pipeline_script_from_ast(ast)\nassert 'ROUND 2' in canon and 'FOREACH_TASK' in canon\np2, ast2, w2, e2 = s.parse_pipeline_script_v2(canon)\nassert not e2\nprint([b['type'] for b in p2['blocks'] if b.get('enabled', True)])\nPY`
 
+## Fixes
+- Updated PWA local pipeline parser/normalizer/renderer to support `ROUND <n>` and `FOREACH_TASK` as container AST nodes (like `LOOP`) so offline validation (fallback) and backend-returned ASTs won’t break UI rendering/indent/outdent.
+
+Verification (no TCP binds):
+- `node --check autonovelwriter/pwa/app.js`

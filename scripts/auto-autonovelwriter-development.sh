@@ -18,6 +18,8 @@ Options:
   --reasoning <level>       low|medium|high|xhigh (default: medium)
   --new-session             Start a fresh Codex session
   --reset-state             Clear task state (keeps queue)
+  --sync-autoappdev         Sync AutoAppDev submodule to latest (reference-only; default)
+  --no-sync-autoappdev      Do not sync AutoAppDev submodule
   --batch-size <n>          Generate at most n new tasks per batch (default: 6)
   --max-batches <n>         Stop after n batches (default: 1; 0 = infinite)
   --max-tasks <n>           Stop after processing n tasks total (default: 0; 0 = infinite)
@@ -38,6 +40,8 @@ Notes:
   - This script is intentionally redundant in prompts. Each Codex step must be
     self-contained and restate the overall goal.
   - Commits/pushes are done by THIS driver, not by Codex.
+  - AutoAppDev is vendored as a submodule for reference; AutoNovelWriter is similar in spirit,
+    but intentionally different in product surface and runner semantics.
   - The *app being built* also has its own pipelines (novel-writing vs app-dev)
     and a pipeline-script visualization module. Do not confuse those with the
     driver stages above.
@@ -49,6 +53,7 @@ model="gpt-5.3-codex"
 reasoning="medium"
 new_session=0
 reset_state=0
+sync_autoappdev=1
 batch_size=6
 max_batches=1
 max_tasks=0
@@ -66,6 +71,8 @@ while [ $# -gt 0 ]; do
     --reasoning) reasoning="${2:-}"; shift ;;
     --new-session) new_session=1 ;;
     --reset-state) reset_state=1 ;;
+    --sync-autoappdev) sync_autoappdev=1 ;;
+    --no-sync-autoappdev) sync_autoappdev=0 ;;
     --batch-size) batch_size="${2:-}"; shift ;;
     --max-batches) max_batches="${2:-}"; shift ;;
     --max-tasks) max_tasks="${2:-}"; shift ;;
@@ -383,6 +390,164 @@ git_commit_push_if_dirty() {
   done
 }
 
+sync_autoappdev_submodule() {
+  if [ "$sync_autoappdev" -ne 1 ]; then
+    return 0
+  fi
+  if [ ! -d "$repo_root/AutoAppDev" ]; then
+    return 0
+  fi
+  if ! git -C "$repo_root" submodule status AutoAppDev >/dev/null 2>&1; then
+    return 0
+  fi
+  log "Syncing AutoAppDev submodule to latest (reference only)..."
+  git -C "$repo_root" submodule update --init AutoAppDev >/dev/null 2>&1 || true
+
+  # Prefer a safe FF pull if the submodule is on a branch; otherwise fall back to update --remote.
+  if git -C "$repo_root/AutoAppDev" symbolic-ref -q HEAD >/dev/null 2>&1; then
+    git -C "$repo_root/AutoAppDev" pull --ff-only >/dev/null 2>&1 || true
+  else
+    git -C "$repo_root" submodule update --remote --merge AutoAppDev >/dev/null 2>&1 || true
+  fi
+
+  git_commit_push_if_dirty "AutoNovelWriter: sync AutoAppDev submodule"
+}
+
+update_readme_autodev_progress() {
+  local task_id="${1:-}"
+  local task_title="${2:-}"
+  local stage="${3:-}"
+
+  REPO_ROOT="$repo_root" QUEUE_FILE="$queue_file" STATE_FILE="$state_file" CUR_TASK_ID="$task_id" CUR_TASK_TITLE="$task_title" CUR_STAGE="$stage" python3 - <<'PY'
+import json
+import os
+import re
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+
+repo_root = Path(os.environ["REPO_ROOT"])
+readme_path = repo_root / "README.md"
+queue_file = Path(os.environ.get("QUEUE_FILE", ""))
+state_file = Path(os.environ.get("STATE_FILE", ""))
+cur_task_id = (os.environ.get("CUR_TASK_ID") or "").strip()
+cur_task_title = (os.environ.get("CUR_TASK_TITLE") or "").strip()
+cur_stage = (os.environ.get("CUR_STAGE") or "").strip()
+
+start = "<!-- AUTO_DEV_PROGRESS_START -->"
+end = "<!-- AUTO_DEV_PROGRESS_END -->"
+
+id_to_title = {}
+if queue_file and queue_file.exists():
+    for line in queue_file.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        tid = obj.get("id")
+        if isinstance(tid, str) and tid:
+            title = obj.get("title")
+            if not isinstance(title, str):
+                title = ""
+            id_to_title[tid] = title
+
+total = len(id_to_title)
+done = set()
+last_done = None  # (tid, ts)
+
+if state_file and state_file.exists():
+    for raw in state_file.read_text(encoding="utf-8", errors="replace").splitlines():
+        parts = raw.split("\t")
+        if len(parts) < 3:
+            continue
+        tid, st, ts = parts[0].strip(), parts[1].strip(), parts[2].strip()
+        if st == "done" and tid:
+            done.add(tid)
+            last_done = (tid, ts)
+
+done_n = len(done)
+pending_n = max(0, total - done_n)
+
+latest_batch = ""
+batch_root = repo_root / "references" / "autonovelwriter_dev" / "tasks" / "batches"
+if batch_root.exists():
+    try:
+        dirs = [p for p in batch_root.iterdir() if p.is_dir()]
+        dirs.sort(key=lambda p: p.name)
+        if dirs:
+            latest_batch = str(dirs[-1].relative_to(repo_root))
+    except Exception:
+        latest_batch = ""
+
+def git_short_head(path: Path) -> str:
+    try:
+        out = subprocess.check_output(["git", "-C", str(path), "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL)
+        return out.decode("utf-8", errors="replace").strip()
+    except Exception:
+        return ""
+
+autoappdev_head = ""
+autoappdev_dir = repo_root / "AutoAppDev"
+if autoappdev_dir.exists():
+    autoappdev_head = git_short_head(autoappdev_dir)
+
+updated_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+last_done_tid = last_done[0] if last_done else ""
+last_done_ts = last_done[1] if last_done else ""
+last_done_title = id_to_title.get(last_done_tid, "") if last_done_tid else ""
+
+cur_title = cur_task_title or id_to_title.get(cur_task_id, "")
+cur_line = f"{cur_task_id} / {cur_stage} — {cur_title}".strip(" —")
+
+lines = [
+    start,
+    "### Auto-Dev Progress (Generated)",
+    f"- updated_utc: {updated_utc}",
+    f"- current: {cur_line}" if cur_task_id or cur_stage else f"- current: (idle)",
+    f"- queue: total={total} done={done_n} pending={pending_n}",
+]
+if last_done_tid:
+    lines.append(f"- last_done: {last_done_tid} — {last_done_title} @ {last_done_ts}".rstrip())
+if latest_batch:
+    lines.append(f"- latest_batch: {latest_batch}")
+if autoappdev_head:
+    lines.append(f"- autoappdev_head: {autoappdev_head}")
+lines.append(end)
+section = "\n".join(lines) + "\n"
+
+text = ""
+if readme_path.exists():
+    text = readme_path.read_text(encoding="utf-8", errors="replace")
+else:
+    text = "# AutoNovelWriter\n\n"
+
+def replace_section(src: str) -> str:
+    if start in src and end in src and src.index(start) < src.index(end):
+        pattern = re.escape(start) + r".*?" + re.escape(end) + r"\n?"
+        return re.sub(pattern, section, src, flags=re.S)
+    # Insert under Driver section if present; else append.
+    needle = "## Driver Workflow (Auto-Dev)"
+    if needle in src:
+        parts = src.split(needle, 1)
+        before, after = parts[0], parts[1]
+        # Place right after the header line.
+        if after.startswith("\n"):
+            return before + needle + "\n" + section + after[1:]
+        return before + needle + "\n" + section + after
+    if not src.endswith("\n"):
+        src += "\n"
+    return src + "\n" + section
+
+new_text = replace_section(text)
+if new_text != text:
+    readme_path.write_text(new_text, encoding="utf-8", errors="replace")
+PY
+}
+
 pick_free_port() {
   python3 - <<'PY'
 import socket
@@ -564,6 +729,7 @@ fi
 log "Using Codex session: $session_id"
 
 ensure_tmux
+sync_autoappdev_submodule
 
 generate_tasks_batch() {
   local out_file="$1"
@@ -610,6 +776,7 @@ Read:
 - $spec_doc
 - $state_file (if exists)
 - $queue_file
+- AutoAppDev/ (submodule; reference only)
 
 Task: propose the NEXT batch of at most $batch_size small development tasks to improve AutoNovelWriter.
 
@@ -828,6 +995,7 @@ Read these first:
 - $spec_doc
 - README.md
 - Existing code under: $backend_root/ and $pwa_root/
+- Reference only: AutoAppDev/ (vendored submodule; similar patterns, different product)
 - Task definition JSON (notes + acceptance): $step_dir/task.json
 
 This step:
@@ -927,6 +1095,7 @@ EOF
   - major endpoints/features shipped so far
   - the existence of the pipeline-script visualization module (even if only partially implemented)
   - the driver workflow and how to run it safely
+- Do NOT remove or manually edit the AUTO_DEV_PROGRESS markers in README.md; that section is overwritten by the driver.
 - Keep README concise and actionable (commands + paths).
 - Append a short \"## README\" note to: $step_dir/summary.md describing what you changed.
 EOF
@@ -983,6 +1152,9 @@ PY
 	      host_smoke_backend
 	      tmux_restart_panes_if_running
 	    fi
+
+	    # Driver-managed README progress marker (stable, deterministic) so progress is visible in git history.
+	    update_readme_autodev_progress "$task_id" "$task_title" "$stage"
 
     # Commit + push after ANY edit (including prompts/step artifacts), per repo philosophy.
     local tmp_body

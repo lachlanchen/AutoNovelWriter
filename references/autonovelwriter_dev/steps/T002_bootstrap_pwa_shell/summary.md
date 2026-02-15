@@ -8,3 +8,8 @@
 
 Verification notes:
 - No TCP-binding smoke tests were run in this Codex sandbox (socket binds may be denied). Use the driver tmux panes to validate browser load + WS connectivity.
+
+## Fixes
+- Improved operability when PWA host differs from backend host: click the “Backend” URL in the chat panel to set a persisted WS URL (stored in `localStorage`).
+- Clarified in `service_worker.js` that service workers do not intercept WebSockets.
+- Fixed the plan’s `rg` verification command to use `--` so patterns starting with `--` aren’t parsed as flags.

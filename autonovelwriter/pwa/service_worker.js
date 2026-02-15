@@ -1,4 +1,7 @@
-/* Minimal offline shell service worker (cache static assets). */
+/* Minimal offline shell service worker (cache static assets).
+ *
+ * Note: service workers do not proxy/intercept WebSocket connections.
+ */
 
 const CACHE_NAME = 'anw-shell-v1';
 const CORE_ASSETS = [

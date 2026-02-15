@@ -36,7 +36,7 @@ ls -la autonovelwriter/pwa/
 python3 -m json.tool autonovelwriter/pwa/manifest.webmanifest >/dev/null
 
 # 3) Grep for required tokens and references
-rg -n "--(bg|fg|panel|accent)" autonovelwriter/pwa/app.css
+rg -n -- "--(bg|fg|panel|accent):" autonovelwriter/pwa/app.css
 rg -n "manifest\.webmanifest" autonovelwriter/pwa/index.html
 rg -n "service_worker\.js" autonovelwriter/pwa/app.js autonovelwriter/pwa/index.html || true
 

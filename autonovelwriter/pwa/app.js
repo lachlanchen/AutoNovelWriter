@@ -9,6 +9,8 @@
   const conn = $('conn');
   const backendHint = $('backendHint');
 
+  const LS_WS_URL = 'anw_ws_url';
+
   function ts() {
     const d = new Date();
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -45,6 +47,10 @@
     // Allow override: ?ws=ws://host:port/ws
     const wsOverride = url.searchParams.get('ws');
     if (wsOverride) return wsOverride;
+
+    // Allow persisted override set from UI (click backend hint).
+    const saved = window.localStorage.getItem(LS_WS_URL);
+    if (saved) return saved;
 
     // Allow override: ?backend=http://host:port (converted to ws)
     const backendOverride = url.searchParams.get('backend');
@@ -157,6 +163,16 @@
         .catch((e) => addMsg('err', 'sw', String(e)));
     });
   }
+
+  backendHint.addEventListener('click', () => {
+    const current = parseBackendWsUrl();
+    const next = window.prompt('Set WebSocket URL (stored in this browser).', current);
+    if (!next) return;
+    window.localStorage.setItem(LS_WS_URL, next.trim());
+    addMsg('hello', 'ws', `saved ws url: ${next.trim()}`);
+    if (ws) try { ws.close(); } catch (_) {}
+    connect();
+  });
 
   connect();
 })();

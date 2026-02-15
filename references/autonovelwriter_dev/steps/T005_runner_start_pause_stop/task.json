@@ -1,0 +1,15 @@
+{
+  "id": "T005_runner_start_pause_stop",
+  "title": "Task runner control (start/pause/resume/stop) + state machine",
+  "notes": "Backend task runner executes pipeline blocks over queued tasks with state persisted under runtime/state. UI controls start/pause/stop and shows live status.",
+  "acceptance": [
+    "Start/pause/resume/stop works without losing state",
+    "Task statuses persist across restart",
+    "UI shows live task progress"
+  ],
+  "tags": [
+    "backend",
+    "runner",
+    "state"
+  ]
+}

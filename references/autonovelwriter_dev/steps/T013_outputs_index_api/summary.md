@@ -11,3 +11,6 @@ Verification (no TCP binds):
 ## Fixes
 - Enforced the 5000-entry cap during the directory walk (early exit) to avoid scanning huge trees before failing.
 - Improved dotfile filtering to skip nested dot paths (any path segment starting with `.`).
+
+## I18N
+- No PWA user-facing strings were added/changed in this task (backend-only endpoint).

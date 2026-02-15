@@ -8,7 +8,7 @@ Usage: scripts/auto-autonovelwriter-development.sh [options]
 Auto-develops the "AutoNovelWriter" Scratch-like PWA + Tornado backend by
 calling Codex non-interactively in ONE shared session, task-by-task:
 
-  plan -> implement -> debug -> fix -> summary -> update_readme -> commit+push
+  plan -> implement -> debug -> fix -> i18n -> summary -> update_readme -> commit+push
 
 It keeps a resumable queue/state under:
   references/autonovelwriter_dev/
@@ -567,9 +567,42 @@ ensure_tmux
 
 generate_tasks_batch() {
   local out_file="$1"
-  local gen_prompt="$prompt_dir/GEN_tasks_$(date +%Y%m%d_%H%M%S).txt"
-  local gen_json="$log_dir/GEN_tasks_$(date +%Y%m%d_%H%M%S).jsonl"
-  cat > "$gen_prompt" <<EOF
+  local attempt=0
+  local tmp_out
+  tmp_out="$(mktemp)"
+
+  while true; do
+    attempt=$((attempt + 1))
+    local ts
+    ts="$(date +%Y%m%d_%H%M%S)"
+    local gen_prompt="$prompt_dir/GEN_tasks_${ts}_try${attempt}.txt"
+    local gen_json="$log_dir/GEN_tasks_${ts}_try${attempt}.jsonl"
+
+    local next_num
+    next_num="$(python3 - "$queue_file" <<'PY'
+import json, re, sys
+max_n = 0
+try:
+  with open(sys.argv[1], "r", encoding="utf-8") as f:
+    for line in f:
+      line = line.strip()
+      if not line:
+        continue
+      try:
+        obj = json.loads(line)
+      except Exception:
+        continue
+      tid = obj.get("id") or ""
+      m = re.match(r"^T(\\d+)_", tid)
+      if m:
+        max_n = max(max_n, int(m.group(1)))
+except FileNotFoundError:
+  pass
+print(max_n + 1)
+PY
+)"
+
+    cat > "$gen_prompt" <<EOF
 You are being invoked by scripts/auto-autonovelwriter-development.sh.
 
 Read:
@@ -582,30 +615,132 @@ Task: propose the NEXT batch of at most $batch_size small development tasks to i
 
 Constraints:
 - Tasks must be small and independently verifiable.
-- Prioritize:
-  - runnable backend + loadable PWA
-  - observable pipeline + chat pipe
-  - pipeline-script visualization: script <-> blocks translation + import/export
-  - clear separation of in-app pipelines (novel-writing vs app-development)
+	- Prioritize improvements to the AutoNovelWriter app itself (PWA + backend), especially:
+	  - flexible pipeline blocks with editable actions (tool selection, prompts, scripts, skills)
+	  - nested rounds/loops (indentation) in pipeline representation + UI drag indent/outdent
+	  - in-app meta task generation (generate next tasks from materials + feedback)
+	  - materials management (multiple folders/files, standard layout, indexing)
+	  - novel-writing settings (novel language + other writing UX options), separate from UI language
+	  - in-app runner can actually write: produce drafts/revisions into the standardized output folders
+	  - UI language (i18n): en, zh-Hans, zh-Hant, ja, ko, vi, ar, fr, es, ru, de
+	  - pipeline-script visualization: formatted script <-> blocks translation + import/export
+	  - observable chat + folder-based inbox/outbox interruption during runs
+  - clear separation of in-app pipelines (novel-writing vs app-development vs app meta-dev)
   - standardized storage layout for: input materials, interactions, outputs, docs, references,
     scripts, tools, logs, auto-novels/projects, task management, and resume state
 - Do NOT do any implementation now.
-- Append tasks to: $out_file
+- Do NOT write any files. Do NOT run any shell commands.
 
 Output format:
-- Write JSONL (one JSON object per line), no surrounding markdown, no header.
+- Reply with JSONL only (one JSON object per line), no surrounding markdown, no header.
 - Schema:
-  {\"id\": \"T###_<slug>\", \"title\": \"...\", \"notes\": \"...\", \"acceptance\": [\"...\"], \"tags\": [\"...\"]}\n
+  {\"id\": \"T###_<slug>\", \"title\": \"...\", \"notes\": \"...\", \"acceptance\": [\"...\"], \"tags\": [\"...\"]}
+
 Rules:
 - IDs must be unique and not conflict with existing IDs in $queue_file.
+- Use IDs starting from T$(printf '%03d' "$next_num")_... (increment sequentially).
 - Keep titles short. Notes can be longer.
+- Output at least 3 tasks.
 EOF
-  run_codex_resume_from_file "$session_id" "$gen_prompt" "$gen_json"
-  if [ ! -s "$out_file" ]; then
-    echo "Task generation did not produce a non-empty file: $out_file" >&2
-    exit 1
-  fi
-  log "Generated tasks batch in: $out_file"
+
+    run_codex_resume_from_file "$session_id" "$gen_prompt" "$gen_json"
+
+    # Extract JSONL tasks from Codex output (agent_message text) and write them to out_file.
+    python3 - "$gen_json" "$queue_file" "$batch_size" > "$tmp_out" <<'PY'
+import json, sys
+
+gen_json, queue_file, batch_size_s = sys.argv[1], sys.argv[2], sys.argv[3]
+batch_size = int(batch_size_s)
+
+existing = set()
+try:
+  with open(queue_file, "r", encoding="utf-8") as f:
+    for line in f:
+      line = line.strip()
+      if not line:
+        continue
+      try:
+        obj = json.loads(line)
+      except Exception:
+        continue
+      tid = obj.get("id")
+      if tid:
+        existing.add(tid)
+except FileNotFoundError:
+  pass
+
+msgs = []
+with open(gen_json, "r", encoding="utf-8") as f:
+  for line in f:
+    try:
+      obj = json.loads(line)
+    except Exception:
+      continue
+    if obj.get("type") != "item.completed":
+      continue
+    item = obj.get("item") or {}
+    if item.get("type") == "agent_message":
+      msgs.append(item.get("text") or "")
+
+text = "\n".join(msgs)
+tasks = []
+seen = set()
+
+def emit(obj):
+  tid = obj.get("id") if isinstance(obj, dict) else None
+  if not tid or tid in existing or tid in seen:
+    return
+  obj.setdefault("title", "")
+  obj.setdefault("notes", "")
+  obj.setdefault("acceptance", [])
+  obj.setdefault("tags", [])
+	tasks.append(obj)
+	seen.add(tid)
+
+	from json import JSONDecoder
+
+	dec = JSONDecoder()
+	i = 0
+	while True:
+	  i = text.find("{", i)
+	  if i < 0:
+	    break
+	  try:
+	    obj, end = dec.raw_decode(text[i:])
+	  except Exception:
+	    i += 1
+	    continue
+	  if isinstance(obj, list):
+	    for el in obj:
+	      if isinstance(el, dict):
+	        emit(el)
+	        if len(tasks) >= batch_size:
+	          break
+	  elif isinstance(obj, dict):
+	    emit(obj)
+	  i += end
+	  if len(tasks) >= batch_size:
+	    break
+
+for t in tasks:
+  print(json.dumps(t, ensure_ascii=False))
+PY
+
+    if [ -s "$tmp_out" ]; then
+      mkdir -p "$(dirname "$out_file")"
+      mv "$tmp_out" "$out_file"
+      log "Generated tasks batch in: $out_file"
+      break
+    fi
+
+    if [ "$attempt" -ge 3 ]; then
+      rm -f "$tmp_out"
+      echo "Task generation failed after $attempt attempts (no tasks extracted). See: $gen_json" >&2
+      exit 1
+    fi
+
+    log "Task generation produced no tasks; retrying (attempt $((attempt + 1))/3)..."
+  done
 }
 
 iterate_tasks() {
@@ -651,6 +786,9 @@ Overall goal (repeat for every step):
 - Build AutoNovelWriter: Scratch-like PWA controller + Python Tornado backend.
 - Light theme by default.
 - Must support chat + folder-based inbox/outbox interruption during a running pipeline.
+- Must support UI language (i18n): en, zh-Hans, zh-Hant, ja, ko, vi, ar, fr, es, ru, de.
+- Must support novel-writing settings (at least novel language), separate from UI language.
+- Must support materials management (multiple folders/files) and standardized project storage.
 - Must standardize and document storage and naming conventions for:
   - input materials, interactions, outputs
   - docs/references/scripts/tools/logs
@@ -659,8 +797,12 @@ Overall goal (repeat for every step):
 - Must support a pipeline-script visualization module:
   - Parse a formatted pipeline script (shell-ish text) into structured tasks/steps/actions/blocks.
   - Render the structured pipeline back into a formatted script the UI can generate/export.
-- Do NOT confuse driver stages (plan/implement/debug/fix/summary) with the *in-app* pipelines
-  (novel-writing vs app-development) that AutoNovelWriter controls.
+- Pipeline blocks must be flexible and editable:
+  - per-block action/tool selection (codex + other SDK stubs + shell scripts)
+  - per-block editable prompts/templates and parameters
+  - nested rounds/loops via indentation in the formatted script + UI drag indent/outdent
+- Do NOT confuse driver stages (plan/implement/debug/fix/i18n/summary) with the *in-app* pipelines
+  (novel-writing vs app-development vs meta-dev) that AutoNovelWriter controls.
 
 Read these first:
 - $context_doc
@@ -730,21 +872,32 @@ EOF
   - pipeline script <-> blocks JSON translation
 EOF
       ;;
-    fix)
-      cat >> "$out_prompt" <<EOF
-- Apply fixes for issues found in $step_dir/debug.md.
-- Keep fixes minimal; rerun verification commands:
-  - Do NOT bind TCP ports or start servers inside this Codex step.
-  - Prefer syntax/import/build checks only.
-- Append a \"## Fixes\" section to: $step_dir/summary.md
-EOF
-      ;;
-    summary)
-      cat >> "$out_prompt" <<EOF
-- Do NOT modify app code in this stage unless strictly necessary for docs/logging.
-- Ensure $step_dir/summary.md exists and is coherent.
-- Add a short \"## Next\" section listing 2-4 concrete follow-ups.
-EOF
+	    fix)
+	      cat >> "$out_prompt" <<EOF
+	- Apply fixes for issues found in $step_dir/debug.md.
+	- Keep fixes minimal; rerun verification commands:
+	  - Do NOT bind TCP ports or start servers inside this Codex step.
+	  - Prefer syntax/import/build checks only.
+	- Append a \"## Fixes\" section to: $step_dir/summary.md
+	EOF
+	      ;;
+	    i18n)
+	      cat >> "$out_prompt" <<EOF
+	- Update UI localization for any new/changed user-facing strings introduced by this task.
+	- Required UI languages: en, zh-Hans, zh-Hant, ja, ko, vi, ar, fr, es, ru, de.
+	- If an i18n system does not exist yet, scaffold one in the PWA and migrate existing strings to keys.
+	- If no user-facing strings changed, explicitly note that in: $step_dir/summary.md (append section \"## I18N\").
+	- Keep translations short and natural; Arabic should be RTL-safe.
+	- Do NOT bind TCP ports or start servers inside this step.
+	- Append an \"## I18N\" section to: $step_dir/summary.md describing what you changed.
+	EOF
+	      ;;
+	    summary)
+	      cat >> "$out_prompt" <<EOF
+	- Do NOT modify app code in this stage unless strictly necessary for docs/logging.
+	- Ensure $step_dir/summary.md exists and is coherent.
+	- Add a short \"## Next\" section listing 2-4 concrete follow-ups.
+	EOF
       ;;
     update_readme)
       cat >> "$out_prompt" <<EOF
@@ -798,19 +951,19 @@ PY
   log "Processing task: $task_id — $task_title"
   state_mark "$task_id" "running"
 
-  local stage
-  for stage in plan implement debug fix summary update_readme; do
+	  local stage
+	  for stage in plan implement debug fix i18n summary update_readme; do
     local pfile="$prompt_dir/${task_id}_${stage}.txt"
     local jfile="$log_dir/${task_id}_${stage}.jsonl"
     write_prompt_for_stage "$task_id" "$task_title" "$stage" "$pfile"
     log "Codex stage: $task_id/$stage"
     run_codex_resume_from_file "$session_id" "$pfile" "$jfile"
 
-    # Host-side smoke checks (outside Codex sandbox) for stages that can change code.
-    if [ "$stage" = "implement" ] || [ "$stage" = "fix" ]; then
-      host_smoke_backend
-      tmux_restart_panes_if_running
-    fi
+	    # Host-side smoke checks (outside Codex sandbox) for stages that can change code.
+	    if [ "$stage" = "implement" ] || [ "$stage" = "fix" ] || [ "$stage" = "i18n" ]; then
+	      host_smoke_backend
+	      tmux_restart_panes_if_running
+	    fi
 
     # Commit + push after ANY edit (including prompts/step artifacts), per repo philosophy.
     local tmp_body
@@ -844,14 +997,17 @@ while true; do
     break
   fi
 
-  pending_count="$(iterate_tasks | wc -l | tr -d ' ')"
-  if [ "$pending_count" -eq 0 ]; then
-    log "No pending tasks. Generating a new batch..."
-    batch_file="$tasks_dir/tasks_batch_$(date +%Y%m%d_%H%M%S).jsonl"
-    generate_tasks_batch "$batch_file"
-    cat "$batch_file" >> "$queue_file"
-    git_commit_push_if_dirty "AutoNovelWriter: append generated tasks batch"
-  fi
+	  pending_count="$(iterate_tasks | wc -l | tr -d ' ')"
+	  if [ "$pending_count" -eq 0 ]; then
+	    log "No pending tasks. Generating a new batch..."
+	    batch_ts="$(date +%Y%m%d_%H%M%S)"
+	    batch_dir="$tasks_dir/batches/batch_${batch_ts}_b${batch}"
+	    mkdir -p "$batch_dir"
+	    batch_file="$batch_dir/tasks.jsonl"
+	    generate_tasks_batch "$batch_file"
+	    cat "$batch_file" >> "$queue_file"
+	    git_commit_push_if_dirty "AutoNovelWriter: append generated tasks batch"
+	  fi
 
   log "Starting batch $batch"
   while read -r task_meta; do

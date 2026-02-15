@@ -1,0 +1,16 @@
+{
+  "id": "T013_outputs_index_api",
+  "title": "Outputs index API (active project)",
+  "notes": "Add a small API to list output files for the active project (path, mtime, size, kind) similar to materials index, and cap results. This enables PWA observability without requiring filesystem access.",
+  "acceptance": [
+    "GET /api/outputs/index returns ok=true with files[] under runtime/projects/<active>/outputs",
+    "Response includes project_id and outputs_root",
+    "Indexing is capped (e.g. 5000 entries) and sorted for stability"
+  ],
+  "tags": [
+    "backend",
+    "outputs",
+    "projects",
+    "api"
+  ]
+}

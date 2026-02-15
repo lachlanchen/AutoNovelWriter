@@ -1682,7 +1682,10 @@ class OutputsIndexHandler(BaseHandler):
                     rel = p.relative_to(outputs_root).as_posix()
                 except Exception:
                     continue
-                if not rel or rel.startswith("."):
+                if not rel:
+                    continue
+                # Hide dotfiles/dirs anywhere in the tree.
+                if any(seg.startswith(".") for seg in rel.split("/")):
                     continue
                 try:
                     st = p.stat()
@@ -1696,12 +1699,16 @@ class OutputsIndexHandler(BaseHandler):
                     files.append({"path": rel + "/", "kind": "dir", "mtime_ms": mtime_ms, "size_bytes": 0})
                 elif p.is_file():
                     files.append({"path": rel, "kind": "file", "mtime_ms": mtime_ms, "size_bytes": size})
+
+                # Keep scan bounded (avoid walking huge trees before enforcing cap).
+                if len(files) > 5000:
+                    return self.write_json(
+                        {"ok": False, "error": "too_many_entries", "count": len(files)}, status=400
+                    )
         except Exception:
             files = []
 
         files.sort(key=lambda x: x.get("path", ""))
-        if len(files) > 5000:
-            return self.write_json({"ok": False, "error": "too_many_entries", "count": len(files)}, status=400)
 
         self.write_json(
             {

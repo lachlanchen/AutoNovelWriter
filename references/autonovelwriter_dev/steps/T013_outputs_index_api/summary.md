@@ -8,3 +8,6 @@
 Verification (no TCP binds):
 - `python3 -m py_compile autonovelwriter/backend/server.py`
 
+## Fixes
+- Enforced the 5000-entry cap during the directory walk (early exit) to avoid scanning huge trees before failing.
+- Improved dotfile filtering to skip nested dot paths (any path segment starting with `.`).

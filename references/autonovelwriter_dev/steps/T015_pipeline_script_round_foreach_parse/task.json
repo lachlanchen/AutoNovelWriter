@@ -1,0 +1,16 @@
+{
+  "id": "T015_pipeline_script_round_foreach_parse",
+  "title": "Pipeline script: ROUND/FOREACH_TASK parse+render",
+  "notes": "Extend pipeline script format to support the default Scratch-like layout verbs ROUND <n_rounds> and FOREACH_TASK as structured loop constructs (canonical script remains source of truth). Map ROUND to a loop node with repeat=n_rounds, and FOREACH_TASK to a loop-like node with repeat='foreach_task' or a dedicated kind; render back canonically. Do not conflate with driver stages.",
+  "acceptance": [
+    "Parser accepts ROUND <n> and FOREACH_TASK with 2-space indentation and produces a nested AST",
+    "Renderer round-trips AST back to canonical script with ROUND/FOREACH_TASK preserved",
+    "Validation rejects bad indentation and unknown verbs with structured errors/warnings"
+  ],
+  "tags": [
+    "backend",
+    "pipeline",
+    "parser",
+    "ui-blocks"
+  ]
+}

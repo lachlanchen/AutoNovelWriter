@@ -27,3 +27,9 @@ Verification (no TCP binds):
 ## I18N
 - Added i18n keys for the new Projects/Materials panel (`projects.title`, `projects.select`, `projects.selector_aria`, `materials.empty`) across all required UI languages in `autonovelwriter/pwa/app.js`.
 - Wired the project selector `aria-label` through i18n (`data-i18n-aria-label`) in `autonovelwriter/pwa/index.html`.
+
+## Next
+1. Update `README.md` runtime section to document `autonovelwriter/runtime/projects/<project_id>/...` plus the new projects/materials endpoints and active project pointer (`runtime/state/active_project.json`).
+2. Add a minimal “create project” flow in the PWA (new project name input) and backend `POST /api/projects` (or reuse `/api/projects/active` to implicitly create).
+3. Add file-type/extension + folder grouping in materials UI (dirs first, then files) and optionally expose a `GET /api/materials/read?path=` for previewing small text files.
+4. Add incremental/cached materials indexing (mtime-based) to avoid full `rglob` scans for large materials trees.

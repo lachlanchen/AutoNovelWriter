@@ -1,0 +1,17 @@
+{
+  "id": "T018_runner_execute_foreach_round",
+  "title": "Runner: execute ROUND/FOREACH_TASK semantics",
+  "notes": "Stop flatten-only execution for v2 container nodes. Execute pipeline AST with true control flow: steps outside FOREACH_TASK run once per run (or per ROUND iteration), steps inside FOREACH_TASK run per task. Persist an execution cursor (round_index, task_index, ast_path) in `autonovelwriter/runtime/state/runner_state.json` (or project state) so pause/restart resumes without repeating completed steps. Keep driver-stage vs in-app pipeline separation explicit in logs/events.",
+  "acceptance": [
+    "Given a script with `ROUND 2` containing `STEP meta_tasks_generate` then `FOREACH_TASK` children, `meta_tasks_generate` runs once per round (not once per task) and `write` runs for each task.",
+    "Runner persists a resume cursor and, after process restart, continues from the next unfinished (round, task, block) without duplicating already-done outputs.",
+    "WS `run_status`/`task_status` and `runner.log` reflect container context (round index, task id, block type)."
+  ],
+  "tags": [
+    "backend",
+    "runner",
+    "pipeline",
+    "resumable",
+    "ws"
+  ]
+}

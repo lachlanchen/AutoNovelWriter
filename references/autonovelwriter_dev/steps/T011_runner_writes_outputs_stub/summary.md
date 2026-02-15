@@ -1,0 +1,16 @@
+# T011 Summary: Runner writes drafts/revisions to outputs (stub)
+
+## Implement
+- Backend runner executes a real stub action for the `write` block:
+  - Writes a draft markdown file into the active project outputs folder:
+    - `autonovelwriter/runtime/projects/<project_id>/outputs/`
+  - Persists per-block completion and output path under:
+    - `autonovelwriter/runtime/state/task_status.json` (`blocks.write.output_paths`)
+  - Emits observability signals:
+    - WS event: `output_created` with the created path
+    - WS log line: `[output] created: <path>`
+  - Idempotency: if `blocks.write` is already `done` and the referenced output exists, the runner logs a skip and does not re-create the draft.
+
+Verification (no TCP binds):
+- `python3 -m py_compile autonovelwriter/backend/server.py`
+

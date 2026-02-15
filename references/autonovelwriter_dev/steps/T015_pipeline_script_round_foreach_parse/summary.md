@@ -32,3 +32,6 @@ Verification (no TCP binds):
 2. PWA pipeline UI: allow creating/editing container blocks (`ROUND` repeat count, `FOREACH_TASK`) rather than only parsing them from script.
 3. Canonicalization: ensure backend `/api/pipeline` always returns a script that includes `ROUND`/`FOREACH_TASK` when present in AST, and that UI round-trips without losing them.
 4. Add non-socket tests for parse/render/normalize parity between backend and PWA fallback (golden scripts).
+
+## README
+- Updated root `README.md` to document pipeline script v2 container verbs (`ROUND`, `FOREACH_TASK`) and to list `output_created` among the WebSocket events.

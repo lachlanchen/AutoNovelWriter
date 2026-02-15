@@ -55,15 +55,19 @@ The backend serves it via `GET/POST /api/pipeline` as:
 - `pipeline_ast` (derived, nested structure used for loops + indentation UI)
 
 The runner executes steps derived from the same v2 parser/AST so what the PWA displays matches what runs.
+Note: execution currently flattens container blocks into a single pass; true repeat/foreach execution semantics are tracked separately and will be implemented in the runner.
 
 Pipeline script v2 supports nesting:
 - `LOOP <n>` introduces a loop block
+- `ROUND <n>` introduces a “rounds” container block
+- `FOREACH_TASK` introduces a per-task container block
 - children are indented by 2 spaces per level
 
 Validation (no persistence):
 - `POST /api/pipeline/validate` returns a canonical preview plus `pipeline_ast`, warnings, and errors.
 
 The PWA shows the script in a textarea (source of truth) and renders nested blocks from `pipeline_ast`.
+If the backend validate endpoint is unreachable, the PWA falls back to a local parser that supports the same v2 verbs (`LOOP`, `ROUND`, `FOREACH_TASK`, `STEP`, `DISABLED`).
 
 ## Key Backend APIs
 
@@ -77,7 +81,7 @@ The PWA shows the script in a textarea (source of truth) and renders nested bloc
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
 - Agent test (gated): `POST /api/agent/test` (runs `codex --version` only when enabled + env gate)
-- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `run_status`, `task_status`, `log`, `pipeline_updated`)
+- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `run_status`, `task_status`, `log`, `pipeline_updated`)
 
 ## Runner Outputs (Draft Stub)
 

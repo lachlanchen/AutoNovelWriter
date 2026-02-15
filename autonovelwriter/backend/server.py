@@ -171,27 +171,36 @@ def render_pipeline_script(pipeline: dict) -> str:
 
 
 def parse_pipeline_script(script: str) -> dict:
+    pipeline, _warnings = parse_pipeline_script_with_warnings(script)
+    return pipeline
+
+
+def parse_pipeline_script_with_warnings(script: str) -> tuple[dict, list]:
     blocks = []
+    warnings = []
     allowed = set(PIPELINE_BLOCK_TYPES)
-    for raw in (script or "").splitlines():
+    for ln, raw in enumerate((script or "").splitlines(), start=1):
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
         parts = line.split()
         if len(parts) < 2:
+            warnings.append({"line": ln, "error": "too_few_tokens", "text": raw})
             continue
         verb = parts[0].upper()
         t = parts[1].strip()
+        if verb not in ("STEP", "DISABLED"):
+            warnings.append({"line": ln, "error": "unknown_verb", "text": raw})
+            continue
         if t not in allowed:
-            # Ignore unknown tokens; the API handler can choose to reject instead.
+            warnings.append({"line": ln, "error": "unknown_type", "text": raw})
             continue
         enabled = verb == "STEP"
-        if verb not in ("STEP", "DISABLED"):
-            continue
         blocks.append({"id": t, "type": t, "enabled": enabled})
     if not blocks:
-        return default_pipeline()
-    return {"blocks": blocks}
+        # Default pipeline keeps the app usable, but still return warnings so the UI can show them.
+        return default_pipeline(), warnings
+    return {"blocks": blocks}, warnings
 
 
 def load_pipeline_script(paths: dict) -> str:
@@ -286,9 +295,9 @@ class PipelineHandler(BaseHandler):
     def get(self):
         # Canonical artifact is the script; JSON is derived.
         script = load_pipeline_script(self._paths)
-        pipeline = parse_pipeline_script(script)
+        pipeline, warnings = parse_pipeline_script_with_warnings(script)
         save_pipeline(self._paths, pipeline)
-        self.write_json({"ok": True, "script": script, "pipeline": pipeline})
+        self.write_json({"ok": True, "script": script, "pipeline": pipeline, "warnings": warnings})
 
     def post(self):
         try:
@@ -301,13 +310,13 @@ class PipelineHandler(BaseHandler):
 
         if isinstance(body.get("script"), str):
             script = body.get("script", "")
-            pipeline = parse_pipeline_script(script)
+            pipeline, warnings = parse_pipeline_script_with_warnings(script)
             # Reject if script produced no blocks (probably invalid).
             if not pipeline.get("blocks"):
                 return self.write_json({"ok": False, "error": "invalid_script"}, status=400)
             save_pipeline_script(self._paths, script)
             save_pipeline(self._paths, pipeline)
-            return self.write_json({"ok": True, "script": script, "pipeline": pipeline})
+            return self.write_json({"ok": True, "script": script, "pipeline": pipeline, "warnings": warnings})
 
         blocks = body.get("blocks")
         if not isinstance(blocks, list):
@@ -336,7 +345,7 @@ class PipelineHandler(BaseHandler):
         save_pipeline(self._paths, pipeline)
         script = render_pipeline_script(pipeline)
         save_pipeline_script(self._paths, script)
-        self.write_json({"ok": True, "script": script, "pipeline": pipeline})
+        self.write_json({"ok": True, "script": script, "pipeline": pipeline, "warnings": []})
 
 
 class ChatStore:
@@ -634,6 +643,7 @@ class Runner:
         self._paused = False
         self._task_id = None
         self._block = None
+        self._loop_active = False
 
         # Safe restart behavior: if previous run was 'running', come up paused.
         state = _load_json(Path(paths["runner_state_json"]), {})
@@ -718,7 +728,7 @@ class Runner:
             self._status = "running"
             self._save_state()
             self._emit_status()
-            tornado.ioloop.IOLoop.current().spawn_callback(self._run_loop)
+            await self._ensure_loop()
             return self.status()
 
     async def pause(self) -> dict:
@@ -739,7 +749,7 @@ class Runner:
             self._status = "running"
             self._save_state()
             self._emit_status()
-            tornado.ioloop.IOLoop.current().spawn_callback(self._run_loop)
+            await self._ensure_loop()
             return self.status()
 
     async def stop(self) -> dict:
@@ -752,95 +762,110 @@ class Runner:
             self._emit_status()
             return self.status()
 
+    async def _ensure_loop(self) -> None:
+        # Prevent overlapping run loops from rapid start/resume calls.
+        if self._loop_active:
+            return
+        self._loop_active = True
+        tornado.ioloop.IOLoop.current().spawn_callback(self._run_loop)
+
     async def _run_loop(self) -> None:
-        # Ensure only one run loop is active at a time.
-        async with self._lock:
-            if self._status != "running":
-                return
-
-        while True:
+        try:
+            # Ensure only one run loop is active at a time.
             async with self._lock:
-                if self._stop:
-                    self._status = "idle"
-                    self._task_id = None
-                    self._block = None
-                    self._save_state()
-                    self._emit_status()
-                    return
-                if self._paused or self._status != "running":
-                    self._save_state()
-                    self._emit_status()
+                if self._status != "running":
                     return
 
-            script = load_pipeline_script(self._paths)
-            pipeline = parse_pipeline_script(script)
-            blocks = [b for b in pipeline.get("blocks", []) if isinstance(b, dict) and b.get("enabled", True)]
-
-            tasks = self._load_tasks()
-            st = self._load_task_status()
-
-            next_task = None
-            for t in tasks:
-                tid = t.get("id")
-                if not isinstance(tid, str) or not tid:
-                    continue
-                status = st.get(tid, {}).get("status", "pending")
-                if status in ("pending", "queued"):
-                    next_task = tid
-                    break
-
-            if not next_task:
-                async with self._lock:
-                    self._status = "idle"
-                    self._task_id = None
-                    self._block = None
-                    self._save_state()
-                    self._emit_status()
-                return
-
-            async with self._lock:
-                self._task_id = next_task
-                self._block = None
-                self._save_state()
-                self._emit_status()
-
-            st.setdefault(next_task, {})
-            st[next_task].update({"status": "running", "ts_ms": _now_ms()})
-            self._save_task_status(st)
-            self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": next_task, "status": "running"})
-
-            for b in blocks:
+            while True:
                 async with self._lock:
                     if self._stop:
-                        break
-                    if self._paused:
-                        break
-                    self._block = b.get("type")
-                    self._save_state()
-                    self._emit_status()
+                        self._status = "idle"
+                        self._task_id = None
+                        self._block = None
+                        self._save_state()
+                        self._emit_status()
+                        return
+                    if self._paused or self._status != "running":
+                        self._save_state()
+                        self._emit_status()
+                        return
 
-                self._log(f"[runner] task={next_task} block={self._block} start")
-                # Stub work unit.
-                yield tornado.gen.sleep(0.25)
-                self._log(f"[runner] task={next_task} block={self._block} done")
+                script = load_pipeline_script(self._paths)
+                pipeline = parse_pipeline_script(script)
+                blocks = [b for b in pipeline.get("blocks", []) if isinstance(b, dict) and b.get("enabled", True)]
 
-            async with self._lock:
-                if self._stop:
-                    self._status = "idle"
-                    self._task_id = None
+                tasks = self._load_tasks()
+                st = self._load_task_status()
+
+                next_task = None
+                for t in tasks:
+                    tid = t.get("id")
+                    if not isinstance(tid, str) or not tid:
+                        continue
+                    status = st.get(tid, {}).get("status", "pending")
+                    if status in ("pending", "queued"):
+                        next_task = tid
+                        break
+
+                if not next_task:
+                    async with self._lock:
+                        self._status = "idle"
+                        self._task_id = None
+                        self._block = None
+                        self._save_state()
+                        self._emit_status()
+                    return
+
+                async with self._lock:
+                    self._task_id = next_task
                     self._block = None
                     self._save_state()
                     self._emit_status()
-                    return
-                if self._paused:
-                    self._status = "paused"
-                    self._save_state()
-                    self._emit_status()
-                    return
 
-            st[next_task].update({"status": "done", "ts_ms": _now_ms()})
-            self._save_task_status(st)
-            self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": next_task, "status": "done"})
+                st.setdefault(next_task, {})
+                st[next_task].update({"status": "running", "ts_ms": _now_ms()})
+                self._save_task_status(st)
+                self._hub.broadcast(
+                    {"type": "task_status", "ts_ms": _now_ms(), "task_id": next_task, "status": "running"}
+                )
+
+                for b in blocks:
+                    async with self._lock:
+                        if self._stop:
+                            break
+                        if self._paused:
+                            break
+                        self._block = b.get("type")
+                        self._save_state()
+                        self._emit_status()
+
+                    self._log(f"[runner] task={next_task} block={self._block} start")
+                    # Stub work unit (cooperative cancellation point).
+                    yield tornado.gen.sleep(0.25)
+                    self._log(f"[runner] task={next_task} block={self._block} done")
+
+                async with self._lock:
+                    if self._stop:
+                        self._status = "idle"
+                        self._task_id = None
+                        self._block = None
+                        self._save_state()
+                        self._emit_status()
+                        return
+                    if self._paused:
+                        self._status = "paused"
+                        self._save_state()
+                        self._emit_status()
+                        return
+
+                st[next_task].update({"status": "done", "ts_ms": _now_ms()})
+                self._save_task_status(st)
+                self._hub.broadcast(
+                    {"type": "task_status", "ts_ms": _now_ms(), "task_id": next_task, "status": "done"}
+                )
+        finally:
+            async with self._lock:
+                self._loop_active = False
 
 
 class RunStartHandler(BaseHandler):

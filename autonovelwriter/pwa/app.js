@@ -47,6 +47,8 @@
     li.appendChild(meta);
     li.appendChild(b);
     chatLog.appendChild(li);
+    // Keep UI usable during long runs.
+    while (chatLog.childElementCount > 300) chatLog.removeChild(chatLog.firstElementChild);
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
@@ -314,6 +316,9 @@
         if (obj && obj.ok && obj.pipeline) {
           pipeline = normalizePipeline(obj.pipeline);
           if (typeof obj.script === 'string') pipelineScript.value = obj.script;
+          if (Array.isArray(obj.warnings) && obj.warnings.length) {
+            addMsg('err', 'pipeline warnings', JSON.stringify(obj.warnings.slice(0, 5)));
+          }
           window.localStorage.setItem(LS_PIPELINE, JSON.stringify(pipeline));
           setPipeStatus('loaded');
           renderPipeline();
@@ -360,6 +365,9 @@
         if (obj.pipeline) pipeline = normalizePipeline(obj.pipeline);
         if (typeof obj.script === 'string') pipelineScript.value = obj.script;
         renderPipeline();
+        if (Array.isArray(obj.warnings) && obj.warnings.length) {
+          addMsg('err', 'pipeline warnings', JSON.stringify(obj.warnings.slice(0, 5)));
+        }
         setPipeStatus('saved');
         return;
       }

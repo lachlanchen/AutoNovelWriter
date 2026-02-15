@@ -25,3 +25,8 @@
 
 Verification notes:
 - No socket-binding smoke tests were run in this Codex sandbox; only syntax/greps.
+
+## Fixes
+- Runner loop guard: prevent overlapping runner loops from rapid start/resume calls by tracking a single active `_run_loop`.
+- Pipeline script feedback: `/api/pipeline` now returns parse warnings (unknown verbs/types) and the PWA surfaces a small warning snippet.
+- PWA operability: chat log is now capped to 300 entries to avoid UI degradation during long runs.

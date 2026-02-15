@@ -48,19 +48,28 @@ The pipeline is represented as a formatted script on disk:
 
 The backend serves it via `GET/POST /api/pipeline` as:
 - `script` (canonical, shell-ish `STEP <type>` / `DISABLED <type>` lines)
-- `pipeline` JSON (derived, for block rendering)
+- `pipeline` JSON (derived, flattened list for simple block rendering)
+- `pipeline_ast` (derived, nested structure used for loops + indentation UI)
 
-The PWA shows the script in a textarea and renders the derived blocks list.
+Pipeline script v2 supports nesting:
+- `LOOP <n>` introduces a loop block
+- children are indented by 2 spaces per level
+
+Validation (no persistence):
+- `POST /api/pipeline/validate` returns a canonical preview plus `pipeline_ast`, warnings, and errors.
+
+The PWA shows the script in a textarea (source of truth) and renders nested blocks from `pipeline_ast`.
 
 ## Key Backend APIs
 
 - Health: `GET /api/health`
 - Settings: `GET/POST /api/settings`
 - Pipeline (canonical script + derived JSON): `GET/POST /api/pipeline`
+- Pipeline validate (preview only): `POST /api/pipeline/validate`
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
 - Agent test (gated): `POST /api/agent/test` (runs `codex --version` only when enabled + env gate)
-- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `run_status`, `task_status`, `log`)
+- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `run_status`, `task_status`, `log`, `pipeline_updated`)
 
 ## Agent Settings / Codex Gate
 
@@ -71,6 +80,14 @@ For safety, the backend will not spawn the `codex` CLI unless both are true:
 - `AUTONOVELWRITER_ENABLE_CODEX=1` is set in the environment
 
 Never commit secrets. Use `autonovelwriter/backend/.env.example` as a template for local env vars.
+
+## PWA I18N (UI Language)
+
+The PWA has a lightweight built-in i18n system.
+
+- Force UI language: add `?lang=<code>` to the PWA URL (e.g. `?lang=ja`).
+- Persisted per-browser in localStorage: `anw_lang`.
+- Supported UI languages: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar` (RTL), `fr`, `es`, `ru`, `de`.
 
 ## Driver Workflow (Auto-Dev)
 

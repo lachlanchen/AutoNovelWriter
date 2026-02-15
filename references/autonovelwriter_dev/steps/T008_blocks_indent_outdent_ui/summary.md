@@ -30,3 +30,6 @@ Verification (no TCP binds):
 2. Include `pipeline_ast` in WS `pipeline_updated` (or add a lightweight `/api/pipeline/ast` endpoint) to avoid validate round-trips and improve resilience when backend validation is slow.
 3. Make selection stable with node IDs (persisted in AST) instead of index-path keys; keep selection across reorder/validate.
 4. Expand i18n coverage to dynamic runtime messages (e.g., `addMsg` titles/bodies) and add a language switcher in Settings.
+
+## README
+- Updated `README.md` to document pipeline script v2 nesting (`LOOP <n>` + 2-space indentation), the `pipeline_ast` payload used by the nested Blocks UI, the `POST /api/pipeline/validate` endpoint, and the new PWA UI language support via `?lang=` (11 languages including RTL Arabic).

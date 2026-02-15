@@ -1404,7 +1404,7 @@ class Runner:
                             break
                     else:
                         # Stub work unit (cooperative cancellation point).
-                        yield tornado.gen.sleep(0.25)
+                        await tornado.gen.sleep(0.25)
                     self._log(f"[runner] task={next_task} block={self._block} done")
 
                 async with self._lock:

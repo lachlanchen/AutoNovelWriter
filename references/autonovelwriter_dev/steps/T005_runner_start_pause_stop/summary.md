@@ -21,7 +21,7 @@
   - Displays pipeline script textarea (canonical) alongside derived JSON.
 
 ## README
-- Updated `README.md` with run instructions, key endpoints, and where runtime state lives.
+- Updated `README.md` with run instructions, key endpoints, where runtime state lives, the canonical `pipeline.script` artifact, and safe driver workflow controls (STOP/reset/new-session).
 
 Verification notes:
 - No socket-binding smoke tests were run in this Codex sandbox; only syntax/greps.

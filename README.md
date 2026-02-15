@@ -16,6 +16,8 @@ PWA (static dev server):
 python3 -m http.server 5173 --directory autonovelwriter/pwa
 ```
 
+Open the PWA at `http://127.0.0.1:5173` and point it at the backend (default `ws://127.0.0.1:8787/ws`).
+
 The repo’s driver script (`scripts/auto-autonovelwriter-development.sh`) can also start a tmux session with both panes.
 
 ## Runtime Paths
@@ -27,6 +29,17 @@ All mutable state and IO live under `autonovelwriter/runtime/` (ignored by git):
 - `autonovelwriter/runtime/tasks/` task queue files
 - `autonovelwriter/runtime/logs/` logs
 
+## Pipeline Script (Canonical Artifact)
+
+The pipeline is represented as a formatted script on disk:
+- `autonovelwriter/runtime/state/pipeline.script`
+
+The backend serves it via `GET/POST /api/pipeline` as:
+- `script` (canonical, shell-ish `STEP <type>` / `DISABLED <type>` lines)
+- `pipeline` JSON (derived, for block rendering)
+
+The PWA shows the script in a textarea and renders the derived blocks list.
+
 ## Key Backend APIs
 
 - Health: `GET /api/health`
@@ -35,6 +48,15 @@ All mutable state and IO live under `autonovelwriter/runtime/` (ignored by git):
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
 - WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `run_status`, `task_status`, `log`)
+
+## Driver Workflow (Auto-Dev)
+
+`scripts/auto-autonovelwriter-development.sh` runs a resumable Codex-driven loop over tasks under `references/autonovelwriter_dev/` and **will commit/push** at the end of each task batch.
+
+Useful controls:
+- Stop after current task: `touch references/autonovelwriter_dev/STOP`
+- Reset state tracking (keeps queue): `scripts/auto-autonovelwriter-development.sh --reset-state`
+- Start a fresh Codex session: `scripts/auto-autonovelwriter-development.sh --new-session`
 
 ## Contents
 - `docs/autonovelwriter_spec.md`: Product spec for the Scratch-like controller (chat + folder pipe + start/pause/stop + settings).

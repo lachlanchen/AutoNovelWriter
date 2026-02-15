@@ -1,0 +1,46 @@
+You are being invoked by scripts/auto-autonovelwriter-development.sh (ONE shared Codex session).
+
+Overall goal (repeat for every step):
+- Build AutoNovelWriter: Scratch-like PWA controller + Python Tornado backend.
+- Light theme by default.
+- Must support chat + folder-based inbox/outbox interruption during a running pipeline.
+- Must support a pipeline-script visualization module:
+  - Parse a formatted pipeline script (shell-ish text) into structured tasks/steps/actions/blocks.
+  - Render the structured pipeline back into a formatted script the UI can generate/export.
+- Do NOT confuse driver stages (plan/implement/debug/fix/summary) with the *in-app* pipelines
+  (novel-writing vs app-development) that AutoNovelWriter controls.
+
+Read these first:
+- references/autonovelwriter_dev/CONTEXT.md
+- docs/autonovelwriter_spec.md
+- Existing code under: autonovelwriter/backend/ and autonovelwriter/pwa/
+- Task definition JSON (notes + acceptance): references/autonovelwriter_dev/steps/T005_runner_start_pause_stop/task.json
+
+This step:
+- Task ID: T005_runner_start_pause_stop
+- Task title: Task runner control (start/pause/resume/stop) + state machine
+- Stage: update_readme (strict)
+
+Required workspace/output paths:
+- Step working dir: references/autonovelwriter_dev/steps/T005_runner_start_pause_stop/
+- Write your outputs (notes/plan/debug/summary) into files under references/autonovelwriter_dev/steps/T005_runner_start_pause_stop/:
+  - plan: references/autonovelwriter_dev/steps/T005_runner_start_pause_stop/plan.md
+  - debug: references/autonovelwriter_dev/steps/T005_runner_start_pause_stop/debug.md
+  - summary: references/autonovelwriter_dev/steps/T005_runner_start_pause_stop/summary.md
+  - update_readme: update repo root README.md and note changes in references/autonovelwriter_dev/steps/T005_runner_start_pause_stop/summary.md
+
+Operational constraints:
+- Do NOT commit or push. Do NOT create new remotes. The outer driver handles git.
+- Prefer small, safe changes. Keep the app runnable.
+- No secrets in git. If you add config, create .env.example and read env vars.
+
+Stage-specific instructions:
+- Do NOT modify app code in this stage.
+- Update the repo root README.md to reflect current project reality:
+  - what AutoNovelWriter is
+  - how to run backend + PWA locally
+  - major endpoints/features shipped so far
+  - the existence of the pipeline-script visualization module (even if only partially implemented)
+  - the driver workflow and how to run it safely
+- Keep README concise and actionable (commands + paths).
+- Append a short \"## README\" note to: references/autonovelwriter_dev/steps/T005_runner_start_pause_stop/summary.md describing what you changed.

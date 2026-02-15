@@ -285,6 +285,14 @@ def _ast_loop(repeat: int, children: list) -> dict:
     return {"kind": "loop", "repeat": int(repeat), "children": children}
 
 
+def _ast_round(repeat: int, children: list) -> dict:
+    return {"kind": "round", "repeat": int(repeat), "children": children}
+
+
+def _ast_foreach_task(children: list) -> dict:
+    return {"kind": "foreach_task", "children": children}
+
+
 def _ast_root(children: list) -> dict:
     return {"kind": "root", "version": 2, "children": children}
 
@@ -301,7 +309,7 @@ def _flatten_ast_steps(ast: dict) -> list:
             if isinstance(t, str) and t:
                 out.append({"id": t, "type": t, "enabled": bool(node.get("enabled", True))})
             return
-        if k == "loop":
+        if k in ("loop", "round", "foreach_task"):
             kids = node.get("children")
             if isinstance(kids, list):
                 for c in kids:
@@ -320,7 +328,7 @@ def _ast_has_loop(ast: dict) -> bool:
         if not isinstance(node, dict):
             return False
         k = node.get("kind")
-        if k == "loop":
+        if k in ("loop", "round", "foreach_task"):
             return True
         kids = node.get("children")
         if isinstance(kids, list):
@@ -377,6 +385,26 @@ def render_pipeline_script_from_ast(ast: dict) -> str:
             if isinstance(kids, list):
                 for c in kids:
                     emit(c, level + 1)
+            return
+        if k == "round":
+            repeat = node.get("repeat")
+            try:
+                repeat_i = int(repeat)
+            except Exception:
+                return
+            lines.append(indent + f"ROUND {repeat_i}")
+            kids = node.get("children")
+            if isinstance(kids, list):
+                for c in kids:
+                    emit(c, level + 1)
+            return
+        if k == "foreach_task":
+            lines.append(indent + "FOREACH_TASK")
+            kids = node.get("children")
+            if isinstance(kids, list):
+                for c in kids:
+                    emit(c, level + 1)
+            return
 
     if isinstance(ast, dict) and ast.get("kind") == "root":
         kids = ast.get("children", [])
@@ -434,8 +462,8 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
     errors = []
 
     root_children = []
-    # stack frames: (expected_level, children_list, loop_line)
-    stack = [(0, root_children, None)]
+    # stack frames: (expected_level, children_list, container_kind, container_line)
+    stack = [(0, root_children, None, None)]
 
     def current_level() -> int:
         return stack[-1][0]
@@ -443,9 +471,14 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
     def close_frames_to(level: int) -> None:
         nonlocal stack
         while stack and level < stack[-1][0]:
-            expected, kids, loop_line = stack[-1]
-            if loop_line is not None and not kids:
-                errors.append({"line": loop_line, "code": "loop_empty", "text": "LOOP"})
+            expected, kids, kind, line_no = stack[-1]
+            if line_no is not None and not kids:
+                if kind == "loop":
+                    errors.append({"line": line_no, "code": "loop_empty", "text": "LOOP"})
+                elif kind == "round":
+                    errors.append({"line": line_no, "code": "round_empty", "text": "ROUND"})
+                elif kind == "foreach_task":
+                    errors.append({"line": line_no, "code": "foreach_task_empty", "text": "FOREACH_TASK"})
             stack.pop()
 
     def leading_spaces(raw: str) -> tuple[int, bool]:
@@ -500,7 +533,35 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
             loop_node = _ast_loop(repeat=repeat, children=loop_children)
             stack[-1][1].append(loop_node)
             # Push a new frame for children at next indent level.
-            stack.append((lvl + 1, loop_children, ln))
+            stack.append((lvl + 1, loop_children, "loop", ln))
+            continue
+
+        if verb == "ROUND":
+            if len(parts) < 2:
+                errors.append({"line": ln, "code": "round_missing_repeat", "text": raw})
+                continue
+            try:
+                repeat = int(parts[1])
+            except Exception:
+                errors.append({"line": ln, "code": "round_repeat_not_int", "text": raw})
+                continue
+            if repeat <= 0 or repeat > 10_000:
+                errors.append({"line": ln, "code": "round_repeat_out_of_range", "text": raw})
+                continue
+
+            round_children = []
+            round_node = _ast_round(repeat=repeat, children=round_children)
+            stack[-1][1].append(round_node)
+            stack.append((lvl + 1, round_children, "round", ln))
+            continue
+
+        if verb == "FOREACH_TASK":
+            if len(parts) != 1:
+                warnings.append({"line": ln, "code": "too_many_tokens", "text": raw})
+            foreach_children = []
+            foreach_node = _ast_foreach_task(children=foreach_children)
+            stack[-1][1].append(foreach_node)
+            stack.append((lvl + 1, foreach_children, "foreach_task", ln))
             continue
 
         if verb in ("STEP", "DISABLED"):

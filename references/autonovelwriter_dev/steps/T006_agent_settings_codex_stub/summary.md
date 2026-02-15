@@ -21,3 +21,9 @@ Verification notes:
 ## Fixes
 - `/api/settings` GET now reloads settings from disk (source of truth) so UI reflects persisted state reliably.
 - Codex gate now returns more specific disabled reasons (`agent_sdk_not_codex`, `agent_disabled`, `env_gate_disabled`) to make troubleshooting clearer.
+
+## Next
+1. Add settings for runtime path overrides (inbox/outbox/tasks/logs/state) and surface them in the UI (with validation).
+2. Add a “redacted settings” view and ensure any future secret-like fields are never returned to the PWA or written to git.
+3. Wire agent selection into runner behavior beyond the stub (per-block execution strategy and model selection).
+4. Add basic auth/CSRF considerations for non-local deployments (today’s CORS and open WS are dev-friendly only).

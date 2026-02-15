@@ -14,3 +14,8 @@ Verification (no TCP binds):
 
 ## I18N
 - No PWA user-facing strings were added/changed in this task (backend-only endpoint).
+
+## Next
+1. Add a minimal PWA Outputs panel that calls `/api/outputs/index` and refreshes on `output_created`.
+2. Consider pagination/cursor support for outputs listing instead of a hard cap (or make the cap configurable).
+3. Add an API to download/view a specific output file (read-only) with safe path validation.

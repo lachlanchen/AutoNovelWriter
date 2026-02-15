@@ -51,6 +51,9 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.repeat_aria': 'Repeat count',
+      'pipeline.repeat_title': 'Repeat count (1-10000)',
+      'pipeline.repeat_err': 'Repeat must be 1-10000',
       'ui.chat': 'Chat',
       'ws.status_title': 'WebSocket status',
       'ws.disconnected': 'disconnected',
@@ -116,6 +119,9 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.repeat_aria': '重复次数',
+      'pipeline.repeat_title': '重复次数（1-10000）',
+      'pipeline.repeat_err': '重复次数必须为 1-10000',
       'ui.chat': '聊天',
       'ws.status_title': 'WebSocket 状态',
       'ws.disconnected': '未连接',
@@ -181,6 +187,9 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.repeat_aria': '重複次數',
+      'pipeline.repeat_title': '重複次數（1-10000）',
+      'pipeline.repeat_err': '重複次數必須為 1-10000',
       'ui.chat': '聊天',
       'ws.status_title': 'WebSocket 狀態',
       'ws.disconnected': '未連線',
@@ -246,6 +255,9 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.repeat_aria': '繰り返し回数',
+      'pipeline.repeat_title': '繰り返し回数（1-10000）',
+      'pipeline.repeat_err': '繰り返し回数は 1-10000 です',
       'ui.chat': 'チャット',
       'ws.status_title': 'WebSocket 状態',
       'ws.disconnected': '未接続',
@@ -311,6 +323,9 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.repeat_aria': '반복 횟수',
+      'pipeline.repeat_title': '반복 횟수 (1-10000)',
+      'pipeline.repeat_err': '반복 횟수는 1-10000이어야 합니다',
       'ui.chat': '채팅',
       'ws.status_title': 'WebSocket 상태',
       'ws.disconnected': '연결 끊김',
@@ -376,6 +391,9 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.repeat_aria': 'So lan lap',
+      'pipeline.repeat_title': 'So lan lap (1-10000)',
+      'pipeline.repeat_err': 'So lan lap phai tu 1-10000',
       'ui.chat': 'Chat',
       'ws.status_title': 'Trang thai WebSocket',
       'ws.disconnected': 'mat ket noi',
@@ -441,6 +459,9 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.repeat_aria': 'عدد التكرار',
+      'pipeline.repeat_title': 'عدد التكرار (1-10000)',
+      'pipeline.repeat_err': 'يجب أن يكون التكرار بين 1 و10000',
       'ui.chat': 'الدردشة',
       'ws.status_title': 'حالة WebSocket',
       'ws.disconnected': 'غير متصل',
@@ -506,6 +527,9 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.repeat_aria': 'Nombre de répétitions',
+      'pipeline.repeat_title': 'Nombre de répétitions (1-10000)',
+      'pipeline.repeat_err': 'Doit être 1-10000',
       'ui.chat': 'Chat',
       'ws.status_title': 'Statut WebSocket',
       'ws.disconnected': 'déconnecté',
@@ -571,6 +595,9 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.repeat_aria': 'Repeticiones',
+      'pipeline.repeat_title': 'Repeticiones (1-10000)',
+      'pipeline.repeat_err': 'Debe ser 1-10000',
       'ui.chat': 'Chat',
       'ws.status_title': 'Estado de WebSocket',
       'ws.disconnected': 'desconectado',
@@ -636,6 +663,9 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.repeat_aria': 'Количество повторов',
+      'pipeline.repeat_title': 'Количество повторов (1-10000)',
+      'pipeline.repeat_err': 'Должно быть 1-10000',
       'ui.chat': 'Чат',
       'ws.status_title': 'Статус WebSocket',
       'ws.disconnected': 'нет связи',
@@ -701,6 +731,9 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.repeat_aria': 'Wiederholungen',
+      'pipeline.repeat_title': 'Wiederholungen (1-10000)',
+      'pipeline.repeat_err': 'Muss 1-10000 sein',
       'ui.chat': 'Chat',
       'ws.status_title': 'WebSocket-Status',
       'ws.disconnected': 'getrennt',
@@ -1703,12 +1736,103 @@
                 : n.type;
         const meta = document.createElement('div');
         meta.className = 'btype';
-        if (n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task') {
+        if (n.kind === 'loop' || n.kind === 'round') {
+          const row = document.createElement('div');
+          row.className = 'repeat-row';
+
           const badge = document.createElement('span');
           badge.className = 'badge';
-          badge.textContent =
-            n.kind === 'foreach_task' ? t('pipeline.badge_foreach')
-              : `x${n.repeat || 1}`;
+          badge.textContent = 'x';
+          row.appendChild(badge);
+
+          const inp = document.createElement('input');
+          inp.type = 'number';
+          inp.className = 'repeat-input';
+          inp.min = '1';
+          inp.max = '10000';
+          inp.step = '1';
+          inp.inputMode = 'numeric';
+          inp.title = t('pipeline.repeat_title');
+          inp.setAttribute('aria-label', t('pipeline.repeat_aria'));
+          inp.value = String(Number.isFinite(n.repeat) ? n.repeat : parseInt(String(n.repeat || '1'), 10) || 1);
+
+          const err = document.createElement('div');
+          err.className = 'repeat-err';
+          err.textContent = t('pipeline.repeat_err');
+          err.hidden = true;
+
+          const parseVal = () => {
+            const s = String(inp.value || '').trim();
+            if (!s) return null;
+            if (!/^[0-9]+$/.test(s)) return null;
+            const v = parseInt(s, 10);
+            if (!Number.isFinite(v)) return null;
+            return v;
+          };
+
+          const setValid = (ok) => {
+            if (ok) {
+              inp.classList.remove('invalid');
+              err.hidden = true;
+              try { inp.setCustomValidity(''); } catch (_) {}
+            } else {
+              inp.classList.add('invalid');
+              err.hidden = false;
+              try { inp.setCustomValidity(t('pipeline.repeat_err')); } catch (_) {}
+            }
+          };
+
+          const commitIfValid = () => {
+            const v = parseVal();
+            if (v === null || v < 1 || v > 10000) {
+              setValid(false);
+              return;
+            }
+            setValid(true);
+            if (n.repeat !== v) {
+              n.repeat = v;
+              setPipeStatus('dirty');
+              updateDerivedFromAst({ writeScript: true });
+            }
+          };
+
+          inp.addEventListener('focus', () => {
+            setSelected(key);
+            updateIndentButtons();
+          });
+          inp.addEventListener('mousedown', (e) => e.stopPropagation());
+          inp.addEventListener('click', (e) => e.stopPropagation());
+          inp.addEventListener('input', () => commitIfValid());
+          inp.addEventListener('change', () => commitIfValid());
+          inp.addEventListener('blur', () => {
+            // If the field is left invalid, snap back to the last valid repeat.
+            const v = parseVal();
+            if (v === null || v < 1 || v > 10000) {
+              inp.value = String(n.repeat || 1);
+              setValid(true);
+            }
+          });
+          inp.addEventListener('keydown', (e) => {
+            if (!e) return;
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commitIfValid();
+              try { inp.blur(); } catch (_) {}
+            } else if (e.key === 'Escape') {
+              e.preventDefault();
+              inp.value = String(n.repeat || 1);
+              setValid(true);
+              try { inp.blur(); } catch (_) {}
+            }
+          });
+
+          row.appendChild(inp);
+          meta.appendChild(row);
+          meta.appendChild(err);
+        } else if (n.kind === 'foreach_task') {
+          const badge = document.createElement('span');
+          badge.className = 'badge';
+          badge.textContent = t('pipeline.badge_foreach');
           meta.appendChild(badge);
         } else {
           meta.textContent = n.enabled === false ? 'disabled' : 'enabled';

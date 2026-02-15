@@ -13,3 +13,11 @@ Verification (no TCP binds):
 
 ## Fixes
 - Step enable toggle label now reflects enabled vs disabled (localized) instead of always showing “enabled”.
+
+## I18N
+- Added i18n keys for the new Blocks toolbar insertion buttons and tooltips across all 11 UI languages:
+  - `pipeline.add_loop`, `pipeline.add_round`, `pipeline.add_foreach_task`
+  - `pipeline.add_loop_title`, `pipeline.add_round_title`, `pipeline.add_foreach_task_title`
+- Localized previously hard-coded per-block mini UI strings:
+  - `pipeline.state_enabled`, `pipeline.state_disabled`
+  - mini Indent/Outdent buttons now reuse existing `pipeline.indent(_title)` / `pipeline.outdent(_title)` keys.

@@ -19,3 +19,6 @@ Verification (no TCP binds):
 2. Add a UI affordance to create container blocks (`LOOP`, `ROUND`, `FOREACH_TASK`) from the blocks panel without hand-editing the script.
 3. Consider validating repeat edits against backend `/api/pipeline/validate` when online (to keep constraints in sync and surface server-side warnings).
 4. Improve typing UX by validating on blur/Enter only (reduce transient “invalid” state while editing).
+
+## README
+- Documented that `LOOP`/`ROUND` repeat counts are editable inline in the PWA blocks list and update the canonical script immediately.

@@ -69,6 +69,9 @@ Validation (no persistence):
 The PWA shows the script in a textarea (source of truth) and renders nested blocks from `pipeline_ast`.
 If the backend validate endpoint is unreachable, the PWA falls back to a local parser that supports the same v2 verbs (`LOOP`, `ROUND`, `FOREACH_TASK`, `STEP`, `DISABLED`).
 
+Blocks UI notes:
+- `LOOP` and `ROUND` repeat counts are editable inline in the blocks list; valid edits immediately update the canonical script textarea.
+
 ## Key Backend APIs
 
 - Health: `GET /api/health`

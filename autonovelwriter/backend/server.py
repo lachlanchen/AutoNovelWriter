@@ -44,6 +44,7 @@ def resolve_paths() -> dict:
         "settings_json": runtime_root / "state" / "settings.json",
         "pipeline_json": runtime_root / "state" / "pipeline.json",
         "pipeline_script": runtime_root / "state" / "pipeline.script",
+        "pipeline_ast_json": runtime_root / "state" / "pipeline_ast.json",
         "chat_jsonl": runtime_root / "state" / "chat.jsonl",
         "inbox_state_json": runtime_root / "state" / "inbox_state.json",
         "runner_state_json": runtime_root / "state" / "runner_state.json",
@@ -170,7 +171,7 @@ PIPELINE_BLOCK_TYPES = [
     "commit_push",
 ]
 
-PIPELINE_SCRIPT_HEADER = "# AutoNovelWriter pipeline script v1\n"
+PIPELINE_SCRIPT_HEADER = "# AutoNovelWriter pipeline script v2\n"
 
 
 def default_pipeline() -> dict:
@@ -199,10 +200,47 @@ def save_pipeline(paths: dict, pipeline: dict) -> None:
     p.write_text(json.dumps(pipeline, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def _ast_step(step_type: str, enabled: bool) -> dict:
+    return {"kind": "step", "type": step_type, "enabled": bool(enabled)}
+
+
+def _ast_loop(repeat: int, children: list) -> dict:
+    return {"kind": "loop", "repeat": int(repeat), "children": children}
+
+
+def _ast_root(children: list) -> dict:
+    return {"kind": "root", "version": 2, "children": children}
+
+
+def _flatten_ast_steps(ast: dict) -> list:
+    out = []
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        k = node.get("kind")
+        if k == "step":
+            t = node.get("type")
+            if isinstance(t, str) and t:
+                out.append({"id": t, "type": t, "enabled": bool(node.get("enabled", True))})
+            return
+        if k == "loop":
+            kids = node.get("children")
+            if isinstance(kids, list):
+                for c in kids:
+                    walk(c)
+
+    if isinstance(ast, dict) and ast.get("kind") == "root":
+        kids = ast.get("children", [])
+        if isinstance(kids, list):
+            for c in kids:
+                walk(c)
+    return out
+
+
 def render_pipeline_script(pipeline: dict) -> str:
-    # Shell-ish, line-based format:
-    #   STEP <type>
-    #   DISABLED <type>
+    # Render from the derived JSON "blocks" list (no nesting). This keeps the
+    # rest of the codebase stable; v2 nesting is handled by render_pipeline_script_from_ast().
     lines = [PIPELINE_SCRIPT_HEADER.rstrip("\n")]
     blocks = pipeline.get("blocks") if isinstance(pipeline, dict) else None
     if not isinstance(blocks, list):
@@ -218,37 +256,164 @@ def render_pipeline_script(pipeline: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def render_pipeline_script_from_ast(ast: dict) -> str:
+    lines = [PIPELINE_SCRIPT_HEADER.rstrip("\n")]
+
+    def emit(node: dict, level: int) -> None:
+        if not isinstance(node, dict):
+            return
+        k = node.get("kind")
+        indent = "  " * level
+        if k == "step":
+            t = node.get("type")
+            if not isinstance(t, str) or not t:
+                return
+            enabled = bool(node.get("enabled", True))
+            lines.append(indent + ("STEP " if enabled else "DISABLED ") + t)
+            return
+        if k == "loop":
+            repeat = node.get("repeat")
+            try:
+                repeat_i = int(repeat)
+            except Exception:
+                return
+            lines.append(indent + f"LOOP {repeat_i}")
+            kids = node.get("children")
+            if isinstance(kids, list):
+                for c in kids:
+                    emit(c, level + 1)
+
+    if isinstance(ast, dict) and ast.get("kind") == "root":
+        kids = ast.get("children", [])
+        if isinstance(kids, list):
+            for c in kids:
+                emit(c, 0)
+
+    return "\n".join(lines) + "\n"
+
+
 def parse_pipeline_script(script: str) -> dict:
-    pipeline, _warnings = parse_pipeline_script_with_warnings(script)
+    pipeline, _ast, _warnings, _errors = parse_pipeline_script_v2(script)
     return pipeline
 
 
 def parse_pipeline_script_with_warnings(script: str) -> tuple[dict, list]:
-    blocks = []
-    warnings = []
+    pipeline, _ast, warnings, _errors = parse_pipeline_script_v2(script)
+    return pipeline, warnings
+
+
+def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
+    # v2 supports:
+    # - STEP <type>
+    # - DISABLED <type>
+    # - LOOP <n> with 2-space indentation of children
+    #
+    # Returns:
+    # - pipeline (flat list, for backward compatibility)
+    # - pipeline_ast (nested)
+    # - warnings (non-fatal)
+    # - errors (fatal)
     allowed = set(PIPELINE_BLOCK_TYPES)
+    warnings = []
+    errors = []
+
+    root_children = []
+    # stack frames: (expected_level, children_list, loop_line)
+    stack = [(0, root_children, None)]
+
+    def current_level() -> int:
+        return stack[-1][0]
+
+    def close_frames_to(level: int) -> None:
+        nonlocal stack
+        while stack and level < stack[-1][0]:
+            expected, kids, loop_line = stack[-1]
+            if loop_line is not None and not kids:
+                errors.append({"line": loop_line, "error": "loop_empty", "text": "LOOP"})
+            stack.pop()
+
+    def leading_spaces(raw: str) -> tuple[int, bool]:
+        n = 0
+        for ch in raw:
+            if ch == "\t":
+                return n, True
+            if ch == " ":
+                n += 1
+                continue
+            break
+        return n, False
+
     for ln, raw in enumerate((script or "").splitlines(), start=1):
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+
+        sp, has_tab = leading_spaces(raw)
+        if has_tab:
+            errors.append({"line": ln, "error": "tab_indent_not_allowed", "text": raw})
+            continue
+        if sp % 2 != 0:
+            errors.append({"line": ln, "error": "bad_indent_not_multiple_of_2", "text": raw})
+            continue
+        lvl = sp // 2
+
+        # Bring stack to the right container for this indentation.
+        close_frames_to(lvl)
+        if lvl > current_level():
+            # Indent jumped deeper than the current open container expects.
+            errors.append({"line": ln, "error": "indent_jump", "text": raw})
+            continue
+
         line = raw.strip()
-        if not line or line.startswith("#"):
-            continue
         parts = line.split()
-        if len(parts) < 2:
-            warnings.append({"line": ln, "error": "too_few_tokens", "text": raw})
+        verb = parts[0].upper() if parts else ""
+
+        if verb == "LOOP":
+            if len(parts) < 2:
+                errors.append({"line": ln, "error": "loop_missing_repeat", "text": raw})
+                continue
+            try:
+                repeat = int(parts[1])
+            except Exception:
+                errors.append({"line": ln, "error": "loop_repeat_not_int", "text": raw})
+                continue
+            if repeat <= 0 or repeat > 10_000:
+                errors.append({"line": ln, "error": "loop_repeat_out_of_range", "text": raw})
+                continue
+
+            loop_children = []
+            loop_node = _ast_loop(repeat=repeat, children=loop_children)
+            stack[-1][1].append(loop_node)
+            # Push a new frame for children at next indent level.
+            stack.append((lvl + 1, loop_children, ln))
             continue
-        verb = parts[0].upper()
-        t = parts[1].strip()
-        if verb not in ("STEP", "DISABLED"):
-            warnings.append({"line": ln, "error": "unknown_verb", "text": raw})
+
+        if verb in ("STEP", "DISABLED"):
+            if len(parts) < 2:
+                warnings.append({"line": ln, "warning": "too_few_tokens", "text": raw})
+                continue
+            t = parts[1].strip()
+            if t not in allowed:
+                warnings.append({"line": ln, "warning": "unknown_type", "text": raw})
+                continue
+            enabled = verb == "STEP"
+            stack[-1][1].append(_ast_step(t, enabled))
             continue
-        if t not in allowed:
-            warnings.append({"line": ln, "error": "unknown_type", "text": raw})
-            continue
-        enabled = verb == "STEP"
-        blocks.append({"id": t, "type": t, "enabled": enabled})
-    if not blocks:
-        # Default pipeline keeps the app usable, but still return warnings so the UI can show them.
-        return default_pipeline(), warnings
-    return {"blocks": blocks}, warnings
+
+        # Unknown verbs are non-fatal but must never be silent.
+        warnings.append({"line": ln, "warning": "unknown_verb", "text": raw})
+
+    # Close remaining frames to catch empty loops.
+    close_frames_to(0)
+
+    ast = _ast_root(root_children)
+    flat_blocks = _flatten_ast_steps(ast)
+    if not flat_blocks:
+        # Keep the app usable even with an empty/garbled script.
+        flat_blocks = default_pipeline()["blocks"]
+        ast = _ast_root([_ast_step(b["type"], bool(b.get("enabled", True))) for b in flat_blocks])
+
+    pipeline = {"blocks": flat_blocks}
+    return pipeline, ast, warnings, errors
 
 
 def load_pipeline_script(paths: dict) -> str:
@@ -265,6 +430,12 @@ def save_pipeline_script(paths: dict, script: str) -> None:
     p = Path(paths["pipeline_script"])
     _safe_mkdir(p.parent)
     p.write_text(script, encoding="utf-8", errors="replace")
+
+
+def save_pipeline_ast(paths: dict, pipeline_ast: dict) -> None:
+    p = Path(paths["pipeline_ast_json"])
+    _safe_mkdir(p.parent)
+    p.write_text(json.dumps(pipeline_ast, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _load_json(p: Path, default):
@@ -347,15 +518,26 @@ class SettingsHandler(BaseHandler):
 
 
 class PipelineHandler(BaseHandler):
-    def initialize(self, paths: dict):
+    def initialize(self, paths: dict, hub: "WebSocketHub"):
         self._paths = paths
+        self._hub = hub
 
     def get(self):
         # Canonical artifact is the script; JSON is derived.
         script = load_pipeline_script(self._paths)
-        pipeline, warnings = parse_pipeline_script_with_warnings(script)
+        pipeline, pipeline_ast, warnings, errors = parse_pipeline_script_v2(script)
         save_pipeline(self._paths, pipeline)
-        self.write_json({"ok": True, "script": script, "pipeline": pipeline, "warnings": warnings})
+        save_pipeline_ast(self._paths, pipeline_ast)
+        self.write_json(
+            {
+                "ok": True,
+                "script": script,
+                "pipeline": pipeline,
+                "pipeline_ast": pipeline_ast,
+                "warnings": warnings,
+                "errors": errors,
+            }
+        )
 
     def post(self):
         try:
@@ -367,14 +549,32 @@ class PipelineHandler(BaseHandler):
             return self.write_json({"ok": False, "error": "expected_object"}, status=400)
 
         if isinstance(body.get("script"), str):
-            script = body.get("script", "")
-            pipeline, warnings = parse_pipeline_script_with_warnings(script)
-            # Reject if script produced no blocks (probably invalid).
-            if not pipeline.get("blocks"):
-                return self.write_json({"ok": False, "error": "invalid_script"}, status=400)
-            save_pipeline_script(self._paths, script)
+            incoming = body.get("script", "")
+            pipeline, pipeline_ast, warnings, errors = parse_pipeline_script_v2(incoming)
+            if errors:
+                return self.write_json({"ok": False, "warnings": warnings, "errors": errors}, status=400)
+
+            canonical = render_pipeline_script_from_ast(pipeline_ast)
+            save_pipeline_script(self._paths, canonical)
             save_pipeline(self._paths, pipeline)
-            return self.write_json({"ok": True, "script": script, "pipeline": pipeline, "warnings": warnings})
+            save_pipeline_ast(self._paths, pipeline_ast)
+            self._hub.broadcast(
+                {
+                    "type": "pipeline_updated",
+                    "ts_ms": _now_ms(),
+                    "warnings": warnings,
+                }
+            )
+            return self.write_json(
+                {
+                    "ok": True,
+                    "script": canonical,
+                    "pipeline": pipeline,
+                    "pipeline_ast": pipeline_ast,
+                    "warnings": warnings,
+                    "errors": [],
+                }
+            )
 
         blocks = body.get("blocks")
         if not isinstance(blocks, list):
@@ -400,10 +600,46 @@ class PipelineHandler(BaseHandler):
             cleaned.append({"id": bid, "type": t, "enabled": enabled})
 
         pipeline = {"blocks": cleaned}
+        # Convert to a v2 AST with only steps (no nesting).
+        pipeline_ast = _ast_root([_ast_step(b["type"], bool(b.get("enabled", True))) for b in cleaned])
+        canonical = render_pipeline_script_from_ast(pipeline_ast)
+        save_pipeline_script(self._paths, canonical)
         save_pipeline(self._paths, pipeline)
-        script = render_pipeline_script(pipeline)
-        save_pipeline_script(self._paths, script)
-        self.write_json({"ok": True, "script": script, "pipeline": pipeline, "warnings": []})
+        save_pipeline_ast(self._paths, pipeline_ast)
+        self._hub.broadcast({"type": "pipeline_updated", "ts_ms": _now_ms(), "warnings": []})
+        self.write_json(
+            {"ok": True, "script": canonical, "pipeline": pipeline, "pipeline_ast": pipeline_ast, "warnings": [], "errors": []}
+        )
+
+
+class PipelineValidateHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    def post(self):
+        try:
+            body = tornado.escape.json_decode(self.request.body or b"{}")
+        except Exception:
+            return self.write_json({"ok": False, "error": "invalid_json"}, status=400)
+
+        if not isinstance(body, dict) or not isinstance(body.get("script"), str):
+            return self.write_json({"ok": False, "error": "expected_script"}, status=400)
+
+        script = body.get("script", "")
+        pipeline, pipeline_ast, warnings, errors = parse_pipeline_script_v2(script)
+        canonical = render_pipeline_script_from_ast(pipeline_ast) if not errors else ""
+        return self.write_json(
+            {
+                "ok": not bool(errors),
+                "script": script,
+                "canonical": canonical,
+                "pipeline": pipeline,
+                "pipeline_ast": pipeline_ast,
+                "warnings": warnings,
+                "errors": errors,
+            },
+            status=200 if not errors else 400,
+        )
 
 
 class ChatStore:
@@ -1014,7 +1250,8 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
     handlers = [
         (r"/api/health", HealthHandler),
         (r"/api/settings", SettingsHandler, {"paths": paths, "settings": settings}),
-        (r"/api/pipeline", PipelineHandler, {"paths": paths}),
+        (r"/api/pipeline", PipelineHandler, {"paths": paths, "hub": hub}),
+        (r"/api/pipeline/validate", PipelineValidateHandler, {"paths": paths}),
         (r"/api/chat/history", ChatHistoryHandler, {"chat_store": chat_store}),
         (r"/api/chat/send", ChatSendHandler, {"paths": paths, "chat_store": chat_store, "hub": hub}),
         (r"/api/run/start", RunStartHandler, {"runner": runner}),

@@ -1,0 +1,667 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: scripts/auto-autonovelwriter-development.sh [options]
+
+Auto-develops the "AutoNovelWriter" Scratch-like PWA + Tornado backend by
+calling Codex non-interactively in ONE shared session, task-by-task:
+
+  plan -> implement -> critique -> fix -> summary -> commit+push
+
+It keeps a resumable queue/state under:
+  references/autonovelwriter_dev/
+
+Options:
+  --model <name>            Codex model (default: gpt-5.3-codex)
+  --reasoning <level>       low|medium|high|xhigh (default: medium)
+  --new-session             Start a fresh Codex session
+  --reset-state             Clear task state (keeps queue)
+  --batch-size <n>          Generate at most n new tasks per batch (default: 6)
+  --max-batches <n>         Stop after n batches (default: 1; 0 = infinite)
+  --stop-file <path>        Stop after current task if this file exists
+                            (default: references/autonovelwriter_dev/STOP)
+  --no-tmux                 Do not create/manage tmux dev session
+  --tmux-session <name>     tmux session name (default: autonovelwriter_dev)
+  --backend-port <n>        Backend port (default: 8787)
+  --pwa-port <n>            PWA dev server port (default: 5173)
+  --skip-git-check          Pass --skip-git-repo-check to codex exec
+  --verbose                 Verbose driver logs
+  -h, --help                Show help
+
+Stop control:
+  touch references/autonovelwriter_dev/STOP
+
+Notes:
+  - This script is intentionally redundant in prompts. Each Codex step must be
+    self-contained and restate the overall goal.
+  - Commits/pushes are done by THIS driver, not by Codex.
+USAGE
+}
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+model="gpt-5.3-codex"
+reasoning="medium"
+new_session=0
+reset_state=0
+batch_size=6
+max_batches=1
+stop_file="references/autonovelwriter_dev/STOP"
+no_tmux=0
+tmux_session="autonovelwriter_dev"
+backend_port=8787
+pwa_port=5173
+skip_git_check=0
+verbose=0
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --model) model="${2:-}"; shift ;;
+    --reasoning) reasoning="${2:-}"; shift ;;
+    --new-session) new_session=1 ;;
+    --reset-state) reset_state=1 ;;
+    --batch-size) batch_size="${2:-}"; shift ;;
+    --max-batches) max_batches="${2:-}"; shift ;;
+    --stop-file) stop_file="${2:-}"; shift ;;
+    --no-tmux) no_tmux=1 ;;
+    --tmux-session) tmux_session="${2:-}"; shift ;;
+    --backend-port) backend_port="${2:-}"; shift ;;
+    --pwa-port) pwa_port="${2:-}"; shift ;;
+    --skip-git-check) skip_git_check=1 ;;
+    --verbose) verbose=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
+  esac
+  shift
+done
+
+case "$reasoning" in low|medium|high|xhigh) ;; *)
+  echo "Invalid --reasoning '$reasoning' (use low|medium|high|xhigh)" >&2
+  exit 1
+esac
+
+if ! command -v codex >/dev/null 2>&1; then
+  echo "codex CLI not found in PATH." >&2
+  exit 1
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "python3 is required." >&2
+  exit 1
+fi
+
+if [ "$skip_git_check" -eq 0 ]; then
+  if ! git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "Not inside a Git repo: $repo_root (use --skip-git-check if intentional)" >&2
+    exit 1
+  fi
+fi
+
+vlog() { if [ "$verbose" -eq 1 ]; then printf '%s\n' "$*" >&2; fi; }
+
+ref_root="references/autonovelwriter_dev"
+plan_dir="$ref_root/plan"
+prompt_dir="$ref_root/prompts"
+log_dir="$ref_root/logs"
+steps_dir="$ref_root/steps"
+summary_dir="$ref_root/summaries"
+tasks_dir="$ref_root/tasks"
+run_log="$log_dir/auto_autonovelwriter_run.log"
+session_file="$ref_root/.codex_autonovelwriter_session"
+state_file="$ref_root/state.tsv"
+queue_file="$tasks_dir/task_queue.jsonl"
+context_doc="$ref_root/CONTEXT.md"
+spec_doc="docs/autonovelwriter_spec.md"
+
+app_root="autonovelwriter"
+backend_root="$app_root/backend"
+pwa_root="$app_root/pwa"
+runtime_root="$app_root/runtime"
+
+mkdir -p "$ref_root" "$plan_dir" "$prompt_dir" "$log_dir" "$steps_dir" "$summary_dir" "$tasks_dir"
+mkdir -p "$(dirname "$spec_doc")"
+
+log() {
+  local msg="$*"
+  printf '[%s] %s\n' "$(date +'%Y-%m-%d %H:%M:%S')" "$msg" | tee -a "$run_log" >&2
+}
+
+lock_file="$ref_root/auto-autonovelwriter-development.lock"
+if command -v flock >/dev/null 2>&1; then
+  exec 200>"$lock_file"
+  python3 - <<'PY'
+import fcntl
+fd = 200
+flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
+PY
+  if ! flock -n 200; then
+    echo "Another scripts/auto-autonovelwriter-development.sh is running (lock: $lock_file)" >&2
+    exit 1
+  fi
+else
+  log "flock not available; skipping single-instance lock."
+fi
+
+ensure_spec_docs() {
+  if [ ! -f "$spec_doc" ]; then
+    cat > "$spec_doc" <<'EOF'
+# AutoNovelWriter: Product Spec (Scratch-like PWA Controller)
+
+Goal: build a **Scratch-like PWA** that controls an automated novel-writing / app-development pipeline.
+The PWA must allow the user to **interrupt** and “chip in” ideas during execution via **chat** and via a
+folder-based **inbox/outbox**. The system must be resumable, observable, and operable.
+
+## 1) UI (Scratch-like)
+- Light theme by default (no dark-first UI).
+- Drag & drop “blocks” that form a pipeline:
+  - plan -> write -> critique_story -> fix_story -> critique_tone -> fix_tone -> critique_dialogue -> fix_dialogue -> critique_character -> fix_character -> summary -> log -> commit_push
+- Blocks are composable; users can reorder, insert, disable, and loop.
+- A “while loop” mode: when the current batch finishes, generate the next batch of tasks automatically until stopped.
+
+## 2) Chat + Folder Pipe
+- A dedicated workspace folder structure:
+  - `autonovelwriter/runtime/io/inbox/` (user -> system)
+  - `autonovelwriter/runtime/io/outbox/` (system -> user)
+  - `autonovelwriter/runtime/logs/`
+  - `autonovelwriter/runtime/state/`
+  - `autonovelwriter/runtime/tasks/`
+- Backend monitors inbox changes (polling OK initially); UI shows chat in real-time (WebSocket).
+
+## 3) Start/Stop/Pause + Settings
+- UI buttons: Start / Pause / Resume / Stop.
+- Settings:
+  - Agent SDK selection: codex / copilot / gemini / claude (stub OK initially, codex first)
+  - Model selection for LLM and vision model (vision can be unused initially but config must exist)
+  - Paths: input/output/queue/log/summary directories, lock file path
+
+## 4) Backend
+- Python Tornado server.
+- APIs:
+  - health
+  - settings get/set
+  - task queue CRUD
+  - run control (start/pause/resume/stop)
+  - chat history
+- WebSocket: push events (chat messages, task status, logs).
+
+## 5) PWA
+- Manifest + Service Worker (cache static assets, offline shell).
+- Responsive (desktop + mobile).
+
+## 6) Development UX
+- Provide a tmux dev session with two panes:
+  - Pane 1: backend (`python3 -m ...` or `python3 server.py`)
+  - Pane 2: PWA dev server (static is OK via `python3 -m http.server`)
+EOF
+  fi
+
+  if [ ! -f "$context_doc" ]; then
+    cat > "$context_doc" <<EOF
+# AutoNovelWriter Dev Context (Used By Codex Prompts)
+
+You are being invoked by: \`scripts/auto-autonovelwriter-development.sh\`.
+
+Overall goal:
+- Implement the system described in: \`$spec_doc\`.
+- Tech: Python Tornado backend + Scratch-like PWA (light theme).
+- Key feature: user can interrupt a running pipeline via chat UI and folder-based inbox/outbox.
+
+Hard constraints:
+- Keep steps small and resumable.
+- Default theme is light.
+- Use file-based workspace defaults under: \`$runtime_root/\` (configurable via settings).
+- Provide explicit paths for logs/state/tasks/summaries.
+- Do NOT commit/push in Codex steps: the outer driver commits/pushes.
+
+App paths (write here only):
+- Backend: \`$backend_root/\`
+- PWA: \`$pwa_root/\`
+- Runtime defaults: \`$runtime_root/\`
+
+Driver paths:
+- Step artifacts: \`$steps_dir/\`
+- Logs: \`$log_dir/\`
+- Task queue: \`$queue_file\`
+- State: \`$state_file\`
+
+Acceptance baseline:
+- \`python3 $backend_root/server.py --port $backend_port\` runs and serves health.
+- PWA loads with light theme, shows pipeline blocks + chat panel, and connects to backend WS.
+EOF
+  fi
+}
+
+ensure_seed_queue() {
+  if [ ! -s "$queue_file" ]; then
+    cat > "$queue_file" <<'EOF'
+{"id":"T001_bootstrap_backend","title":"Bootstrap Tornado backend skeleton (health, static, ws)","notes":"Create autonovelwriter/backend/server.py with Tornado app, /api/health, /api/settings, /ws events. Add requirements.txt and minimal config loading.","acceptance":["python3 autonovelwriter/backend/server.py --port 8787 works","GET /api/health returns 200 JSON","WS connects and emits a hello event"],"tags":["backend","tornado","ws"]}
+{"id":"T002_bootstrap_pwa_shell","title":"Bootstrap PWA shell (light theme, manifest, service worker)","notes":"Create autonovelwriter/pwa/ static app with index.html, app.css (light theme tokens), app.js, manifest.webmanifest, service_worker.js. Connect to backend /ws and show chat panel.","acceptance":["PWA loads in browser (served by python http.server)","Light theme default with CSS variables","Chat panel shows backend hello event"],"tags":["pwa","light-theme","offline"]}
+{"id":"T003_blocks_ui_v1","title":"Scratch-like pipeline blocks v1 (drag/drop, task list)","notes":"Implement drag/drop blocks UI (HTML5 DnD ok). Represent pipeline steps and allow reorder/disable. Persist pipeline as JSON via backend /api/pipeline.","acceptance":["Drag/drop reorder works","Pipeline persists and reloads","Blocks map to step types in spec"],"tags":["pwa","scratch","pipeline"]}
+{"id":"T004_folder_chat_pipe","title":"Folder-based inbox/outbox + backend polling + UI sync","notes":"Implement runtime/io/inbox and outbox. Backend polls inbox, appends to chat history, emits WS events; UI can send message to backend which writes to outbox.","acceptance":["Drop a .md/.txt into inbox and it appears in UI","Sending chat from UI writes a file to outbox","All events visible via WS"],"tags":["backend","io","chat"]}
+{"id":"T005_runner_start_pause_stop","title":"Task runner control (start/pause/resume/stop) + state machine","notes":"Backend task runner executes pipeline blocks over queued tasks with state persisted under runtime/state. UI controls start/pause/stop and shows live status.","acceptance":["Start/pause/resume/stop works without losing state","Task statuses persist across restart","UI shows live task progress"],"tags":["backend","runner","state"]}
+{"id":"T006_agent_settings_codex_stub","title":"Agent settings + codex runner stub (no secrets committed)","notes":"Add settings UI for agent sdk + model. Backend implements codex runner stub that shells out to codex CLI (disabled by default). Provide .env.example; never commit secrets.","acceptance":["Settings persist (agent sdk/model/path)","Codex runner is stubbed + gated","No secrets in git"],"tags":["agents","settings","security"]}
+EOF
+  fi
+}
+
+extract_session_id_from_jsonl() {
+  local json_file="$1"
+  python3 - "$json_file" <<'PY'
+import json, sys
+sid = ""
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+    for line in f:
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        if not isinstance(obj, dict):
+            continue
+        sid = obj.get("thread_id") or obj.get("session_id") or sid
+        th = obj.get("thread")
+        if not sid and isinstance(th, dict):
+            sid = th.get("id") or sid
+        if sid:
+            break
+print(sid)
+PY
+}
+
+run_codex_new_session_init_from_file() {
+  local prompt_file="$1"
+  local json_file="$2"
+  local cmd=(codex exec --json -m "$model" -c "model_reasoning_effort=\"$reasoning\"")
+  if [ "$skip_git_check" -eq 1 ]; then
+    cmd+=(--skip-git-repo-check)
+  fi
+  cmd+=(-)
+  "${cmd[@]}" < "$prompt_file" > "$json_file" 2>>"$log_dir/codex_stderr.log"
+}
+
+run_codex_resume_from_file() {
+  local sid="$1"
+  local prompt_file="$2"
+  local json_file="$3"
+  local cmd=(codex exec resume "$sid" --json --full-auto -m "$model" -c "model_reasoning_effort=\"$reasoning\"")
+  if [ "$skip_git_check" -eq 1 ]; then
+    cmd+=(--skip-git-repo-check)
+  fi
+  cmd+=(-)
+  "${cmd[@]}" < "$prompt_file" > "$json_file" 2>>"$log_dir/codex_stderr.log"
+}
+
+state_reset() {
+  rm -f "$state_file"
+}
+
+state_mark() {
+  local id="$1"
+  local status="$2"
+  local ts
+  ts="$(date +%Y-%m-%dT%H:%M:%S%z)"
+  mkdir -p "$(dirname "$state_file")"
+  if [ -f "$state_file" ]; then
+    grep -v $'\t'"$id"$'\t' "$state_file" > "$state_file.tmp" || true
+    mv "$state_file.tmp" "$state_file"
+  fi
+  printf '%s\t%s\t%s\n' "$id" "$status" "$ts" >> "$state_file"
+}
+
+git_commit_push_if_dirty() {
+  local msg="$1"
+  local body_file="${2:-}"
+  if git -C "$repo_root" diff --quiet && git -C "$repo_root" diff --cached --quiet; then
+    log "No changes to commit for: $msg"
+    return 0
+  fi
+  git -C "$repo_root" add -A
+  if [ -n "$body_file" ] && [ -s "$body_file" ]; then
+    git -C "$repo_root" commit -m "$msg" -F "$body_file"
+  else
+    git -C "$repo_root" commit -m "$msg"
+  fi
+  local tries=0
+  while true; do
+    tries=$((tries+1))
+    if git -C "$repo_root" push; then
+      break
+    fi
+    if [ "$tries" -ge 3 ]; then
+      echo "git push failed after $tries attempts" >&2
+      return 1
+    fi
+    log "git push failed; retrying ($tries/3) after 5s..."
+    sleep 5
+  done
+}
+
+ensure_tmux() {
+  if [ "$no_tmux" -eq 1 ]; then
+    return 0
+  fi
+  if ! command -v tmux >/dev/null 2>&1; then
+    log "tmux not found; skipping tmux dev session."
+    return 0
+  fi
+
+  if tmux has-session -t "$tmux_session" 2>/dev/null; then
+    return 0
+  fi
+
+  local backend_cmd="cd \"$repo_root\" && python3 \"$backend_root/server.py\" --port \"$backend_port\""
+  local pwa_cmd="cd \"$repo_root\" && python3 -m http.server \"$pwa_port\" --directory \"$pwa_root\""
+
+  tmux new-session -d -s "$tmux_session" -n dev "bash -lc 'echo \"[backend pane] waiting for $backend_root/server.py\"; if [ -f \"$backend_root/server.py\" ]; then $backend_cmd; else while true; do sleep 3600; done; fi'"
+  tmux split-window -h -t "$tmux_session:dev" "bash -lc 'echo \"[pwa pane] serving $pwa_root on :$pwa_port\"; if [ -d \"$pwa_root\" ]; then $pwa_cmd; else while true; do sleep 3600; done; fi'"
+  tmux select-layout -t "$tmux_session:dev" even-horizontal >/dev/null 2>&1 || true
+  log "tmux session created: $tmux_session (backend + pwa). Attach with: tmux attach -t $tmux_session"
+}
+
+tmux_restart_panes_if_running() {
+  if [ "$no_tmux" -eq 1 ] || ! command -v tmux >/dev/null 2>&1; then
+    return 0
+  fi
+  if ! tmux has-session -t "$tmux_session" 2>/dev/null; then
+    return 0
+  fi
+
+  local backend_cmd="cd \"$repo_root\" && python3 \"$backend_root/server.py\" --port \"$backend_port\""
+  local pwa_cmd="cd \"$repo_root\" && python3 -m http.server \"$pwa_port\" --directory \"$pwa_root\""
+
+  tmux send-keys -t "$tmux_session:dev.0" C-c >/dev/null 2>&1 || true
+  tmux send-keys -t "$tmux_session:dev.0" "bash -lc 'if [ -f \"$backend_root/server.py\" ]; then $backend_cmd; else echo \"backend not ready\"; fi'" Enter || true
+
+  tmux send-keys -t "$tmux_session:dev.1" C-c >/dev/null 2>&1 || true
+  tmux send-keys -t "$tmux_session:dev.1" "bash -lc 'if [ -d \"$pwa_root\" ]; then $pwa_cmd; else echo \"pwa not ready\"; fi'" Enter || true
+}
+
+ensure_spec_docs
+ensure_seed_queue
+
+if [ "$reset_state" -eq 1 ]; then
+  log "Resetting state file: $state_file"
+  state_reset
+fi
+
+session_id=""
+if [ "$new_session" -eq 0 ] && [ -f "$session_file" ]; then
+  session_id="$(tr -d ' \t\r\n' < "$session_file")"
+fi
+
+if [ -z "$session_id" ]; then
+  init_prompt="$prompt_dir/000_init.txt"
+  init_json="$log_dir/000_init.jsonl"
+  cat > "$init_prompt" <<EOF
+Session initialization only.
+
+You are being invoked by: scripts/auto-autonovelwriter-development.sh
+
+Store these constraints for subsequent prompts:
+- Goal: implement AutoNovelWriter per docs/autonovelwriter_spec.md (Scratch-like light-theme PWA + Tornado backend).
+- Work only inside this repository: $repo_root
+- Always keep steps small and resumable.
+- Do NOT commit/push: the outer driver will do git operations.
+- Primary writable paths:
+  - $backend_root/
+  - $pwa_root/
+  - $runtime_root/
+  - $ref_root/
+- Default runtime IO paths:
+  - $runtime_root/io/inbox
+  - $runtime_root/io/outbox
+  - $runtime_root/tasks
+  - $runtime_root/logs
+  - $runtime_root/state
+- UI theme: light by default.
+
+Important for this initialization step:
+- Do NOT run shell commands.
+- Do NOT read or write any files.
+- Reply with exactly: READY_AUTONOVELWRITER_SESSION
+EOF
+  log "Initializing Codex session for AutoNovelWriter development"
+  run_codex_new_session_init_from_file "$init_prompt" "$init_json"
+  if ! grep -q "READY_AUTONOVELWRITER_SESSION" "$init_json"; then
+    echo "Initialization response missing READY_AUTONOVELWRITER_SESSION marker." >&2
+    exit 1
+  fi
+  session_id="$(extract_session_id_from_jsonl "$init_json")"
+  if [ -z "$session_id" ]; then
+    echo "Failed to extract Codex session ID from init JSONL." >&2
+    exit 1
+  fi
+  printf '%s\n' "$session_id" > "$session_file"
+fi
+
+log "Using Codex session: $session_id"
+
+ensure_tmux
+
+generate_tasks_batch() {
+  local out_file="$1"
+  local gen_prompt="$prompt_dir/GEN_tasks_$(date +%Y%m%d_%H%M%S).txt"
+  local gen_json="$log_dir/GEN_tasks_$(date +%Y%m%d_%H%M%S).jsonl"
+  cat > "$gen_prompt" <<EOF
+You are being invoked by scripts/auto-autonovelwriter-development.sh.
+
+Read:
+- $context_doc
+- $spec_doc
+- $state_file (if exists)
+- $queue_file
+
+Task: propose the NEXT batch of at most $batch_size small development tasks to improve AutoNovelWriter.
+
+Constraints:
+- Tasks must be small and independently verifiable.
+- Prioritize: runnable backend + loadable PWA + observable pipeline + chat pipe.
+- Do NOT do any implementation now.
+- Append tasks to: $out_file
+
+Output format:
+- Write JSONL (one JSON object per line), no surrounding markdown, no header.
+- Schema:
+  {\"id\": \"T###_<slug>\", \"title\": \"...\", \"notes\": \"...\", \"acceptance\": [\"...\"], \"tags\": [\"...\"]}\n
+Rules:
+- IDs must be unique and not conflict with existing IDs in $queue_file.
+- Keep titles short. Notes can be longer.
+EOF
+  run_codex_resume_from_file "$session_id" "$gen_prompt" "$gen_json"
+  if [ ! -s "$out_file" ]; then
+    echo "Task generation did not produce a non-empty file: $out_file" >&2
+    exit 1
+  fi
+  log "Generated tasks batch in: $out_file"
+}
+
+iterate_tasks() {
+  python3 - "$queue_file" "$state_file" <<'PY'
+import json, sys, os
+queue = sys.argv[1]
+state = sys.argv[2]
+done = set()
+if os.path.exists(state):
+  with open(state, "r", encoding="utf-8") as f:
+    for line in f:
+      parts = line.rstrip("\n").split("\t")
+      if len(parts) >= 2 and parts[1] == "done":
+        done.add(parts[0])
+with open(queue, "r", encoding="utf-8") as f:
+  for line in f:
+    line = line.strip()
+    if not line:
+      continue
+    try:
+      obj = json.loads(line)
+    except Exception:
+      continue
+    tid = obj.get("id") or ""
+    title = obj.get("title") or ""
+    if not tid or tid in done:
+      continue
+    print(json.dumps({"id": tid, "title": title}, ensure_ascii=False))
+PY
+}
+
+write_prompt_for_stage() {
+  local task_id="$1"
+  local task_title="$2"
+  local stage="$3"
+  local out_prompt="$4"
+  local step_dir="$steps_dir/$task_id"
+
+  cat > "$out_prompt" <<EOF
+You are being invoked by scripts/auto-autonovelwriter-development.sh (ONE shared Codex session).
+
+Overall goal (repeat for every step):
+- Build AutoNovelWriter: Scratch-like PWA controller + Python Tornado backend.
+- Light theme by default.
+- Must support chat + folder-based inbox/outbox interruption during a running pipeline.
+
+Read these first:
+- $context_doc
+- $spec_doc
+- Existing code under: $backend_root/ and $pwa_root/
+
+This step:
+- Task ID: $task_id
+- Task title: $task_title
+- Stage: $stage (strict)
+
+Required workspace/output paths:
+- Step working dir: $step_dir/
+- Write your outputs (notes/plan/critique/summary) into files under $step_dir/:
+  - plan: $step_dir/plan.md
+  - critique: $step_dir/critique.md
+  - summary: $step_dir/summary.md
+
+Operational constraints:
+- Do NOT commit or push. Do NOT create new remotes. The outer driver handles git.
+- Prefer small, safe changes. Keep the app runnable.
+- No secrets in git. If you add config, create .env.example and read env vars.
+
+Stage-specific instructions:
+EOF
+
+  case "$stage" in
+    plan)
+      cat >> "$out_prompt" <<EOF
+- Do NOT modify app code in this stage.
+- Produce a short plan in: $step_dir/plan.md
+- Plan must include:
+  - files to change/create
+  - acceptance checklist
+  - minimal verification commands
+EOF
+      ;;
+    implement)
+      cat >> "$out_prompt" <<EOF
+- Implement the task. Keep scope tight and verifiable.
+- Ensure runtime defaults exist under: $runtime_root/ (create dirs/files as needed).
+- After implementing, run minimal verification commands (no long-running daemons).
+- Write a brief implementation note into: $step_dir/summary.md (append section \"## Implement\").
+EOF
+      ;;
+    critique)
+      cat >> "$out_prompt" <<EOF
+- Do NOT make code changes in this stage.
+- Review repo changes vs acceptance and list issues in: $step_dir/critique.md
+- Focus on: correctness, operability, resumability, light theme, path/config clarity.
+EOF
+      ;;
+    fix)
+      cat >> "$out_prompt" <<EOF
+- Apply fixes for issues found in $step_dir/critique.md.
+- Keep fixes minimal; rerun verification commands.
+- Append a \"## Fixes\" section to: $step_dir/summary.md
+EOF
+      ;;
+    summary)
+      cat >> "$out_prompt" <<EOF
+- Do NOT modify app code in this stage unless strictly necessary for docs/logging.
+- Ensure $step_dir/summary.md exists and is coherent.
+- Add a short \"## Next\" section listing 2-4 concrete follow-ups.
+EOF
+      ;;
+    *)
+      echo "Invalid stage: $stage" >&2
+      exit 1
+      ;;
+  esac
+}
+
+process_one_task() {
+  local task_json="$1"
+  local task_id
+  local task_title
+  task_id="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["id"])' "$task_json")"
+  task_title="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["title"])' "$task_json")"
+
+  local step_dir="$steps_dir/$task_id"
+  mkdir -p "$step_dir"
+
+  log "Processing task: $task_id — $task_title"
+  state_mark "$task_id" "running"
+
+  local stage
+  for stage in plan implement critique fix summary; do
+    local pfile="$prompt_dir/${task_id}_${stage}.txt"
+    local jfile="$log_dir/${task_id}_${stage}.jsonl"
+    write_prompt_for_stage "$task_id" "$task_title" "$stage" "$pfile"
+    log "Codex stage: $task_id/$stage"
+    run_codex_resume_from_file "$session_id" "$pfile" "$jfile"
+  done
+
+  if [ -d "$backend_root" ]; then
+    python3 -m compileall "$backend_root" >/dev/null 2>&1 || true
+  fi
+
+  tmux_restart_panes_if_running
+
+  local body_file="$step_dir/commit_body.txt"
+  {
+    printf '%s\n\n' "AutoNovelWriter task: $task_id"
+    printf '%s\n\n' "See step summary: $step_dir/summary.md"
+  } > "$body_file"
+  git_commit_push_if_dirty "AutoNovelWriter: $task_title" "$body_file"
+
+  state_mark "$task_id" "done"
+  log "Task done: $task_id"
+}
+
+batch=0
+while true; do
+  batch=$((batch+1))
+  if [ "$max_batches" -ne 0 ] && [ "$batch" -gt "$max_batches" ]; then
+    log "Reached --max-batches=$max_batches; stopping."
+    break
+  fi
+
+  if [ -f "$stop_file" ]; then
+    log "Stop file present ($stop_file). Stopping before starting batch $batch."
+    break
+  fi
+
+  pending_count="$(iterate_tasks | wc -l | tr -d ' ')"
+  if [ "$pending_count" -eq 0 ]; then
+    log "No pending tasks. Generating a new batch..."
+    batch_file="$tasks_dir/tasks_batch_$(date +%Y%m%d_%H%M%S).jsonl"
+    generate_tasks_batch "$batch_file"
+    cat "$batch_file" >> "$queue_file"
+  fi
+
+  log "Starting batch $batch"
+  iterate_tasks | while read -r task_meta; do
+    if [ -f "$stop_file" ]; then
+      log "Stop file present ($stop_file). Stopping before next task."
+      break
+    fi
+    process_one_task "$task_meta"
+  done
+  log "Finished batch $batch"
+done
+
+log "AutoNovelWriter auto-development driver finished."
+

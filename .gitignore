@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Node (if introduced later)
+node_modules/
+
+# OS junk
+.DS_Store
+Thumbs.db
+__MACOSX/
+._*
+
+# AutoNovelWriter runtime (never commit user chat/task artifacts)
+autonovelwriter/runtime/io/inbox/*
+autonovelwriter/runtime/io/outbox/*
+autonovelwriter/runtime/logs/*
+autonovelwriter/runtime/state/*
+autonovelwriter/runtime/tasks/*
+
+# Auto-dev driver artifacts (keep plans/steps/tasks, ignore raw codex JSONL + session/locks)
+references/autonovelwriter_dev/logs/
+references/autonovelwriter_dev/.codex_autonovelwriter_session
+references/autonovelwriter_dev/*.lock
+

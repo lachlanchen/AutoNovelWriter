@@ -54,6 +54,8 @@ The backend serves it via `GET/POST /api/pipeline` as:
 - `pipeline` JSON (derived, flattened list for simple block rendering)
 - `pipeline_ast` (derived, nested structure used for loops + indentation UI)
 
+The runner executes steps derived from the same v2 parser/AST so what the PWA displays matches what runs.
+
 Pipeline script v2 supports nesting:
 - `LOOP <n>` introduces a loop block
 - children are indented by 2 spaces per level

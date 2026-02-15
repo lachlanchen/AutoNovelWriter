@@ -20,3 +20,6 @@ Verification (no TCP binds):
 1. Implement LOOP repeat semantics in the runner (deterministic counters + persisted resume pointers).
 2. Add a runner-visible “pipeline invalid” state (persisted) and surface it in the PWA instead of relying on logs.
 3. Extend the pipeline script grammar for the desired default layout (`ROUND`, `FOREACH_TASK`, editable prompts/params) and update script <-> blocks rendering accordingly.
+
+## README
+- Noted in `README.md` that the runner executes steps derived from the same v2 pipeline parser/AST as the PWA (`/api/pipeline`), so displayed order matches execution order.

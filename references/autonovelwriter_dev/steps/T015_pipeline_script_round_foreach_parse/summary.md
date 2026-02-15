@@ -26,3 +26,9 @@ Verification (no TCP binds):
 
 ## I18N
 - Added i18n keys for the new block container labels shown in the PWA pipeline blocks list (`ROUND`, `FOREACH_TASK`) and the `foreach` badge, for all required UI languages.
+
+## Next
+1. Runner semantics: implement execution for `ROUND` and `FOREACH_TASK` with persisted loop counters and resume pointers in state.
+2. PWA pipeline UI: allow creating/editing container blocks (`ROUND` repeat count, `FOREACH_TASK`) rather than only parsing them from script.
+3. Canonicalization: ensure backend `/api/pipeline` always returns a script that includes `ROUND`/`FOREACH_TASK` when present in AST, and that UI round-trips without losing them.
+4. Add non-socket tests for parse/render/normalize parity between backend and PWA fallback (golden scripts).

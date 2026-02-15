@@ -1,0 +1,16 @@
+{
+  "id": "T010_novel_settings_separate_from_ui_lang",
+  "title": "Novel settings: language + UX options",
+  "notes": "Add novel-writing settings that are explicitly separate from UI language: novel language, tone, target length, POV, etc. Persist via `/api/settings` under a `novel` namespace and expose in PWA Settings UI (without changing UI labels).",
+  "acceptance": [
+    "Settings persist under settings.novel.* and survive backend restart",
+    "Changing UI language does not change novel language setting and vice versa",
+    "PWA displays and edits novel settings via /api/settings"
+  ],
+  "tags": [
+    "pwa",
+    "backend",
+    "settings",
+    "novel"
+  ]
+}

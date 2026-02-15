@@ -11,3 +11,7 @@
 Verification notes:
 - No TCP-binding tests run in this sandbox; used syntax-only checks.
 
+## Fixes
+- Canonical rendering now preserves v1 header when no loops exist; v2 header is used only when a `LOOP` node exists in `pipeline_ast`.
+- Normalized v2 `warnings` and `errors` objects to use a consistent `code` key (plus `line` and `text`).
+- WS `pipeline_updated` now includes the canonical `script` and `script_hash` (SHA-256); API responses include `script_hash` on successful save and `canonical_hash` from `/api/pipeline/validate`.

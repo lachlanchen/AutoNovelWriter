@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -171,7 +172,12 @@ PIPELINE_BLOCK_TYPES = [
     "commit_push",
 ]
 
-PIPELINE_SCRIPT_HEADER = "# AutoNovelWriter pipeline script v2\n"
+PIPELINE_SCRIPT_HEADER_V1 = "# AutoNovelWriter pipeline script v1\n"
+PIPELINE_SCRIPT_HEADER_V2 = "# AutoNovelWriter pipeline script v2\n"
+
+
+def _sha256_hex(text: str) -> str:
+    return hashlib.sha256((text or "").encode("utf-8", errors="replace")).hexdigest()
 
 
 def default_pipeline() -> dict:
@@ -238,10 +244,27 @@ def _flatten_ast_steps(ast: dict) -> list:
     return out
 
 
+def _ast_has_loop(ast: dict) -> bool:
+    def walk(node) -> bool:
+        if not isinstance(node, dict):
+            return False
+        k = node.get("kind")
+        if k == "loop":
+            return True
+        kids = node.get("children")
+        if isinstance(kids, list):
+            for c in kids:
+                if walk(c):
+                    return True
+        return False
+
+    return walk(ast)
+
+
 def render_pipeline_script(pipeline: dict) -> str:
     # Render from the derived JSON "blocks" list (no nesting). This keeps the
     # rest of the codebase stable; v2 nesting is handled by render_pipeline_script_from_ast().
-    lines = [PIPELINE_SCRIPT_HEADER.rstrip("\n")]
+    lines = [PIPELINE_SCRIPT_HEADER_V1.rstrip("\n")]
     blocks = pipeline.get("blocks") if isinstance(pipeline, dict) else None
     if not isinstance(blocks, list):
         blocks = default_pipeline()["blocks"]
@@ -257,7 +280,8 @@ def render_pipeline_script(pipeline: dict) -> str:
 
 
 def render_pipeline_script_from_ast(ast: dict) -> str:
-    lines = [PIPELINE_SCRIPT_HEADER.rstrip("\n")]
+    header = PIPELINE_SCRIPT_HEADER_V2 if _ast_has_loop(ast) else PIPELINE_SCRIPT_HEADER_V1
+    lines = [header.rstrip("\n")]
 
     def emit(node: dict, level: int) -> None:
         if not isinstance(node, dict):
@@ -329,7 +353,7 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
         while stack and level < stack[-1][0]:
             expected, kids, loop_line = stack[-1]
             if loop_line is not None and not kids:
-                errors.append({"line": loop_line, "error": "loop_empty", "text": "LOOP"})
+                errors.append({"line": loop_line, "code": "loop_empty", "text": "LOOP"})
             stack.pop()
 
     def leading_spaces(raw: str) -> tuple[int, bool]:
@@ -349,10 +373,10 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
 
         sp, has_tab = leading_spaces(raw)
         if has_tab:
-            errors.append({"line": ln, "error": "tab_indent_not_allowed", "text": raw})
+            errors.append({"line": ln, "code": "tab_indent_not_allowed", "text": raw})
             continue
         if sp % 2 != 0:
-            errors.append({"line": ln, "error": "bad_indent_not_multiple_of_2", "text": raw})
+            errors.append({"line": ln, "code": "bad_indent_not_multiple_of_2", "text": raw})
             continue
         lvl = sp // 2
 
@@ -360,7 +384,7 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
         close_frames_to(lvl)
         if lvl > current_level():
             # Indent jumped deeper than the current open container expects.
-            errors.append({"line": ln, "error": "indent_jump", "text": raw})
+            errors.append({"line": ln, "code": "indent_jump", "text": raw})
             continue
 
         line = raw.strip()
@@ -369,15 +393,15 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
 
         if verb == "LOOP":
             if len(parts) < 2:
-                errors.append({"line": ln, "error": "loop_missing_repeat", "text": raw})
+                errors.append({"line": ln, "code": "loop_missing_repeat", "text": raw})
                 continue
             try:
                 repeat = int(parts[1])
             except Exception:
-                errors.append({"line": ln, "error": "loop_repeat_not_int", "text": raw})
+                errors.append({"line": ln, "code": "loop_repeat_not_int", "text": raw})
                 continue
             if repeat <= 0 or repeat > 10_000:
-                errors.append({"line": ln, "error": "loop_repeat_out_of_range", "text": raw})
+                errors.append({"line": ln, "code": "loop_repeat_out_of_range", "text": raw})
                 continue
 
             loop_children = []
@@ -389,18 +413,18 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
 
         if verb in ("STEP", "DISABLED"):
             if len(parts) < 2:
-                warnings.append({"line": ln, "warning": "too_few_tokens", "text": raw})
+                warnings.append({"line": ln, "code": "too_few_tokens", "text": raw})
                 continue
             t = parts[1].strip()
             if t not in allowed:
-                warnings.append({"line": ln, "warning": "unknown_type", "text": raw})
+                warnings.append({"line": ln, "code": "unknown_type", "text": raw})
                 continue
             enabled = verb == "STEP"
             stack[-1][1].append(_ast_step(t, enabled))
             continue
 
         # Unknown verbs are non-fatal but must never be silent.
-        warnings.append({"line": ln, "warning": "unknown_verb", "text": raw})
+        warnings.append({"line": ln, "code": "unknown_verb", "text": raw})
 
     # Close remaining frames to catch empty loops.
     close_frames_to(0)
@@ -558,10 +582,13 @@ class PipelineHandler(BaseHandler):
             save_pipeline_script(self._paths, canonical)
             save_pipeline(self._paths, pipeline)
             save_pipeline_ast(self._paths, pipeline_ast)
+            script_hash = _sha256_hex(canonical)
             self._hub.broadcast(
                 {
                     "type": "pipeline_updated",
                     "ts_ms": _now_ms(),
+                    "script": canonical,
+                    "script_hash": script_hash,
                     "warnings": warnings,
                 }
             )
@@ -569,6 +596,7 @@ class PipelineHandler(BaseHandler):
                 {
                     "ok": True,
                     "script": canonical,
+                    "script_hash": script_hash,
                     "pipeline": pipeline,
                     "pipeline_ast": pipeline_ast,
                     "warnings": warnings,
@@ -606,9 +634,20 @@ class PipelineHandler(BaseHandler):
         save_pipeline_script(self._paths, canonical)
         save_pipeline(self._paths, pipeline)
         save_pipeline_ast(self._paths, pipeline_ast)
-        self._hub.broadcast({"type": "pipeline_updated", "ts_ms": _now_ms(), "warnings": []})
+        script_hash = _sha256_hex(canonical)
+        self._hub.broadcast(
+            {"type": "pipeline_updated", "ts_ms": _now_ms(), "script": canonical, "script_hash": script_hash, "warnings": []}
+        )
         self.write_json(
-            {"ok": True, "script": canonical, "pipeline": pipeline, "pipeline_ast": pipeline_ast, "warnings": [], "errors": []}
+            {
+                "ok": True,
+                "script": canonical,
+                "script_hash": script_hash,
+                "pipeline": pipeline,
+                "pipeline_ast": pipeline_ast,
+                "warnings": [],
+                "errors": [],
+            }
         )
 
 
@@ -628,11 +667,13 @@ class PipelineValidateHandler(BaseHandler):
         script = body.get("script", "")
         pipeline, pipeline_ast, warnings, errors = parse_pipeline_script_v2(script)
         canonical = render_pipeline_script_from_ast(pipeline_ast) if not errors else ""
+        canonical_hash = _sha256_hex(canonical) if canonical else ""
         return self.write_json(
             {
                 "ok": not bool(errors),
                 "script": script,
                 "canonical": canonical,
+                "canonical_hash": canonical_hash,
                 "pipeline": pipeline,
                 "pipeline_ast": pipeline_ast,
                 "warnings": warnings,

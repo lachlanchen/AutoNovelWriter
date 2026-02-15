@@ -1,0 +1,16 @@
+{
+  "id": "T017_meta_tasks_generate_stub",
+  "title": "Runner: meta_tasks_generate writes task batch",
+  "notes": "Implement a stub pipeline action meta_tasks_generate that creates a new tasks batch folder under runtime (standardized layout) and writes a JSONL task list derived from current materials + recent interactions (placeholder content OK). Must be resumable and observable via WS/log, and must not conflict with driver task queue semantics.",
+  "acceptance": [
+    "Running a pipeline containing meta_tasks_generate creates a new batch folder and at least one JSONL file on disk",
+    "WS/log includes the created batch path and task count",
+    "Task status persists across restart and records meta_tasks_generate completion with output paths"
+  ],
+  "tags": [
+    "backend",
+    "runner",
+    "tasks",
+    "storage"
+  ]
+}

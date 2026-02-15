@@ -8,7 +8,7 @@ Usage: scripts/auto-autonovelwriter-development.sh [options]
 Auto-develops the "AutoNovelWriter" Scratch-like PWA + Tornado backend by
 calling Codex non-interactively in ONE shared session, task-by-task:
 
-  plan -> implement -> critique -> fix -> summary -> commit+push
+  plan -> implement -> debug -> fix -> summary -> commit+push
 
 It keeps a resumable queue/state under:
   references/autonovelwriter_dev/
@@ -38,6 +38,9 @@ Notes:
   - This script is intentionally redundant in prompts. Each Codex step must be
     self-contained and restate the overall goal.
   - Commits/pushes are done by THIS driver, not by Codex.
+  - The *app being built* also has its own pipelines (novel-writing vs app-dev)
+    and a pipeline-script visualization module. Do not confuse those with the
+    driver stages above.
 USAGE
 }
 
@@ -156,10 +159,25 @@ Goal: build a **Scratch-like PWA** that controls an automated novel-writing / ap
 The PWA must allow the user to **interrupt** and “chip in” ideas during execution via **chat** and via a
 folder-based **inbox/outbox**. The system must be resumable, observable, and operable.
 
+## 0) Core Concepts
+- **In-app pipelines (user-controlled)**:
+  - **Novel pipeline**: plan -> write -> multi-aspect critique/fix -> summary/log -> commit/push.
+  - **App-dev pipeline**: plan -> implement -> debug -> fix -> summary/log -> commit/push.
+- **Driver stages (developer-controlled)**: this repository uses `scripts/auto-autonovelwriter-development.sh`
+  to build the app using `plan -> implement -> debug -> fix -> summary -> commit+push`. Do not conflate this
+  with the in-app pipelines above.
+- **Pipeline Script (formatted shell-ish text)**:
+  - The app must support importing a pipeline script written by other agents/tools.
+  - The app must visualize that script as Scratch-like blocks (tasks/steps/actions).
+  - The app must generate/export a formatted script from the block representation.
+
 ## 1) UI (Scratch-like)
 - Light theme by default (no dark-first UI).
-- Drag & drop “blocks” that form a pipeline:
-  - plan -> write -> critique_story -> fix_story -> critique_tone -> fix_tone -> critique_dialogue -> fix_dialogue -> critique_character -> fix_character -> summary -> log -> commit_push
+- Drag & drop “blocks” that form a pipeline (pipeline templates are built-in and editable).
+- A Script panel:
+  - shows the formatted pipeline script (source of truth for long-running automation)
+  - `Parse Script -> Blocks` and `Render Blocks -> Script`
+  - import/export script files
 - Blocks are composable; users can reorder, insert, disable, and loop.
 - A “while loop” mode: when the current batch finishes, generate the next batch of tasks automatically until stopped.
 
@@ -178,16 +196,27 @@ folder-based **inbox/outbox**. The system must be resumable, observable, and ope
   - Agent SDK selection: codex / copilot / gemini / claude (stub OK initially, codex first)
   - Model selection for LLM and vision model (vision can be unused initially but config must exist)
   - Paths: input/output/queue/log/summary directories, lock file path
+  - Materials/workspace roots for novel projects (chapter/paragraph targeting)
 
 ## 4) Backend
 - Python Tornado server.
 - APIs:
   - health
   - settings get/set
+  - pipeline get/set (blocks JSON)
+  - pipeline script get/set (formatted text)
+  - pipeline script parse/render (script <-> blocks)
   - task queue CRUD
   - run control (start/pause/resume/stop)
   - chat history
 - WebSocket: push events (chat messages, task status, logs).
+
+## 4.1) Runner Semantics (In-App)
+- The novel pipeline must support loops at different granularities:
+  - chapter-level refinement
+  - paragraph-level refinement
+  - free tasks generated from story/tone/dialogue/character/conflict/worldbuilding gaps
+- Every run must be interruptible via chat + inbox/outbox, and resumable from persisted state.
 
 ## 5) PWA
 - Manifest + Service Worker (cache static assets, offline shell).
@@ -210,6 +239,7 @@ Overall goal:
 - Implement the system described in: \`$spec_doc\`.
 - Tech: Python Tornado backend + Scratch-like PWA (light theme).
 - Key feature: user can interrupt a running pipeline via chat UI and folder-based inbox/outbox.
+- Key feature: pipeline-script visualization (formatted script <-> blocks/tasks/steps/actions).
 
 Hard constraints:
 - Keep steps small and resumable.
@@ -217,6 +247,10 @@ Hard constraints:
 - Use file-based workspace defaults under: \`$runtime_root/\` (configurable via settings).
 - Provide explicit paths for logs/state/tasks/summaries.
 - Do NOT commit/push in Codex steps: the outer driver commits/pushes.
+- Do NOT conflate:
+  - driver stages used to build this repo (plan/implement/debug/fix/summary)
+  - in-app pipelines used to write/refine novels (plan/write/critique/fix/.../commit_push)
+  - in-app pipelines used to develop apps (plan/implement/debug/fix/.../commit_push)
 
 App paths (write here only):
 - Backend: \`$backend_root/\`
@@ -490,6 +524,8 @@ You are being invoked by: scripts/auto-autonovelwriter-development.sh
 
 Store these constraints for subsequent prompts:
 - Goal: implement AutoNovelWriter per docs/autonovelwriter_spec.md (Scratch-like light-theme PWA + Tornado backend).
+- AutoNovelWriter must support a pipeline-script visualization module (formatted script <-> blocks/tasks JSON).
+- Do NOT confuse driver stages with in-app pipelines (novel-writing vs app-development).
 - Work only inside this repository: $repo_root
 - Always keep steps small and resumable.
 - Do NOT commit/push: the outer driver will do git operations.
@@ -546,7 +582,11 @@ Task: propose the NEXT batch of at most $batch_size small development tasks to i
 
 Constraints:
 - Tasks must be small and independently verifiable.
-- Prioritize: runnable backend + loadable PWA + observable pipeline + chat pipe.
+- Prioritize:
+  - runnable backend + loadable PWA
+  - observable pipeline + chat pipe
+  - pipeline-script visualization: script <-> blocks translation + import/export
+  - clear separation of in-app pipelines (novel-writing vs app-development)
 - Do NOT do any implementation now.
 - Append tasks to: $out_file
 
@@ -609,6 +649,11 @@ Overall goal (repeat for every step):
 - Build AutoNovelWriter: Scratch-like PWA controller + Python Tornado backend.
 - Light theme by default.
 - Must support chat + folder-based inbox/outbox interruption during a running pipeline.
+- Must support a pipeline-script visualization module:
+  - Parse a formatted pipeline script (shell-ish text) into structured tasks/steps/actions/blocks.
+  - Render the structured pipeline back into a formatted script the UI can generate/export.
+- Do NOT confuse driver stages (plan/implement/debug/fix/summary) with the *in-app* pipelines
+  (novel-writing vs app-development) that AutoNovelWriter controls.
 
 Read these first:
 - $context_doc
@@ -623,9 +668,9 @@ This step:
 
 Required workspace/output paths:
 - Step working dir: $step_dir/
-- Write your outputs (notes/plan/critique/summary) into files under $step_dir/:
+- Write your outputs (notes/plan/debug/summary) into files under $step_dir/:
   - plan: $step_dir/plan.md
-  - critique: $step_dir/critique.md
+  - debug: $step_dir/debug.md
   - summary: $step_dir/summary.md
 
 Operational constraints:
@@ -651,6 +696,9 @@ EOF
       cat >> "$out_prompt" <<EOF
 - Implement the task. Keep scope tight and verifiable.
 - Ensure runtime defaults exist under: $runtime_root/ (create dirs/files as needed).
+- When implementing pipeline behavior, treat the formatted pipeline script as the canonical artifact:
+  - backend stores script + structured JSON
+  - UI can import/export script and visualize it as blocks
 - After implementing, run minimal verification commands:
   - Do NOT bind TCP ports or start servers inside this Codex step (sandbox may deny with PermissionError).
   - Prefer syntax/import/build checks (e.g., py_compile/compileall, eslint/typecheck, unit tests).
@@ -658,16 +706,19 @@ EOF
 - Write a brief implementation note into: $step_dir/summary.md (append section \"## Implement\").
 EOF
       ;;
-    critique)
+    debug)
       cat >> "$out_prompt" <<EOF
 - Do NOT make code changes in this stage.
-- Review repo changes vs acceptance and list issues in: $step_dir/critique.md
-- Focus on: correctness, operability, resumability, light theme, path/config clarity.
+- Review repo changes vs acceptance and list issues in: $step_dir/debug.md
+- Focus on: correctness, operability, resumability, light theme, path/config clarity,
+  and the separation between:
+  - driver stages (this script) vs in-app pipelines
+  - pipeline script <-> blocks JSON translation
 EOF
       ;;
     fix)
       cat >> "$out_prompt" <<EOF
-- Apply fixes for issues found in $step_dir/critique.md.
+- Apply fixes for issues found in $step_dir/debug.md.
 - Keep fixes minimal; rerun verification commands:
   - Do NOT bind TCP ports or start servers inside this Codex step.
   - Prefer syntax/import/build checks only.
@@ -721,7 +772,7 @@ PY
   state_mark "$task_id" "running"
 
   local stage
-  for stage in plan implement critique fix summary; do
+  for stage in plan implement debug fix summary; do
     local pfile="$prompt_dir/${task_id}_${stage}.txt"
     local jfile="$log_dir/${task_id}_${stage}.jsonl"
     write_prompt_for_stage "$task_id" "$task_title" "$stage" "$pfile"

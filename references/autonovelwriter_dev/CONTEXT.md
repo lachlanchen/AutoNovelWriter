@@ -6,6 +6,7 @@ Overall goal:
 - Implement the system described in: `docs/autonovelwriter_spec.md`.
 - Tech: Python Tornado backend + Scratch-like PWA (light theme).
 - Key feature: user can interrupt a running pipeline via chat UI and folder-based inbox/outbox.
+- Key feature: pipeline-script visualization (formatted script <-> blocks/tasks/steps/actions).
 
 Hard constraints:
 - Keep steps small and resumable.
@@ -13,6 +14,10 @@ Hard constraints:
 - Use file-based workspace defaults under: `autonovelwriter/runtime/` (configurable via settings).
 - Provide explicit paths for logs/state/tasks/summaries.
 - Do NOT commit/push in Codex steps: the outer driver commits/pushes.
+- Do NOT conflate:
+  - driver stages used to build this repo (plan/implement/debug/fix/summary)
+  - in-app pipelines used to write/refine novels (plan/write/critique/fix/.../commit_push)
+  - in-app pipelines used to develop apps (plan/implement/debug/fix/.../commit_push)
 
 App paths (write here only):
 - Backend: `autonovelwriter/backend/`

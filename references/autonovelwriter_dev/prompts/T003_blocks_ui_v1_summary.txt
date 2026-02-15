@@ -1,0 +1,34 @@
+You are being invoked by scripts/auto-autonovelwriter-development.sh (ONE shared Codex session).
+
+Overall goal (repeat for every step):
+- Build AutoNovelWriter: Scratch-like PWA controller + Python Tornado backend.
+- Light theme by default.
+- Must support chat + folder-based inbox/outbox interruption during a running pipeline.
+
+Read these first:
+- references/autonovelwriter_dev/CONTEXT.md
+- docs/autonovelwriter_spec.md
+- Existing code under: autonovelwriter/backend/ and autonovelwriter/pwa/
+- Task definition JSON (notes + acceptance): references/autonovelwriter_dev/steps/T003_blocks_ui_v1/task.json
+
+This step:
+- Task ID: T003_blocks_ui_v1
+- Task title: Scratch-like pipeline blocks v1 (drag/drop, task list)
+- Stage: summary (strict)
+
+Required workspace/output paths:
+- Step working dir: references/autonovelwriter_dev/steps/T003_blocks_ui_v1/
+- Write your outputs (notes/plan/critique/summary) into files under references/autonovelwriter_dev/steps/T003_blocks_ui_v1/:
+  - plan: references/autonovelwriter_dev/steps/T003_blocks_ui_v1/plan.md
+  - critique: references/autonovelwriter_dev/steps/T003_blocks_ui_v1/critique.md
+  - summary: references/autonovelwriter_dev/steps/T003_blocks_ui_v1/summary.md
+
+Operational constraints:
+- Do NOT commit or push. Do NOT create new remotes. The outer driver handles git.
+- Prefer small, safe changes. Keep the app runnable.
+- No secrets in git. If you add config, create .env.example and read env vars.
+
+Stage-specific instructions:
+- Do NOT modify app code in this stage unless strictly necessary for docs/logging.
+- Ensure references/autonovelwriter_dev/steps/T003_blocks_ui_v1/summary.md exists and is coherent.
+- Add a short \"## Next\" section listing 2-4 concrete follow-ups.

@@ -3,10 +3,80 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f4ee" />
+
     <title>AutoNovelWriter</title>
+
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="app.css" />
+
+    <meta name="description" content="Scratch-like PWA controller for an automated novel-writing pipeline." />
   </head>
   <body>
-    <h1>AutoNovelWriter PWA Placeholder</h1>
-    <p>Task T002 will replace this with the real Scratch-like UI.</p>
+    <div id="app" class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="mark" aria-hidden="true"></div>
+          <div class="brand-text">
+            <div class="brand-title">AutoNovelWriter</div>
+            <div class="brand-sub">Scratch-like pipeline controller</div>
+          </div>
+        </div>
+
+        <div class="controls" aria-label="Run controls">
+          <button class="btn" disabled>Start</button>
+          <button class="btn" disabled>Pause</button>
+          <button class="btn" disabled>Resume</button>
+          <button class="btn" disabled>Stop</button>
+        </div>
+      </header>
+
+      <main class="main">
+        <section class="stage" aria-label="Pipeline">
+          <div class="panel-head">
+            <div class="panel-title">Pipeline</div>
+            <div class="panel-meta">(T003 will add blocks)</div>
+          </div>
+          <div class="stage-body">
+            <div class="placeholder">
+              <div class="placeholder-title">Blocks go here</div>
+              <div class="placeholder-text">Drag-and-drop pipeline blocks will be implemented in the next steps.</div>
+              <div class="placeholder-text">This shell focuses on light-theme UI + WebSocket chat/events.</div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="chat" aria-label="Chat">
+          <div class="panel-head">
+            <div class="panel-title">Chat</div>
+            <div id="conn" class="pill" title="WebSocket status">disconnected</div>
+          </div>
+
+          <ol id="chatLog" class="chat-log" aria-label="Chat log"></ol>
+
+          <form id="chatForm" class="chat-form" autocomplete="off">
+            <input
+              id="chatInput"
+              class="chat-input"
+              type="text"
+              placeholder="Type a message (echoed over WS for now)…"
+              aria-label="Chat input"
+            />
+            <button id="chatSend" class="btn btn-primary" type="submit">Send</button>
+          </form>
+
+          <div class="hint">
+            Backend default: <code id="backendHint">ws://127.0.0.1:8787/ws</code>
+          </div>
+        </aside>
+      </main>
+
+      <footer class="footer">
+        <span class="muted">Offline shell enabled via Service Worker.</span>
+      </footer>
+    </div>
+
+    <script src="app.js" defer></script>
   </body>
 </html>

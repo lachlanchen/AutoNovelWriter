@@ -11,3 +11,5 @@
 Verification (no TCP binds):
 - `node --check autonovelwriter/pwa/app.js`
 
+## Fixes
+- Added a slow outputs poll (with backoff) so the outputs list stays fresh even when WS is disconnected (`autonovelwriter/pwa/app.js`).

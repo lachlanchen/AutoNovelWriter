@@ -2268,4 +2268,23 @@
     });
   }
   setTimeout(tickMaterialsPoll, materialsPollMs);
+
+  // Poll outputs index at a slower cadence so the panel stays fresh even if WS is down.
+  let outputsPollN = 0;
+  let outputsPollMs = 5000;
+  function tickOutputsPoll() {
+    const url = backendApiUrl('/api/outputs/index');
+    if (!url) {
+      outputsPollMs = Math.min(20000, Math.floor(outputsPollMs * 1.7));
+      setTimeout(tickOutputsPoll, outputsPollMs);
+      return;
+    }
+    outputsPollN += 1;
+    loadOutputsIndex().then((obj) => {
+      if (obj) outputsPollMs = 5000;
+      else outputsPollMs = Math.min(20000, Math.floor(outputsPollMs * 1.7));
+      setTimeout(tickOutputsPoll, outputsPollMs);
+    });
+  }
+  setTimeout(tickOutputsPoll, outputsPollMs);
 })();

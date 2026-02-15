@@ -120,7 +120,7 @@ Current fields (editable in the PWA Settings modal):
 
 ## Driver Workflow (Auto-Dev)
 
-`scripts/auto-autonovelwriter-development.sh` runs a resumable Codex-driven loop over tasks under `references/autonovelwriter_dev/` and **will commit/push after each stage** (plan/implement/debug/fix/summary/update_readme).
+`scripts/auto-autonovelwriter-development.sh` runs a resumable Codex-driven loop over tasks under `references/autonovelwriter_dev/` and **will commit/push after each stage** (plan/implement/debug/fix/i18n/summary/update_readme).
 
 Useful controls:
 - Stop after current task: `touch references/autonovelwriter_dev/STOP`
@@ -129,7 +129,7 @@ Useful controls:
 
 ## Contents
 - `docs/autonovelwriter_spec.md`: Product spec for the Scratch-like controller (chat + folder pipe + start/pause/stop + settings).
-- `scripts/auto-autonovelwriter-development.sh`: Auto-develop the AutoNovelWriter app itself (task loop: plan -> implement -> debug -> fix -> summary -> update_readme -> commit+push).
+- `scripts/auto-autonovelwriter-development.sh`: Auto-develop the AutoNovelWriter app itself (task loop: plan -> implement -> debug -> fix -> i18n -> summary -> update_readme -> commit+push).
 - `docs/auto-development-guide.md`: Bilingual (EN/ZH) philosophy and requirements for a long-running, resumable auto-development agent.
 - `docs/ORDERING_RATIONALE.md`: Example rationale for sequencing screenshot-driven steps.
 - `scripts-legacy/`: older automation scripts kept for reference but not used by AutoNovelWriter.

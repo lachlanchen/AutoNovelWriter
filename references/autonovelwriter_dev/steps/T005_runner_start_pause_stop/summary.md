@@ -30,3 +30,9 @@ Verification notes:
 - Runner loop guard: prevent overlapping runner loops from rapid start/resume calls by tracking a single active `_run_loop`.
 - Pipeline script feedback: `/api/pipeline` now returns parse warnings (unknown verbs/types) and the PWA surfaces a small warning snippet.
 - PWA operability: chat log is now capped to 300 entries to avoid UI degradation during long runs.
+
+## Next
+1. Add task queue CRUD endpoints + UI (list tasks, enqueue/dequeue, reset status) to replace the current seeded `tasks.json` approach.
+2. Improve pipeline script format to support parameters and loops (while keeping backwards-compat and a version marker), and ensure script parse warnings are clearly displayed (not as “err” chat).
+3. Split runner output from chat: add a dedicated runner/log panel with filtering and severity levels.
+4. Add cooperative cancellation hooks for real work units (per-block checkpoints) and a “resume from last block” strategy.

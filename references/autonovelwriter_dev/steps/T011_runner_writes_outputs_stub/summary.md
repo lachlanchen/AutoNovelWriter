@@ -17,3 +17,6 @@ Verification (no TCP binds):
 ## Fixes
 - Persist `project_rel_path` alongside absolute paths for created outputs (and include it in the `output_created` WS event).
 - If draft write fails, persist per-block `status="error"` and mark the task `status="error"` (do not finalize to `done`).
+
+## I18N
+- No PWA user-facing strings were added/changed in this task. The new `output_created` WS event and runner log lines are backend-side diagnostics and are not localized.

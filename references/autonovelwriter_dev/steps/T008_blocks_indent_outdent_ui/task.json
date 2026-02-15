@@ -1,0 +1,17 @@
+{
+  "id": "T008_blocks_indent_outdent_ui",
+  "title": "Blocks UI: indent/outdent + nested render",
+  "notes": "Update PWA to render nested pipeline blocks from structured JSON (from T007). Add per-block indent/outdent controls (buttons + keyboard shortcuts) and keep the script textarea as canonical (edits sync both ways). Keep drag reorder within same nesting level initially.",
+  "acceptance": [
+    "Nested blocks render with clear indentation and grouping",
+    "Indent/outdent updates script textarea and derived blocks immediately",
+    "Save persists script+JSON; reload restores nesting",
+    "Drag reorder works within a nesting level without corrupting structure"
+  ],
+  "tags": [
+    "pwa",
+    "pipeline",
+    "ui",
+    "script"
+  ]
+}

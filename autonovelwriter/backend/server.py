@@ -9,6 +9,7 @@ from pathlib import Path
 
 import tornado.escape
 import tornado.ioloop
+import tornado.locks
 import tornado.web
 import tornado.websocket
 
@@ -40,6 +41,8 @@ def resolve_paths() -> dict:
         "state": runtime_root / "state",
         "settings_json": runtime_root / "state" / "settings.json",
         "pipeline_json": runtime_root / "state" / "pipeline.json",
+        "chat_jsonl": runtime_root / "state" / "chat.jsonl",
+        "inbox_state_json": runtime_root / "state" / "inbox_state.json",
     }
     return paths
 
@@ -238,9 +241,202 @@ class PipelineHandler(BaseHandler):
         self.write_json({"ok": True, "pipeline": pipeline})
 
 
-class EventsWebSocket(tornado.websocket.WebSocketHandler):
-    def initialize(self, hub):
+class ChatStore:
+    def __init__(self, chat_jsonl: Path, max_in_memory: int = 500):
+        self._chat_jsonl = Path(chat_jsonl)
+        self._max_in_memory = max_in_memory
+        self._messages = []
+        self._lock = tornado.locks.Lock()
+
+    async def load_tail(self, limit: int = 200) -> None:
+        # Best-effort: load existing jsonl history into memory (bounded).
+        p = self._chat_jsonl
+        if not p.exists():
+            return
+        try:
+            lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
+        except Exception:
+            return
+        msgs = []
+        for line in lines[-max(limit, self._max_in_memory) :]:
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if isinstance(obj, dict):
+                msgs.append(obj)
+        self._messages = msgs[-self._max_in_memory :]
+
+    async def append(self, msg: dict) -> None:
+        async with self._lock:
+            _safe_mkdir(self._chat_jsonl.parent)
+            with self._chat_jsonl.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(msg, sort_keys=True) + "\n")
+            self._messages.append(msg)
+            if len(self._messages) > self._max_in_memory:
+                self._messages = self._messages[-self._max_in_memory :]
+
+    async def tail(self, limit: int = 200) -> list:
+        async with self._lock:
+            return list(self._messages[-limit:])
+
+
+def _read_text_file(p: Path, max_bytes: int = 512_000) -> str:
+    try:
+        data = p.read_bytes()
+    except Exception:
+        return ""
+    if len(data) > max_bytes:
+        data = data[:max_bytes]
+    return data.decode("utf-8", errors="replace")
+
+
+class InboxPoller:
+    def __init__(self, paths: dict, chat_store: ChatStore, hub: "WebSocketHub", poll_ms: int = 750):
+        self._paths = paths
+        self._chat_store = chat_store
         self._hub = hub
+        self._poll_ms = poll_ms
+        self._processed = set()
+        self._cb = tornado.ioloop.PeriodicCallback(self._tick, poll_ms)
+
+    def start(self) -> None:
+        self._load_state()
+        self._cb.start()
+
+    def stop(self) -> None:
+        self._cb.stop()
+
+    def _load_state(self) -> None:
+        p = Path(self._paths["inbox_state_json"])
+        if not p.exists():
+            return
+        try:
+            obj = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return
+        if isinstance(obj, dict) and isinstance(obj.get("processed"), list):
+            self._processed = set(str(x) for x in obj["processed"])
+
+    def _save_state(self) -> None:
+        p = Path(self._paths["inbox_state_json"])
+        _safe_mkdir(p.parent)
+        # Persist a bounded set to avoid unbounded growth.
+        processed = sorted(self._processed)[-2000:]
+        p.write_text(json.dumps({"processed": processed}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    async def _tick(self) -> None:
+        inbox = Path(self._paths["io_inbox"])
+        try:
+            entries = list(inbox.iterdir())
+        except Exception:
+            return
+
+        candidates = []
+        for e in entries:
+            if not e.is_file():
+                continue
+            if e.suffix.lower() not in (".txt", ".md"):
+                continue
+            key = str(e.name)
+            if key in self._processed:
+                continue
+            try:
+                mtime = e.stat().st_mtime
+            except Exception:
+                mtime = 0
+            candidates.append((mtime, e))
+
+        if not candidates:
+            return
+
+        # Process oldest-first for stable ordering.
+        candidates.sort(key=lambda t: t[0])
+
+        for _, p in candidates[:25]:
+            text = _read_text_file(p)
+            if not text.strip():
+                self._processed.add(p.name)
+                continue
+
+            msg = {
+                "id": str(uuid.uuid4()),
+                "ts_ms": _now_ms(),
+                "role": "user",
+                "source": "inbox",
+                "filename": p.name,
+                "text": text,
+            }
+            await self._chat_store.append(msg)
+            self._hub.broadcast({"type": "chat", "ts_ms": _now_ms(), "message": msg})
+            self._processed.add(p.name)
+
+        self._save_state()
+
+
+def write_outbox_message(paths: dict, text: str) -> dict:
+    outbox = Path(paths["io_outbox"])
+    _safe_mkdir(outbox)
+    ts = time.strftime("%Y%m%d_%H%M%S")
+    fname = f"chat_{ts}_{uuid.uuid4().hex[:8]}.txt"
+    p = outbox / fname
+    p.write_text(text + ("\n" if not text.endswith("\n") else ""), encoding="utf-8", errors="replace")
+    return {"filename": fname, "path": str(p)}
+
+
+class ChatHistoryHandler(BaseHandler):
+    def initialize(self, chat_store: ChatStore):
+        self._chat_store = chat_store
+
+    async def get(self):
+        limit = int(self.get_argument("limit", "200"))
+        limit = max(1, min(500, limit))
+        msgs = await self._chat_store.tail(limit=limit)
+        self.write_json({"ok": True, "messages": msgs})
+
+
+class ChatSendHandler(BaseHandler):
+    def initialize(self, paths: dict, chat_store: ChatStore, hub: "WebSocketHub"):
+        self._paths = paths
+        self._chat_store = chat_store
+        self._hub = hub
+
+    async def post(self):
+        try:
+            body = tornado.escape.json_decode(self.request.body or b"{}")
+        except Exception:
+            return self.write_json({"ok": False, "error": "invalid_json"}, status=400)
+
+        if not isinstance(body, dict):
+            return self.write_json({"ok": False, "error": "expected_object"}, status=400)
+
+        text = body.get("text", "")
+        if not isinstance(text, str) or not text.strip():
+            return self.write_json({"ok": False, "error": "missing_text"}, status=400)
+        if len(text) > 50_000:
+            return self.write_json({"ok": False, "error": "text_too_long"}, status=400)
+
+        out = write_outbox_message(self._paths, text.strip())
+        msg = {
+            "id": str(uuid.uuid4()),
+            "ts_ms": _now_ms(),
+            "role": "user",
+            "source": "ui",
+            "text": text.strip(),
+            "outbox": out,
+        }
+        await self._chat_store.append(msg)
+        self._hub.broadcast({"type": "chat", "ts_ms": _now_ms(), "message": msg})
+        self._hub.broadcast({"type": "outbox_written", "ts_ms": _now_ms(), "outbox": out})
+
+        self.write_json({"ok": True, "message": msg, "outbox": out})
+
+
+class EventsWebSocket(tornado.websocket.WebSocketHandler):
+    def initialize(self, hub, paths: dict, chat_store: ChatStore):
+        self._hub = hub
+        self._paths = paths
+        self._chat_store = chat_store
         self._client_id = None
 
     def check_origin(self, origin: str) -> bool:
@@ -261,11 +457,33 @@ class EventsWebSocket(tornado.websocket.WebSocketHandler):
         )
 
     def on_message(self, message):
-        # Minimal echo for debugging.
+        # Minimal protocol:
+        # - incoming {type:"chat", text:"..."} => append to history, write to outbox, broadcast to all.
+        # - otherwise echo for debugging.
         try:
             obj = tornado.escape.json_decode(message)
         except Exception:
             obj = {"type": "message", "text": str(message)}
+
+        if isinstance(obj, dict) and obj.get("type") == "chat" and isinstance(obj.get("text"), str):
+            text = obj.get("text", "").strip()
+            if text:
+                out = write_outbox_message(self._paths, text)
+                msg = {
+                    "id": str(uuid.uuid4()),
+                    "ts_ms": _now_ms(),
+                    "role": "user",
+                    "source": "ui",
+                    "client_id": self._client_id,
+                    "text": text,
+                    "outbox": out,
+                }
+                # Fire-and-forget append; WS handler is sync in signature.
+                tornado.ioloop.IOLoop.current().spawn_callback(self._chat_store.append, msg)
+                self._hub.broadcast({"type": "chat", "ts_ms": _now_ms(), "message": msg})
+                self._hub.broadcast({"type": "outbox_written", "ts_ms": _now_ms(), "outbox": out})
+                return
+
         self._hub.broadcast({"type": "echo", "ts_ms": _now_ms(), "from": self._client_id, "data": obj})
 
     def on_close(self):
@@ -296,12 +514,15 @@ class WebSocketHub:
 
 def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Application:
     hub = WebSocketHub()
+    chat_store = ChatStore(Path(paths["chat_jsonl"]))
 
     handlers = [
         (r"/api/health", HealthHandler),
         (r"/api/settings", SettingsHandler, {"paths": paths, "settings": settings}),
         (r"/api/pipeline", PipelineHandler, {"paths": paths}),
-        (r"/ws", EventsWebSocket, {"hub": hub}),
+        (r"/api/chat/history", ChatHistoryHandler, {"chat_store": chat_store}),
+        (r"/api/chat/send", ChatSendHandler, {"paths": paths, "chat_store": chat_store, "hub": hub}),
+        (r"/ws", EventsWebSocket, {"hub": hub, "paths": paths, "chat_store": chat_store}),
     ]
 
     pwa_root = Path(paths["pwa_root"])
@@ -316,7 +537,11 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
             ]
         )
 
-    return tornado.web.Application(handlers, debug=debug)
+    app = tornado.web.Application(handlers, debug=debug)
+    # Attach for setup in main() (poller startup, etc).
+    app.anw_hub = hub
+    app.anw_chat_store = chat_store
+    return app
 
 
 def main() -> None:
@@ -332,9 +557,14 @@ def main() -> None:
     settings = load_settings(paths, host=args.host, port=args.port)
 
     app = make_app(paths, settings, debug=args.debug)
+    # Load chat tail before listening.
+    tornado.ioloop.IOLoop.current().run_sync(lambda: app.anw_chat_store.load_tail(limit=200))
     app.listen(args.port, address=args.host)
 
     print(f"[autonovelwriter] listening on http://{args.host}:{args.port}")
+    # Inbox poller (folder-based interruption).
+    poller = InboxPoller(paths, chat_store=app.anw_chat_store, hub=app.anw_hub, poll_ms=750)
+    poller.start()
     tornado.ioloop.IOLoop.current().start()
 
 

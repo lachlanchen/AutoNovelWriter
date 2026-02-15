@@ -41,6 +41,15 @@
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
+  function addChatMessage(msg) {
+    if (!msg || typeof msg !== 'object') return;
+    const role = typeof msg.role === 'string' ? msg.role : 'event';
+    const source = typeof msg.source === 'string' ? msg.source : 'unknown';
+    const text = typeof msg.text === 'string' ? msg.text : JSON.stringify(msg);
+    const title = `${role}/${source}`;
+    addMsg(source === 'inbox' ? 'hello' : 'hello', title, text);
+  }
+
   function setConn(state) {
     conn.textContent = state;
     conn.classList.remove('ok', 'warn');
@@ -94,6 +103,19 @@
     }
     const proto = u.protocol === 'wss:' ? 'https:' : 'http:';
     return `${proto}//${u.host}${pathname}`;
+  }
+
+  async function loadChatHistory() {
+    const url = backendApiUrl('/api/chat/history?limit=200');
+    if (!url) return;
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const obj = await res.json();
+      if (!obj || !obj.ok || !Array.isArray(obj.messages)) return;
+      for (const m of obj.messages) addChatMessage(m);
+    } catch (_) {
+      // ignore (backend may not be up yet)
+    }
   }
 
   function defaultPipeline() {
@@ -365,6 +387,10 @@
 
       if (obj && obj.type === 'hello') {
         addMsg('hello', 'hello', `client_id=${obj.client_id}`);
+      } else if (obj && obj.type === 'chat' && obj.message) {
+        addChatMessage(obj.message);
+      } else if (obj && obj.type === 'outbox_written' && obj.outbox && obj.outbox.filename) {
+        addMsg('hello', 'outbox', `wrote ${obj.outbox.filename}`);
       } else if (obj && obj.type) {
         addMsg('hello', obj.type, JSON.stringify(obj));
       } else {
@@ -403,7 +429,17 @@
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'chat', text }));
     } else {
-      addMsg('err', 'ws', 'not connected');
+      // Fallback to REST if WS isn't available.
+      const url = backendApiUrl('/api/chat/send');
+      if (!url) {
+        addMsg('err', 'chat', 'cannot derive backend api url');
+      } else {
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        }).catch((e2) => addMsg('err', 'chat', String(e2)));
+      }
     }
 
     chatInput.value = '';
@@ -427,6 +463,7 @@
     if (ws) try { ws.close(); } catch (_) {}
     connect();
     loadPipeline();
+    loadChatHistory();
   });
 
   pipeSave.addEventListener('click', () => savePipeline());
@@ -437,4 +474,5 @@
 
   connect();
   loadPipeline();
+  loadChatHistory();
 })();

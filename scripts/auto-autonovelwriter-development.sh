@@ -618,6 +618,14 @@ Constraints:
 	- Prioritize improvements to the AutoNovelWriter app itself (PWA + backend), especially:
 	  - flexible pipeline blocks with editable actions (tool selection, prompts, scripts, skills)
 	  - nested rounds/loops (indentation) in pipeline representation + UI drag indent/outdent
+	  - default Scratch-like canvas layout (first load) with clear indentation:
+	    - ROUND <n_rounds> (editable repeat count in UI)
+	      - STEP meta_tasks_generate (editable meta-task prompt; writes a new tasks batch folder each run)
+	      - FOREACH_TASK (iterates current task list)
+	        - STEP plan
+	        - STEP write
+	        - STEP critique_story / fix_story / critique_tone / fix_tone / critique_dialogue / fix_dialogue / critique_character / fix_character
+	        - STEP summary / log / update_readme / commit_push
 	  - in-app meta task generation (generate next tasks from materials + feedback)
 	  - materials management (multiple folders/files, standard layout, indexing)
 	  - novel-writing settings (novel language + other writing UX options), separate from UI language
@@ -799,6 +807,15 @@ Overall goal (repeat for every step):
 - Must support a pipeline-script visualization module:
   - Parse a formatted pipeline script (shell-ish text) into structured tasks/steps/actions/blocks.
   - Render the structured pipeline back into a formatted script the UI can generate/export.
+- Default pipeline canvas layout (first load) must look like a Scratch program with indentation:
+  ROUND <n_rounds>
+    STEP meta_tasks_generate
+    FOREACH_TASK
+      STEP plan
+      STEP write
+      STEP critique_story / fix_story / critique_tone / fix_tone / critique_dialogue / fix_dialogue / critique_character / fix_character
+      STEP summary / log / update_readme / commit_push
+- The above layout must remain fully changeable by the user (edit rounds, edit meta-task prompts, reorder/disable blocks).
 - Pipeline blocks must be flexible and editable:
   - per-block action/tool selection (codex + other SDK stubs + shell scripts)
   - per-block editable prompts/templates and parameters

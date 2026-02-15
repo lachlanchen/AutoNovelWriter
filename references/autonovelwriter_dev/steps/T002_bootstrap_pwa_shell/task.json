@@ -1,0 +1,15 @@
+{
+  "id": "T002_bootstrap_pwa_shell",
+  "title": "Bootstrap PWA shell (light theme, manifest, service worker)",
+  "notes": "Create autonovelwriter/pwa/ static app with index.html, app.css (light theme tokens), app.js, manifest.webmanifest, service_worker.js. Connect to backend /ws and show chat panel.",
+  "acceptance": [
+    "PWA loads in browser (served by python http.server)",
+    "Light theme default with CSS variables",
+    "Chat panel shows backend hello event"
+  ],
+  "tags": [
+    "pwa",
+    "light-theme",
+    "offline"
+  ]
+}

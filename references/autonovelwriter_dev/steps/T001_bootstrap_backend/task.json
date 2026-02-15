@@ -1,0 +1,15 @@
+{
+  "id": "T001_bootstrap_backend",
+  "title": "Bootstrap Tornado backend skeleton (health, static, ws)",
+  "notes": "Create autonovelwriter/backend/server.py with Tornado app, /api/health, /api/settings, /ws events. Add requirements.txt and minimal config loading.",
+  "acceptance": [
+    "python3 autonovelwriter/backend/server.py --port 8787 works",
+    "GET /api/health returns 200 JSON",
+    "WS connects and emits a hello event"
+  ],
+  "tags": [
+    "backend",
+    "tornado",
+    "ws"
+  ]
+}

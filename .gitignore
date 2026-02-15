@@ -26,4 +26,6 @@ autonovelwriter/runtime/tasks/*
 references/autonovelwriter_dev/logs/
 references/autonovelwriter_dev/.codex_autonovelwriter_session
 references/autonovelwriter_dev/*.lock
-
+references/autonovelwriter_dev/state.tsv
+references/autonovelwriter_dev/STOP
+references/autonovelwriter_dev/steps/*/commit_body.txt

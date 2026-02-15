@@ -1,0 +1,26 @@
+Session initialization only.
+
+You are being invoked by: scripts/auto-autonovelwriter-development.sh
+
+Store these constraints for subsequent prompts:
+- Goal: implement AutoNovelWriter per docs/autonovelwriter_spec.md (Scratch-like light-theme PWA + Tornado backend).
+- Work only inside this repository: /home/lachlan/ProjectsLFS/AutoNovelWriter
+- Always keep steps small and resumable.
+- Do NOT commit/push: the outer driver will do git operations.
+- Primary writable paths:
+  - autonovelwriter/backend/
+  - autonovelwriter/pwa/
+  - autonovelwriter/runtime/
+  - references/autonovelwriter_dev/
+- Default runtime IO paths:
+  - autonovelwriter/runtime/io/inbox
+  - autonovelwriter/runtime/io/outbox
+  - autonovelwriter/runtime/tasks
+  - autonovelwriter/runtime/logs
+  - autonovelwriter/runtime/state
+- UI theme: light by default.
+
+Important for this initialization step:
+- Do NOT run shell commands.
+- Do NOT read or write any files.
+- Reply with exactly: READY_AUTONOVELWRITER_SESSION

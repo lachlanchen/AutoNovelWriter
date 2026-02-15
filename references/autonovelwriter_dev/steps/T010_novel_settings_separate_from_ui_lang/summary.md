@@ -17,3 +17,6 @@ Verification (no TCP binds):
 
 ## Fixes
 - Backend: changed `/api/settings` POST to reload settings from disk before shallow-merge/save, avoiding clobbering out-of-band changes (`autonovelwriter/backend/server.py`).
+
+## I18N
+- Added i18n keys for the new Novel settings section (labels + placeholders) in `autonovelwriter/pwa/app.js` for all required UI languages: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`.

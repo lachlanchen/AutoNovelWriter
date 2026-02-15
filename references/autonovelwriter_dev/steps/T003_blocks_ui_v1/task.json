@@ -1,0 +1,15 @@
+{
+  "id": "T003_blocks_ui_v1",
+  "title": "Scratch-like pipeline blocks v1 (drag/drop, task list)",
+  "notes": "Implement drag/drop blocks UI (HTML5 DnD ok). Represent pipeline steps and allow reorder/disable. Persist pipeline as JSON via backend /api/pipeline.",
+  "acceptance": [
+    "Drag/drop reorder works",
+    "Pipeline persists and reloads",
+    "Blocks map to step types in spec"
+  ],
+  "tags": [
+    "pwa",
+    "scratch",
+    "pipeline"
+  ]
+}

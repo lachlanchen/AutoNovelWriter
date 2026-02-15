@@ -1660,6 +1660,61 @@ class MaterialsIndexHandler(BaseHandler):
         )
 
 
+class OutputsIndexHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    def get(self):
+        active = load_active_project(self._paths)
+        q = self.get_query_argument("project", default="").strip()
+        pid = q if q else active
+        if not _is_safe_project_id(pid):
+            pid = active
+        pr = _ensure_project_dirs(self._paths, pid)
+        root = Path(self._paths["projects_root"])
+
+        files = []
+        outputs_root = Path(pr["outputs_root"])
+        try:
+            for p in outputs_root.rglob("*"):
+                rel = None
+                try:
+                    rel = p.relative_to(outputs_root).as_posix()
+                except Exception:
+                    continue
+                if not rel or rel.startswith("."):
+                    continue
+                try:
+                    st = p.stat()
+                    mtime_ms = int(st.st_mtime * 1000)
+                    size = int(st.st_size)
+                except Exception:
+                    mtime_ms = 0
+                    size = 0
+
+                if p.is_dir():
+                    files.append({"path": rel + "/", "kind": "dir", "mtime_ms": mtime_ms, "size_bytes": 0})
+                elif p.is_file():
+                    files.append({"path": rel, "kind": "file", "mtime_ms": mtime_ms, "size_bytes": size})
+        except Exception:
+            files = []
+
+        files.sort(key=lambda x: x.get("path", ""))
+        if len(files) > 5000:
+            return self.write_json({"ok": False, "error": "too_many_entries", "count": len(files)}, status=400)
+
+        self.write_json(
+            {
+                "ok": True,
+                "active_project": active,
+                "project": pid,
+                "projects_root": str(root),
+                "outputs_root": str(outputs_root),
+                "files": files,
+            }
+        )
+
+
 def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Application:
     hub = WebSocketHub()
     chat_store = ChatStore(Path(paths["chat_jsonl"]))
@@ -1671,6 +1726,7 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
         (r"/api/projects", ProjectsHandler, {"paths": paths}),
         (r"/api/projects/active", ProjectActiveHandler, {"paths": paths, "hub": hub}),
         (r"/api/materials/index", MaterialsIndexHandler, {"paths": paths}),
+        (r"/api/outputs/index", OutputsIndexHandler, {"paths": paths}),
         (r"/api/pipeline", PipelineHandler, {"paths": paths, "hub": hub}),
         (r"/api/pipeline/validate", PipelineValidateHandler, {"paths": paths}),
         (r"/api/chat/history", ChatHistoryHandler, {"chat_store": chat_store}),

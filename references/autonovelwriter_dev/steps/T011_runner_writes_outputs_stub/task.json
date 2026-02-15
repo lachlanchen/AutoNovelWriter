@@ -1,0 +1,16 @@
+{
+  "id": "T011_runner_writes_outputs_stub",
+  "title": "Runner: write drafts/revisions to outputs",
+  "notes": "Make the in-app runner actually write files into the standardized outputs folders for the active project. Implement at least one runnable pipeline action that produces a draft file (placeholder content allowed), emits WS events with file paths, and updates task status persistently.",
+  "acceptance": [
+    "Running a pipeline that includes the write action produces a new output file on disk",
+    "WS emits an event/log with the created file path",
+    "Task status persists across backend restart and reflects the write step completion"
+  ],
+  "tags": [
+    "backend",
+    "runner",
+    "outputs",
+    "pipeline"
+  ]
+}

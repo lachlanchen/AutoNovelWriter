@@ -76,6 +76,15 @@ The PWA shows the script in a textarea (source of truth) and renders nested bloc
 - Agent test (gated): `POST /api/agent/test` (runs `codex --version` only when enabled + env gate)
 - WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `run_status`, `task_status`, `log`, `pipeline_updated`)
 
+## Runner Outputs (Draft Stub)
+
+When the pipeline contains a `STEP write` block, the backend runner will create a stub draft file under:
+- `autonovelwriter/runtime/projects/<project_id>/outputs/`
+
+The backend also emits:
+- WS event `output_created` with `path` and `project_rel_path`
+- a `log` line `[output] created: ...`
+
 ## Agent Settings / Codex Gate
 
 The PWA Settings panel persists agent settings via `/api/settings` under `autonovelwriter/runtime/state/settings.json`.

@@ -25,3 +25,6 @@ Verification (no TCP binds):
 1. Switch runner execution to use v2 pipeline parsing/AST (including loop repeat semantics) so it matches the PWA nested block view.
 2. Add a small outputs index API (`GET /api/outputs/index`) and/or PWA UI handling of `output_created` to surface created drafts.
 3. Extend `task_status.json` schema to track per-block start/end + errors consistently and keep tasks retriable instead of terminal error.
+
+## README
+- Documented the `STEP write` stub output behavior (outputs path + `output_created` WS event) in `README.md`.

@@ -16,3 +16,8 @@ Verification (no TCP binds):
 
 ## I18N
 - Added localized UI strings for the Outputs panel across all required UI languages (`outputs.title`, `outputs.empty`, `outputs.created`) in `autonovelwriter/pwa/app.js`.
+
+## Next
+1. Add output file viewing/download (read-only) with safe path validation, or a “copy path” affordance in the PWA.
+2. Improve outputs list UX: show mtime, sort toggle, and optionally include directories.
+3. Integrate runner status with outputs (link `task_id` + block -> created output).

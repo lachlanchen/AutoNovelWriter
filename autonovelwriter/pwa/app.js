@@ -17,6 +17,8 @@
 
   const LS_WS_URL = 'anw_ws_url';
   const LS_PIPELINE = 'anw_pipeline';
+  let chatHistoryLoadedKey = null;
+  const seenChatIds = new Set();
 
   function ts() {
     const d = new Date();
@@ -43,6 +45,10 @@
 
   function addChatMessage(msg) {
     if (!msg || typeof msg !== 'object') return;
+    if (typeof msg.id === 'string' && msg.id) {
+      if (seenChatIds.has(msg.id)) return;
+      seenChatIds.add(msg.id);
+    }
     const role = typeof msg.role === 'string' ? msg.role : 'event';
     const source = typeof msg.source === 'string' ? msg.source : 'unknown';
     const text = typeof msg.text === 'string' ? msg.text : JSON.stringify(msg);
@@ -108,10 +114,12 @@
   async function loadChatHistory() {
     const url = backendApiUrl('/api/chat/history?limit=200');
     if (!url) return;
+    if (chatHistoryLoadedKey === url) return;
     try {
       const res = await fetch(url, { method: 'GET' });
       const obj = await res.json();
       if (!obj || !obj.ok || !Array.isArray(obj.messages)) return;
+      chatHistoryLoadedKey = url;
       for (const m of obj.messages) addChatMessage(m);
     } catch (_) {
       // ignore (backend may not be up yet)
@@ -424,11 +432,12 @@
     const text = (chatInput.value || '').trim();
     if (!text) return;
 
-    addMsg('hello', 'you', text);
-
     if (ws && ws.readyState === WebSocket.OPEN) {
+      // Avoid double-render (optimistic + server broadcast). The server will
+      // broadcast a canonical chat message back over WS.
       ws.send(JSON.stringify({ type: 'chat', text }));
     } else {
+      addMsg('hello', 'you', text);
       // Fallback to REST if WS isn't available.
       const url = backendApiUrl('/api/chat/send');
       if (!url) {
@@ -463,6 +472,8 @@
     if (ws) try { ws.close(); } catch (_) {}
     connect();
     loadPipeline();
+    chatHistoryLoadedKey = null;
+    // Keep seenChatIds so history reload doesn't duplicate existing messages.
     loadChatHistory();
   });
 

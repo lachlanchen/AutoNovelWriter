@@ -16,3 +16,8 @@
 
 Notes:
 - Pipeline-script visualization module is not implemented here; T004 only adds the folder-based chat interruption pipe.
+
+## Fixes
+- Prevented common UI duplication: when WS is connected, the chat input no longer renders an optimistic local copy (it waits for the server-broadcast `chat` message). Chat history and WS messages are also deduped by `message.id`.
+- Inbox ingestion is more robust: processing key now includes filename + mtime_ns + size, and very-recently-modified files are skipped to reduce partial reads.
+- Reduced startup cost for large `chat.jsonl`: chat history tail-load now reads only the last ~2MB of the file.

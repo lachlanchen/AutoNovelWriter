@@ -249,12 +249,20 @@ class ChatStore:
         self._lock = tornado.locks.Lock()
 
     async def load_tail(self, limit: int = 200) -> None:
-        # Best-effort: load existing jsonl history into memory (bounded).
+        # Best-effort: load existing jsonl history tail into memory (bounded).
         p = self._chat_jsonl
         if not p.exists():
             return
         try:
-            lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
+            max_bytes = 2_000_000
+            with p.open("rb") as f:
+                f.seek(0, os.SEEK_END)
+                size = f.tell()
+                start = max(0, size - max_bytes)
+                f.seek(start, os.SEEK_SET)
+                chunk = f.read()
+            text = chunk.decode("utf-8", errors="replace")
+            lines = text.splitlines()
         except Exception:
             return
         msgs = []
@@ -333,19 +341,25 @@ class InboxPoller:
             return
 
         candidates = []
+        now = time.time()
         for e in entries:
             if not e.is_file():
                 continue
             if e.suffix.lower() not in (".txt", ".md"):
                 continue
-            key = str(e.name)
-            if key in self._processed:
-                continue
             try:
-                mtime = e.stat().st_mtime
+                st = e.stat()
+                mtime = st.st_mtime
+                # Simple “still being written” heuristic: ignore files modified very recently.
+                if (now - mtime) < 1.0:
+                    continue
+                sig = f"{e.name}|{st.st_mtime_ns}|{st.st_size}"
             except Exception:
                 mtime = 0
-            candidates.append((mtime, e))
+                sig = f"{e.name}|0|0"
+            if sig in self._processed:
+                continue
+            candidates.append((mtime, e, sig))
 
         if not candidates:
             return
@@ -353,10 +367,10 @@ class InboxPoller:
         # Process oldest-first for stable ordering.
         candidates.sort(key=lambda t: t[0])
 
-        for _, p in candidates[:25]:
+        for _, p, sig in candidates[:25]:
             text = _read_text_file(p)
             if not text.strip():
-                self._processed.add(p.name)
+                self._processed.add(sig)
                 continue
 
             msg = {
@@ -369,7 +383,7 @@ class InboxPoller:
             }
             await self._chat_store.append(msg)
             self._hub.broadcast({"type": "chat", "ts_ms": _now_ms(), "message": msg})
-            self._processed.add(p.name)
+            self._processed.add(sig)
 
         self._save_state()
 

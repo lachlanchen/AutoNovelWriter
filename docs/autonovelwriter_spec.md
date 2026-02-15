@@ -63,6 +63,8 @@ Recommended default (gitignored) runtime layout:
   - Agent SDK selection: codex / copilot / gemini / claude (stub OK initially, codex first)
   - Model selection for LLM and vision model (vision can be unused initially but config must exist)
   - Paths: input/output/queue/log/summary directories, lock file path
+  - UI language (i18n) is separate from novel-writing settings (do not conflate)
+  - Novel-writing settings: novel language, tone, target length, POV, tense, etc.
   - Materials/workspace roots for novel projects (chapter/paragraph targeting)
 
 ## 4) Backend

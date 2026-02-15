@@ -62,7 +62,19 @@
       'settings.test_codex_title': 'Runs a gated `codex --version` on backend',
       'settings.codex_gate_hint': 'Codex subprocess is disabled by default. To enable: set',
       'settings.codex_gate_hint_2': 'in your environment and set Agent SDK to',
-      'settings.codex_gate_hint_3': 'with “Enable agent runner”.'
+      'settings.codex_gate_hint_3': 'with “Enable agent runner”.',
+      'novel.section': 'Novel',
+      'novel.language': 'Novel language',
+      'novel.tone': 'Tone',
+      'novel.tone_ph': 'neutral',
+      'novel.target_words': 'Target length (words)',
+      'novel.target_words_ph': '80000',
+      'novel.pov': 'POV',
+      'novel.pov_ph': 'third_limited',
+      'novel.tense': 'Tense',
+      'novel.tense_ph': 'past',
+      'novel.chapters': 'Target chapters',
+      'novel.chapters_ph': '12'
     },
     'zh-Hans': {
       'app.title': 'AutoNovelWriter',
@@ -108,7 +120,19 @@
       'settings.test_codex_title': '在后端运行受控的 `codex --version`',
       'settings.codex_gate_hint': 'Codex 子进程默认禁用。启用：设置',
       'settings.codex_gate_hint_2': '并将 Agent SDK 设为',
-      'settings.codex_gate_hint_3': '且勾选“启用代理运行器”。'
+      'settings.codex_gate_hint_3': '且勾选“启用代理运行器”。',
+      'novel.section': '小说',
+      'novel.language': '小说语言',
+      'novel.tone': '风格',
+      'novel.tone_ph': '中性',
+      'novel.target_words': '目标字数',
+      'novel.target_words_ph': '80000',
+      'novel.pov': '视角',
+      'novel.pov_ph': '第三人称有限',
+      'novel.tense': '时态',
+      'novel.tense_ph': '过去时',
+      'novel.chapters': '目标章节数',
+      'novel.chapters_ph': '12'
     },
     'zh-Hant': {
       'app.title': 'AutoNovelWriter',
@@ -154,7 +178,19 @@
       'settings.test_codex_title': '在後端執行受控的 `codex --version`',
       'settings.codex_gate_hint': 'Codex 子程序預設停用。啟用：設定',
       'settings.codex_gate_hint_2': '並將 Agent SDK 設為',
-      'settings.codex_gate_hint_3': '並勾選「啟用代理執行器」。'
+      'settings.codex_gate_hint_3': '並勾選「啟用代理執行器」。',
+      'novel.section': '小說',
+      'novel.language': '小說語言',
+      'novel.tone': '風格',
+      'novel.tone_ph': '中性',
+      'novel.target_words': '目標字數',
+      'novel.target_words_ph': '80000',
+      'novel.pov': '視角',
+      'novel.pov_ph': '第三人稱有限',
+      'novel.tense': '時態',
+      'novel.tense_ph': '過去式',
+      'novel.chapters': '目標章節數',
+      'novel.chapters_ph': '12'
     },
     ja: {
       'app.title': 'AutoNovelWriter',
@@ -200,7 +236,19 @@
       'settings.test_codex_title': 'バックエンドで `codex --version`（ゲート有）を実行',
       'settings.codex_gate_hint': 'Codex サブプロセスは既定で無効。有効化：',
       'settings.codex_gate_hint_2': 'を環境に設定し、Agent SDK を',
-      'settings.codex_gate_hint_3': 'にして「エージェント実行を有効化」。'
+      'settings.codex_gate_hint_3': 'にして「エージェント実行を有効化」。',
+      'novel.section': '小説',
+      'novel.language': '小説の言語',
+      'novel.tone': 'トーン',
+      'novel.tone_ph': 'ニュートラル',
+      'novel.target_words': '目標語数',
+      'novel.target_words_ph': '80000',
+      'novel.pov': '視点',
+      'novel.pov_ph': '三人称（限定）',
+      'novel.tense': '時制',
+      'novel.tense_ph': '過去',
+      'novel.chapters': '目標章数',
+      'novel.chapters_ph': '12'
     },
     ko: {
       'app.title': 'AutoNovelWriter',
@@ -246,7 +294,19 @@
       'settings.test_codex_title': '백엔드에서 게이트된 `codex --version` 실행',
       'settings.codex_gate_hint': 'Codex 서브프로세스는 기본 비활성. 활성화:',
       'settings.codex_gate_hint_2': '을 설정하고 Agent SDK를',
-      'settings.codex_gate_hint_3': '로 설정 후 “에이전트 실행 활성화”.'
+      'settings.codex_gate_hint_3': '로 설정 후 “에이전트 실행 활성화”.',
+      'novel.section': '소설',
+      'novel.language': '소설 언어',
+      'novel.tone': '톤',
+      'novel.tone_ph': '중립',
+      'novel.target_words': '목표 분량(단어)',
+      'novel.target_words_ph': '80000',
+      'novel.pov': '시점',
+      'novel.pov_ph': '3인칭 제한',
+      'novel.tense': '시제',
+      'novel.tense_ph': '과거',
+      'novel.chapters': '목표 장 수',
+      'novel.chapters_ph': '12'
     },
     vi: {
       'app.title': 'AutoNovelWriter',
@@ -292,7 +352,19 @@
       'settings.test_codex_title': 'Chay `codex --version` co gate tren backend',
       'settings.codex_gate_hint': 'Codex subprocess mac dinh tat. De bat:',
       'settings.codex_gate_hint_2': 'trong moi truong va dat Agent SDK =',
-      'settings.codex_gate_hint_3': 'va chon “Bat agent runner”.'
+      'settings.codex_gate_hint_3': 'va chon “Bat agent runner”.',
+      'novel.section': 'Tieu thuyet',
+      'novel.language': 'Ngon ngu tieu thuyet',
+      'novel.tone': 'Giong dieu',
+      'novel.tone_ph': 'trung tinh',
+      'novel.target_words': 'Do dai muc tieu (tu)',
+      'novel.target_words_ph': '80000',
+      'novel.pov': 'Goc nhin',
+      'novel.pov_ph': 'ngoi thu ba gioi han',
+      'novel.tense': 'Thi',
+      'novel.tense_ph': 'qua khu',
+      'novel.chapters': 'So chuong muc tieu',
+      'novel.chapters_ph': '12'
     },
     ar: {
       'app.title': 'AutoNovelWriter',
@@ -338,7 +410,19 @@
       'settings.test_codex_title': 'تشغيل `codex --version` (مقيّد) على الخادم',
       'settings.codex_gate_hint': 'تشغيل Codex معطّل افتراضياً. للتمكين: عيّن',
       'settings.codex_gate_hint_2': 'في البيئة واختر Agent SDK =',
-      'settings.codex_gate_hint_3': 'مع “تمكين تشغيل الوكيل”.'
+      'settings.codex_gate_hint_3': 'مع “تمكين تشغيل الوكيل”.',
+      'novel.section': 'الرواية',
+      'novel.language': 'لغة الرواية',
+      'novel.tone': 'النبرة',
+      'novel.tone_ph': 'محايد',
+      'novel.target_words': 'الطول المستهدف (كلمات)',
+      'novel.target_words_ph': '80000',
+      'novel.pov': 'وجهة النظر',
+      'novel.pov_ph': 'شخص ثالث محدود',
+      'novel.tense': 'الزمن',
+      'novel.tense_ph': 'ماضٍ',
+      'novel.chapters': 'الفصول المستهدفة',
+      'novel.chapters_ph': '12'
     },
     fr: {
       'app.title': 'AutoNovelWriter',
@@ -384,7 +468,19 @@
       'settings.test_codex_title': 'Exécute `codex --version` (protégé) sur le backend',
       'settings.codex_gate_hint': 'Le sous-processus Codex est désactivé par défaut. Pour activer : définir',
       'settings.codex_gate_hint_2': 'dans l’environnement et choisir Agent SDK =',
-      'settings.codex_gate_hint_3': 'avec « Activer le runner agent ».'
+      'settings.codex_gate_hint_3': 'avec « Activer le runner agent ».',
+      'novel.section': 'Roman',
+      'novel.language': 'Langue du roman',
+      'novel.tone': 'Ton',
+      'novel.tone_ph': 'neutre',
+      'novel.target_words': 'Longueur cible (mots)',
+      'novel.target_words_ph': '80000',
+      'novel.pov': 'Point de vue',
+      'novel.pov_ph': 'troisième limité',
+      'novel.tense': 'Temps',
+      'novel.tense_ph': 'passé',
+      'novel.chapters': 'Chapitres cibles',
+      'novel.chapters_ph': '12'
     },
     es: {
       'app.title': 'AutoNovelWriter',
@@ -430,7 +526,19 @@
       'settings.test_codex_title': 'Ejecuta `codex --version` (con gate) en backend',
       'settings.codex_gate_hint': 'El subproceso de Codex está deshabilitado por defecto. Para habilitar: establece',
       'settings.codex_gate_hint_2': 'en el entorno y elige Agent SDK =',
-      'settings.codex_gate_hint_3': 'con “Habilitar runner del agente”.'
+      'settings.codex_gate_hint_3': 'con “Habilitar runner del agente”.',
+      'novel.section': 'Novela',
+      'novel.language': 'Idioma de la novela',
+      'novel.tone': 'Tono',
+      'novel.tone_ph': 'neutral',
+      'novel.target_words': 'Longitud objetivo (palabras)',
+      'novel.target_words_ph': '80000',
+      'novel.pov': 'POV',
+      'novel.pov_ph': 'tercera persona limitada',
+      'novel.tense': 'Tiempo verbal',
+      'novel.tense_ph': 'pasado',
+      'novel.chapters': 'Capítulos objetivo',
+      'novel.chapters_ph': '12'
     },
     ru: {
       'app.title': 'AutoNovelWriter',
@@ -476,7 +584,19 @@
       'settings.test_codex_title': 'Запускает gated `codex --version` на бэкенде',
       'settings.codex_gate_hint': 'Подпроцесс Codex по умолчанию отключён. Чтобы включить: задайте',
       'settings.codex_gate_hint_2': 'в окружении и выберите Agent SDK =',
-      'settings.codex_gate_hint_3': 'с «Включить запуск агента».'
+      'settings.codex_gate_hint_3': 'с «Включить запуск агента».',
+      'novel.section': 'Роман',
+      'novel.language': 'Язык романа',
+      'novel.tone': 'Тон',
+      'novel.tone_ph': 'нейтральный',
+      'novel.target_words': 'Целевая длина (слов)',
+      'novel.target_words_ph': '80000',
+      'novel.pov': 'Точка зрения',
+      'novel.pov_ph': 'третье лицо (огр.)',
+      'novel.tense': 'Время',
+      'novel.tense_ph': 'прошедшее',
+      'novel.chapters': 'Цель по главам',
+      'novel.chapters_ph': '12'
     },
     de: {
       'app.title': 'AutoNovelWriter',
@@ -522,7 +642,19 @@
       'settings.test_codex_title': 'Führt gated `codex --version` im Backend aus',
       'settings.codex_gate_hint': 'Codex-Subprozess ist standardmäßig deaktiviert. Zum Aktivieren: setze',
       'settings.codex_gate_hint_2': 'in der Umgebung und wähle Agent SDK =',
-      'settings.codex_gate_hint_3': 'mit „Agent-Runner aktivieren“.'
+      'settings.codex_gate_hint_3': 'mit „Agent-Runner aktivieren“.',
+      'novel.section': 'Roman',
+      'novel.language': 'Romansprache',
+      'novel.tone': 'Ton',
+      'novel.tone_ph': 'neutral',
+      'novel.target_words': 'Zielumfang (Wörter)',
+      'novel.target_words_ph': '80000',
+      'novel.pov': 'Perspektive',
+      'novel.pov_ph': 'dritte Person, begrenzt',
+      'novel.tense': 'Zeitform',
+      'novel.tense_ph': 'Vergangenheit',
+      'novel.chapters': 'Zielkapitel',
+      'novel.chapters_ph': '12'
     }
   };
 
@@ -631,6 +763,12 @@
   const codexCliPath = $('codexCliPath');
   const agentEnabled = $('agentEnabled');
   const testCodex = $('testCodex');
+  const novelLanguage = $('novelLanguage');
+  const novelTone = $('novelTone');
+  const novelTargetWords = $('novelTargetWords');
+  const novelPov = $('novelPov');
+  const novelTense = $('novelTense');
+  const novelChapters = $('novelChapters');
 
   const LS_WS_URL = 'anw_ws_url';
   const LS_PIPELINE = 'anw_pipeline';
@@ -864,6 +1002,14 @@
     agentVisionModel.value = a.vision_model || '';
     codexCliPath.value = a.codex_cli_path || '';
     agentEnabled.checked = !!a.enabled;
+
+    const n = (settings && settings.novel) || {};
+    if (novelLanguage) novelLanguage.value = String(n.language || 'en');
+    if (novelTone) novelTone.value = String(n.tone || 'neutral');
+    if (novelTargetWords) novelTargetWords.value = String(Number.isFinite(n.target_length_words) ? n.target_length_words : (n.target_length_words || 80000));
+    if (novelPov) novelPov.value = String(n.pov || 'third_limited');
+    if (novelTense) novelTense.value = String(n.tense || 'past');
+    if (novelChapters) novelChapters.value = String(Number.isFinite(n.chapter_count_target) ? n.chapter_count_target : (n.chapter_count_target || 12));
   }
 
   async function loadSettings() {
@@ -892,11 +1038,26 @@
       codex_cli_path: String(codexCliPath.value || '')
     };
 
+    const novel = {
+      language: String(novelLanguage && novelLanguage.value ? novelLanguage.value : 'en'),
+      tone: String(novelTone && novelTone.value ? novelTone.value : 'neutral').trim(),
+      target_length_words: (() => {
+        const v = novelTargetWords ? parseInt(String(novelTargetWords.value || '').trim(), 10) : NaN;
+        return Number.isFinite(v) && v >= 0 ? v : 80000;
+      })(),
+      pov: String(novelPov && novelPov.value ? novelPov.value : 'third_limited').trim(),
+      tense: String(novelTense && novelTense.value ? novelTense.value : 'past').trim(),
+      chapter_count_target: (() => {
+        const v = novelChapters ? parseInt(String(novelChapters.value || '').trim(), 10) : NaN;
+        return Number.isFinite(v) && v >= 0 ? v : 12;
+      })()
+    };
+
     try {
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent })
+        body: JSON.stringify({ agent, novel })
       });
       const obj = await res.json();
       if (obj && obj.ok && obj.settings) {

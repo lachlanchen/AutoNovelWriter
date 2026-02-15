@@ -136,6 +136,15 @@ def default_settings(paths: dict, host: str, port: int) -> dict:
             "state": str(paths["state"]),
             "projects_root": str(paths["projects_root"]),
         },
+        # Novel-writing preferences are separate from UI language (PWA i18n).
+        "novel": {
+            "language": "en",
+            "tone": "neutral",
+            "target_length_words": 80000,
+            "pov": "third_limited",
+            "tense": "past",
+            "chapter_count_target": 12,
+        },
         "agent": {
             "enabled": False,
             "sdk": "codex",
@@ -589,7 +598,7 @@ class SettingsHandler(BaseHandler):
             return self.write_json({"ok": False, "error": "expected_object"}, status=400)
 
         # Minimal: allow replacing top-level keys; deeper validation comes later.
-        for k in ("paths", "agent"):
+        for k in ("paths", "agent", "novel"):
             if k in body and isinstance(body[k], dict):
                 # Shallow merge into existing dict to avoid losing unknown keys.
                 cur = self._settings.get(k)

@@ -151,6 +151,52 @@
 	            <span data-i18n="settings.enable_agent_runner">Enable agent runner (backend still requires env gate for Codex)</span>
 	          </label>
 
+	          <div class="field section-gap">
+	            <div class="label" data-i18n="novel.section">Novel</div>
+	          </div>
+
+	          <div class="field">
+	            <label class="label" for="novelLanguage" data-i18n="novel.language">Novel language</label>
+	            <select id="novelLanguage" class="input">
+	              <option value="en">en</option>
+	              <option value="zh-Hans">zh-Hans</option>
+	              <option value="zh-Hant">zh-Hant</option>
+	              <option value="ja">ja</option>
+	              <option value="ko">ko</option>
+	              <option value="vi">vi</option>
+	              <option value="ar">ar</option>
+	              <option value="fr">fr</option>
+	              <option value="es">es</option>
+	              <option value="ru">ru</option>
+	              <option value="de">de</option>
+	            </select>
+	          </div>
+
+	          <div class="field">
+	            <label class="label" for="novelTone" data-i18n="novel.tone">Tone</label>
+	            <input id="novelTone" class="input" type="text" data-i18n-placeholder="novel.tone_ph" placeholder="neutral" />
+	          </div>
+
+	          <div class="field">
+	            <label class="label" for="novelTargetWords" data-i18n="novel.target_words">Target length (words)</label>
+	            <input id="novelTargetWords" class="input" type="number" min="0" step="1000" data-i18n-placeholder="novel.target_words_ph" placeholder="80000" />
+	          </div>
+
+	          <div class="field">
+	            <label class="label" for="novelPov" data-i18n="novel.pov">POV</label>
+	            <input id="novelPov" class="input" type="text" data-i18n-placeholder="novel.pov_ph" placeholder="third_limited" />
+	          </div>
+
+	          <div class="field">
+	            <label class="label" for="novelTense" data-i18n="novel.tense">Tense</label>
+	            <input id="novelTense" class="input" type="text" data-i18n-placeholder="novel.tense_ph" placeholder="past" />
+	          </div>
+
+	          <div class="field">
+	            <label class="label" for="novelChapters" data-i18n="novel.chapters">Target chapters</label>
+	            <input id="novelChapters" class="input" type="number" min="0" step="1" data-i18n-placeholder="novel.chapters_ph" placeholder="12" />
+	          </div>
+
 	          <div class="modal-actions">
 	            <button id="saveSettings" class="btn btn-primary" type="submit" data-i18n="ui.save">Save</button>
 	            <button id="testCodex" class="btn" type="button" data-i18n-title="settings.test_codex_title" title="Runs a gated `codex --version` on backend" data-i18n="settings.test_codex">Test Codex</button>

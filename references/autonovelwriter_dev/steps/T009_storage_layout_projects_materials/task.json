@@ -1,0 +1,16 @@
+{
+  "id": "T009_storage_layout_projects_materials",
+  "title": "Storage layout: projects + materials index",
+  "notes": "Define a standardized runtime storage layout under `autonovelwriter/runtime/` for projects, materials, interactions, outputs, logs, tasks, and resume state. Add backend indexing endpoint(s) and a minimal PWA materials browser (read-only) with an active project selector.",
+  "acceptance": [
+    "Backend exposes GET /api/projects and GET /api/materials/index (active project + file listing)",
+    "PWA shows active project and materials list (read-only)",
+    "Dropping a file into the materials folder appears in the index without restart"
+  ],
+  "tags": [
+    "backend",
+    "pwa",
+    "storage",
+    "materials"
+  ]
+}

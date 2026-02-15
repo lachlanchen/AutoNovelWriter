@@ -13,3 +13,6 @@ Verification (no TCP binds):
 
 ## Fixes
 - Added a slow outputs poll (with backoff) so the outputs list stays fresh even when WS is disconnected (`autonovelwriter/pwa/app.js`).
+
+## I18N
+- Added localized UI strings for the Outputs panel across all required UI languages (`outputs.title`, `outputs.empty`, `outputs.created`) in `autonovelwriter/pwa/app.js`.

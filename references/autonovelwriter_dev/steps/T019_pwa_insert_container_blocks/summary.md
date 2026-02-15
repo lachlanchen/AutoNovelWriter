@@ -26,3 +26,6 @@ Verification (no TCP binds):
 1. Add an “insert mode” for container insertion (wrap vs insert-after-selection vs insert-into-selected-container) to reduce UX ambiguity.
 2. Consider collapsing the three “Add …” buttons into a single compact “Add” dropdown for small screens.
 3. Add a small, no-server unit check for AST edits: perform `insertContainer()` then assert `renderScriptFromAst()` contains the expected verb and indentation.
+
+## README
+- Updated `README.md` to note that the PWA Blocks toolbar can insert `LOOP`/`ROUND`/`FOREACH_TASK` containers (wrap selected or append) and that these edits immediately update the canonical script textarea.

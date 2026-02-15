@@ -79,6 +79,7 @@ If the backend validate endpoint is unreachable, the PWA falls back to a local p
 
 Blocks UI notes:
 - `LOOP` and `ROUND` repeat counts are editable inline in the blocks list; valid edits immediately update the canonical script textarea.
+- The Blocks toolbar can insert `LOOP`, `ROUND`, and `FOREACH_TASK` containers without hand-editing the script (wraps the selected block, or appends a valid non-empty container).
 
 ## Key Backend APIs
 
@@ -150,8 +151,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-15T23:36:15Z
-- current: T019_pwa_insert_container_blocks / summary — PWA: insert LOOP/ROUND/FOREACH_TASK blocks
+- updated_utc: 2026-02-15T23:36:47Z
+- current: T019_pwa_insert_container_blocks / update_readme — PWA: insert LOOP/ROUND/FOREACH_TASK blocks
 - queue: total=20 done=18 pending=2
 - last_done: T018_runner_execute_foreach_round — Runner: execute ROUND/FOREACH_TASK semantics @ 2026-02-15T23:43:51+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260215_232137_b1

@@ -303,7 +303,8 @@ state_mark() {
   ts="$(date +%Y-%m-%dT%H:%M:%S%z)"
   mkdir -p "$(dirname "$state_file")"
   if [ -f "$state_file" ]; then
-    grep -v $'\t'"$id"$'\t' "$state_file" > "$state_file.tmp" || true
+    # Replace any existing row for this task ID.
+    grep -v "^${id}"$'\t' "$state_file" > "$state_file.tmp" || true
     mv "$state_file.tmp" "$state_file"
   fi
   printf '%s\t%s\t%s\n' "$id" "$status" "$ts" >> "$state_file"
@@ -318,7 +319,14 @@ git_commit_push_if_dirty() {
   fi
   git -C "$repo_root" add -A
   if [ -n "$body_file" ] && [ -s "$body_file" ]; then
-    git -C "$repo_root" commit -m "$msg" -F "$body_file"
+    local tmp_msg
+    tmp_msg="$(mktemp)"
+    {
+      printf '%s\n\n' "$msg"
+      cat "$body_file"
+    } > "$tmp_msg"
+    git -C "$repo_root" commit -F "$tmp_msg"
+    rm -f "$tmp_msg"
   else
     git -C "$repo_root" commit -m "$msg"
   fi
@@ -524,6 +532,7 @@ Read these first:
 - $context_doc
 - $spec_doc
 - Existing code under: $backend_root/ and $pwa_root/
+- Task definition JSON (notes + acceptance): $step_dir/task.json
 
 This step:
 - Task ID: $task_id
@@ -602,6 +611,25 @@ process_one_task() {
   local step_dir="$steps_dir/$task_id"
   mkdir -p "$step_dir"
 
+  # Materialize the full task record (notes/acceptance/tags) for the prompts to consume.
+  python3 - "$queue_file" "$task_id" > "$step_dir/task.json" <<'PY'
+import json, sys
+queue, tid = sys.argv[1], sys.argv[2]
+with open(queue, "r", encoding="utf-8") as f:
+  for line in f:
+    line = line.strip()
+    if not line:
+      continue
+    try:
+      obj = json.loads(line)
+    except Exception:
+      continue
+    if obj.get("id") == tid:
+      print(json.dumps(obj, ensure_ascii=False, indent=2))
+      sys.exit(0)
+print(json.dumps({"id": tid, "error": "task_not_found_in_queue"}, ensure_ascii=False, indent=2))
+PY
+
   log "Processing task: $task_id — $task_title"
   state_mark "$task_id" "running"
 
@@ -664,4 +692,3 @@ while true; do
 done
 
 log "AutoNovelWriter auto-development driver finished."
-

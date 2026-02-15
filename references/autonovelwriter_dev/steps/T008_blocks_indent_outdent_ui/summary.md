@@ -14,3 +14,8 @@ Files changed:
 Verification (no TCP binds):
 - `node --check autonovelwriter/pwa/app.js`
 - `python3 -m py_compile autonovelwriter/backend/server.py`
+
+## Fixes
+- Made `Indent` always actionable by wrapping the selected node in a neutral `LOOP 1` when no preceding `LOOP` exists (preserves semantics while enabling indentation-driven nesting).
+- Prevented generation of invalid empty loops by pruning empty `LOOP` nodes after outdent/moves.
+- Added a local v2 script parser fallback so the blocks view can update from the canonical script even if `/api/pipeline/validate` is unreachable; backend validation is still used when available.

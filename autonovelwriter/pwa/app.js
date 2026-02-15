@@ -264,6 +264,8 @@
     return { blocks: types.map((t) => ({ id: t, type: t, enabled: true })) };
   }
 
+  const ALLOWED_TYPES = new Set(defaultPipeline().blocks.map((b) => b.type));
+
   function normalizePipeline(p) {
     if (!p || typeof p !== 'object') return defaultPipeline();
     if (!Array.isArray(p.blocks)) return defaultPipeline();
@@ -384,6 +386,113 @@
     return lines.join('\n') + '\n';
   }
 
+  function parseScriptToAst(script) {
+    const warnings = [];
+    const errors = [];
+
+    const root = { kind: 'root', version: 2, children: [] };
+    const stack = [{ level: 0, children: root.children, loopLine: null }];
+
+    function curLevel() {
+      return stack[stack.length - 1].level;
+    }
+
+    function closeTo(level) {
+      while (stack.length && level < stack[stack.length - 1].level) {
+        const top = stack[stack.length - 1];
+        if (top.loopLine !== null && (!top.children || !top.children.length)) {
+          errors.push({ line: top.loopLine, code: 'loop_empty', text: 'LOOP' });
+        }
+        stack.pop();
+      }
+    }
+
+    function leadingSpaces(raw) {
+      let n = 0;
+      for (let i = 0; i < raw.length; i++) {
+        const ch = raw[i];
+        if (ch === '\t') return { n, hasTab: true };
+        if (ch === ' ') {
+          n += 1;
+          continue;
+        }
+        break;
+      }
+      return { n, hasTab: false };
+    }
+
+    const lines = String(script || '').split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const ln = i + 1;
+      const raw = lines[i];
+      if (!raw || !raw.trim()) continue;
+      const trimmed = raw.trimStart();
+      if (trimmed.startsWith('#')) continue;
+
+      const { n: sp, hasTab } = leadingSpaces(raw);
+      if (hasTab) {
+        errors.push({ line: ln, code: 'tab_indent_not_allowed', text: raw });
+        continue;
+      }
+      if (sp % 2 !== 0) {
+        errors.push({ line: ln, code: 'bad_indent_not_multiple_of_2', text: raw });
+        continue;
+      }
+      const lvl = sp / 2;
+
+      closeTo(lvl);
+      if (lvl > curLevel()) {
+        errors.push({ line: ln, code: 'indent_jump', text: raw });
+        continue;
+      }
+
+      const parts = raw.trim().split(/\s+/);
+      const verb = (parts[0] || '').toUpperCase();
+      if (verb === 'LOOP') {
+        if (parts.length < 2) {
+          errors.push({ line: ln, code: 'loop_missing_repeat', text: raw });
+          continue;
+        }
+        const repeat = parseInt(parts[1], 10);
+        if (!Number.isFinite(repeat)) {
+          errors.push({ line: ln, code: 'loop_repeat_not_int', text: raw });
+          continue;
+        }
+        if (repeat <= 0 || repeat > 10000) {
+          errors.push({ line: ln, code: 'loop_repeat_out_of_range', text: raw });
+          continue;
+        }
+        const loop = { kind: 'loop', repeat, children: [] };
+        stack[stack.length - 1].children.push(loop);
+        stack.push({ level: lvl + 1, children: loop.children, loopLine: ln });
+        continue;
+      }
+
+      if (verb === 'STEP' || verb === 'DISABLED') {
+        if (parts.length < 2) {
+          warnings.push({ line: ln, code: 'too_few_tokens', text: raw });
+          continue;
+        }
+        const type = parts[1];
+        if (!ALLOWED_TYPES.has(type)) {
+          warnings.push({ line: ln, code: 'unknown_type', text: raw });
+          continue;
+        }
+        stack[stack.length - 1].children.push({ kind: 'step', type, enabled: verb === 'STEP' });
+        continue;
+      }
+
+      warnings.push({ line: ln, code: 'unknown_verb', text: raw });
+    }
+
+    closeTo(0);
+    if (!root.children.length) {
+      // Keep UI usable even if script is empty/garbled.
+      return { ok: true, pipeline_ast: defaultPipelineAst(), warnings, errors };
+    }
+    return { ok: errors.length === 0, pipeline_ast: root, warnings, errors };
+  }
+
   function pathKey(path) {
     if (!Array.isArray(path) || !path.length) return '';
     return path.map((n) => String(n)).join('.');
@@ -450,8 +559,15 @@
     } catch (_) {}
   }
 
+  function updateIndentButtons() {
+    const on = !!selected;
+    try { pipeIndent.disabled = !on; } catch (_) {}
+    try { pipeOutdent.disabled = !on; } catch (_) {}
+  }
+
   function renderPipeline() {
     blocksEl.innerHTML = '';
+    updateIndentButtons();
 
     function attachContainerDrop(ol, parentPath) {
       const parentKey = pathKey(parentPath);
@@ -658,6 +774,24 @@
     renderPipeline();
   }
 
+  function removeEmptyLoops(ast) {
+    const prune = (n) => {
+      if (!n || typeof n !== 'object') return;
+      if (!Array.isArray(n.children)) return;
+      const next = [];
+      for (const c of n.children) {
+        if (!c || typeof c !== 'object') continue;
+        prune(c);
+        if (c.kind === 'loop' && (!Array.isArray(c.children) || c.children.length === 0)) {
+          continue;
+        }
+        next.push(c);
+      }
+      n.children = next;
+    };
+    prune(ast);
+  }
+
   function indentSelected() {
     if (!selected) return;
     const path = parsePathKey(selected);
@@ -667,14 +801,18 @@
     const { container, index, parentPath } = info;
     if (index <= 0) return;
     const prev = container[index - 1];
-    if (!prev || typeof prev !== 'object' || prev.kind !== 'loop' || !Array.isArray(prev.children)) {
-      addMsg('err', 'pipeline', 'indent requires previous sibling to be a LOOP');
-      return;
-    }
     const node = container.splice(index, 1)[0];
-    prev.children.push(node);
-    setSelected(pathKey(parentPath.concat([index - 1, prev.children.length - 1])));
+    if (prev && typeof prev === 'object' && prev.kind === 'loop' && Array.isArray(prev.children)) {
+      prev.children.push(node);
+      setSelected(pathKey(parentPath.concat([index - 1, prev.children.length - 1])));
+    } else {
+      // Minimal, semantics-preserving behavior: wrap in LOOP 1 so indentation is meaningful.
+      const loop = { kind: 'loop', repeat: 1, children: [node] };
+      container.splice(index, 0, loop);
+      setSelected(pathKey(parentPath.concat([index, 0])));
+    }
     setPipeStatus('dirty');
+    removeEmptyLoops(pipelineAst);
     updateDerivedFromAst({ writeScript: true });
     renderPipeline();
   }
@@ -690,6 +828,7 @@
     const loopPath = parentPath;
     const loopInfo = getContainerAndIndex(pipelineAst, loopPath);
     if (!loopInfo || !loopInfo.node || loopInfo.node.kind !== 'loop') return;
+    const loopNode = loopInfo.node;
     const outerParentPath = loopInfo.parentPath;
     const outerInfo = outerParentPath.length ? getContainerAndIndex(pipelineAst, outerParentPath) : null;
     const outerKids = outerParentPath.length
@@ -699,8 +838,15 @@
     const loopIndex = loopInfo.index;
     const node = container.splice(index, 1)[0];
     outerKids.splice(loopIndex + 1, 0, node);
-    setSelected(pathKey(outerParentPath.concat([loopIndex + 1])));
+    if (Array.isArray(loopNode.children) && loopNode.children.length === 0) {
+      // Avoid generating invalid scripts (backend rejects empty loops).
+      outerKids.splice(loopIndex, 1);
+      setSelected(pathKey(outerParentPath.concat([loopIndex])));
+    } else {
+      setSelected(pathKey(outerParentPath.concat([loopIndex + 1])));
+    }
     setPipeStatus('dirty');
+    removeEmptyLoops(pipelineAst);
     updateDerivedFromAst({ writeScript: true });
     renderPipeline();
   }
@@ -720,6 +866,7 @@
           setSelected('');
           updateDerivedFromAst({ writeScript: false });
           renderPipeline();
+          updateIndentButtons();
           if (Array.isArray(obj.warnings) && obj.warnings.length) {
             addMsg('err', 'pipeline warnings', JSON.stringify(obj.warnings.slice(0, 5)));
           }
@@ -748,6 +895,7 @@
       updateDerivedFromAst({ writeScript: false });
       setPipeStatus('local');
       renderPipeline();
+      updateIndentButtons();
       return;
     } catch (_) {}
 
@@ -757,6 +905,7 @@
     updateDerivedFromAst({ writeScript: false });
     setPipeStatus('loaded');
     renderPipeline();
+    updateIndentButtons();
   }
 
   async function savePipeline() {
@@ -804,13 +953,25 @@
     setPipeStatus('dirty');
     updateDerivedFromAst({ writeScript: true });
     renderPipeline();
+    updateIndentButtons();
   }
 
   let scriptValidateTimer = null;
 
   async function validatePipelineScript(script, opts) {
     const url = backendApiUrl('/api/pipeline/validate');
-    if (!url) return;
+    if (!url) {
+      const r = parseScriptToAst(script);
+      if (r.ok && r.pipeline_ast) {
+        pipelineAst = normalizePipelineAst(r.pipeline_ast);
+        setSelected('');
+        updateDerivedFromAst({ writeScript: false });
+        renderPipeline();
+      } else if (!opts || !opts.quiet) {
+        if (Array.isArray(r.errors) && r.errors.length) addMsg('err', 'pipeline errors', JSON.stringify(r.errors.slice(0, 5)));
+      }
+      return;
+    }
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -838,7 +999,19 @@
         }
       }
     } catch (e) {
-      if (!opts || !opts.quiet) addMsg('err', 'pipeline validate', String(e));
+      const r = parseScriptToAst(script);
+      if (r.ok && r.pipeline_ast) {
+        pipelineAst = normalizePipelineAst(r.pipeline_ast);
+        setSelected('');
+        updateDerivedFromAst({ writeScript: false });
+        renderPipeline();
+        if (!opts || !opts.quiet) {
+          if (Array.isArray(r.warnings) && r.warnings.length) addMsg('err', 'pipeline warnings', JSON.stringify(r.warnings.slice(0, 5)));
+        }
+      } else if (!opts || !opts.quiet) {
+        addMsg('err', 'pipeline validate', String(e));
+        if (Array.isArray(r.errors) && r.errors.length) addMsg('err', 'pipeline errors', JSON.stringify(r.errors.slice(0, 5)));
+      }
     }
   }
 

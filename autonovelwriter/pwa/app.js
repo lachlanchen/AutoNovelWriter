@@ -45,12 +45,20 @@
       'pipeline.outdent': 'Outdent',
       'pipeline.indent_title': 'Indent selected block (Tab)',
       'pipeline.outdent_title': 'Outdent selected block (Shift+Tab)',
+      'pipeline.add_loop': 'Add LOOP',
+      'pipeline.add_round': 'Add ROUND',
+      'pipeline.add_foreach_task': 'Add FOREACH_TASK',
+      'pipeline.add_loop_title': 'Add LOOP (wrap selected, or append)',
+      'pipeline.add_round_title': 'Add ROUND (wrap selected, or append)',
+      'pipeline.add_foreach_task_title': 'Add FOREACH_TASK (wrap selected, or append)',
       'pipeline.script_canonical': 'Pipeline script (canonical)',
       'pipeline.json_derived': 'Pipeline JSON (derived)',
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.state_enabled': 'enabled',
+      'pipeline.state_disabled': 'disabled',
       'pipeline.repeat_aria': 'Repeat count',
       'pipeline.repeat_title': 'Repeat count (1-10000)',
       'pipeline.repeat_err': 'Repeat must be 1-10000',
@@ -113,12 +121,20 @@
       'pipeline.outdent': '取消缩进',
       'pipeline.indent_title': '缩进选中块 (Tab)',
       'pipeline.outdent_title': '取消缩进 (Shift+Tab)',
+      'pipeline.add_loop': '添加 LOOP',
+      'pipeline.add_round': '添加 ROUND',
+      'pipeline.add_foreach_task': '添加 FOREACH_TASK',
+      'pipeline.add_loop_title': '添加 LOOP（包裹选中块或追加）',
+      'pipeline.add_round_title': '添加 ROUND（包裹选中块或追加）',
+      'pipeline.add_foreach_task_title': '添加 FOREACH_TASK（包裹选中块或追加）',
       'pipeline.script_canonical': '流水线脚本（规范）',
       'pipeline.json_derived': '流水线 JSON（派生）',
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.state_enabled': '启用',
+      'pipeline.state_disabled': '禁用',
       'pipeline.repeat_aria': '重复次数',
       'pipeline.repeat_title': '重复次数（1-10000）',
       'pipeline.repeat_err': '重复次数必须为 1-10000',
@@ -181,12 +197,20 @@
       'pipeline.outdent': '取消縮排',
       'pipeline.indent_title': '縮排所選區塊 (Tab)',
       'pipeline.outdent_title': '取消縮排 (Shift+Tab)',
+      'pipeline.add_loop': '新增 LOOP',
+      'pipeline.add_round': '新增 ROUND',
+      'pipeline.add_foreach_task': '新增 FOREACH_TASK',
+      'pipeline.add_loop_title': '新增 LOOP（包住所選區塊或加到末尾）',
+      'pipeline.add_round_title': '新增 ROUND（包住所選區塊或加到末尾）',
+      'pipeline.add_foreach_task_title': '新增 FOREACH_TASK（包住所選區塊或加到末尾）',
       'pipeline.script_canonical': '流程腳本（規範）',
       'pipeline.json_derived': '流程 JSON（衍生）',
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.state_enabled': '啟用',
+      'pipeline.state_disabled': '停用',
       'pipeline.repeat_aria': '重複次數',
       'pipeline.repeat_title': '重複次數（1-10000）',
       'pipeline.repeat_err': '重複次數必須為 1-10000',
@@ -249,12 +273,20 @@
       'pipeline.outdent': 'アウトデント',
       'pipeline.indent_title': '選択ブロックをインデント (Tab)',
       'pipeline.outdent_title': 'アウトデント (Shift+Tab)',
+      'pipeline.add_loop': 'LOOP を追加',
+      'pipeline.add_round': 'ROUND を追加',
+      'pipeline.add_foreach_task': 'FOREACH_TASK を追加',
+      'pipeline.add_loop_title': 'LOOP を追加（選択を包む/末尾に追加）',
+      'pipeline.add_round_title': 'ROUND を追加（選択を包む/末尾に追加）',
+      'pipeline.add_foreach_task_title': 'FOREACH_TASK を追加（選択を包む/末尾に追加）',
       'pipeline.script_canonical': 'パイプラインスクリプト（正）',
       'pipeline.json_derived': 'パイプライン JSON（派生）',
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.state_enabled': '有効',
+      'pipeline.state_disabled': '無効',
       'pipeline.repeat_aria': '繰り返し回数',
       'pipeline.repeat_title': '繰り返し回数（1-10000）',
       'pipeline.repeat_err': '繰り返し回数は 1-10000 です',
@@ -317,12 +349,20 @@
       'pipeline.outdent': '내어쓰기',
       'pipeline.indent_title': '선택 블록 들여쓰기 (Tab)',
       'pipeline.outdent_title': '내어쓰기 (Shift+Tab)',
+      'pipeline.add_loop': 'LOOP 추가',
+      'pipeline.add_round': 'ROUND 추가',
+      'pipeline.add_foreach_task': 'FOREACH_TASK 추가',
+      'pipeline.add_loop_title': 'LOOP 추가(선택 감싸기/끝에 추가)',
+      'pipeline.add_round_title': 'ROUND 추가(선택 감싸기/끝에 추가)',
+      'pipeline.add_foreach_task_title': 'FOREACH_TASK 추가(선택 감싸기/끝에 추가)',
       'pipeline.script_canonical': '파이프라인 스크립트(원본)',
       'pipeline.json_derived': '파이프라인 JSON(파생)',
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.state_enabled': '사용',
+      'pipeline.state_disabled': '사용 안 함',
       'pipeline.repeat_aria': '반복 횟수',
       'pipeline.repeat_title': '반복 횟수 (1-10000)',
       'pipeline.repeat_err': '반복 횟수는 1-10000이어야 합니다',
@@ -385,12 +425,20 @@
       'pipeline.outdent': 'Thut ra',
       'pipeline.indent_title': 'Thut vao khoi da chon (Tab)',
       'pipeline.outdent_title': 'Thut ra (Shift+Tab)',
+      'pipeline.add_loop': 'Them LOOP',
+      'pipeline.add_round': 'Them ROUND',
+      'pipeline.add_foreach_task': 'Them FOREACH_TASK',
+      'pipeline.add_loop_title': 'Them LOOP (bao boc chon / them cuoi)',
+      'pipeline.add_round_title': 'Them ROUND (bao boc chon / them cuoi)',
+      'pipeline.add_foreach_task_title': 'Them FOREACH_TASK (bao boc chon / them cuoi)',
       'pipeline.script_canonical': 'Script pipeline (chuan)',
       'pipeline.json_derived': 'Pipeline JSON (suy ra)',
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.state_enabled': 'bat',
+      'pipeline.state_disabled': 'tat',
       'pipeline.repeat_aria': 'So lan lap',
       'pipeline.repeat_title': 'So lan lap (1-10000)',
       'pipeline.repeat_err': 'So lan lap phai tu 1-10000',
@@ -453,12 +501,20 @@
       'pipeline.outdent': 'إزاحة للخارج',
       'pipeline.indent_title': 'إزاحة الكتلة المحددة (Tab)',
       'pipeline.outdent_title': 'إزاحة للخارج (Shift+Tab)',
+      'pipeline.add_loop': 'إضافة LOOP',
+      'pipeline.add_round': 'إضافة ROUND',
+      'pipeline.add_foreach_task': 'إضافة FOREACH_TASK',
+      'pipeline.add_loop_title': 'إضافة LOOP (تغليف المحدد أو الإلحاق)',
+      'pipeline.add_round_title': 'إضافة ROUND (تغليف المحدد أو الإلحاق)',
+      'pipeline.add_foreach_task_title': 'إضافة FOREACH_TASK (تغليف المحدد أو الإلحاق)',
       'pipeline.script_canonical': 'نص خط الأنابيب (مرجعي)',
       'pipeline.json_derived': 'JSON لخط الأنابيب (مشتق)',
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.state_enabled': 'مفعل',
+      'pipeline.state_disabled': 'معطل',
       'pipeline.repeat_aria': 'عدد التكرار',
       'pipeline.repeat_title': 'عدد التكرار (1-10000)',
       'pipeline.repeat_err': 'يجب أن يكون التكرار بين 1 و10000',
@@ -521,12 +577,20 @@
       'pipeline.outdent': 'Désindenter',
       'pipeline.indent_title': 'Indenter le bloc sélectionné (Tab)',
       'pipeline.outdent_title': 'Désindenter (Shift+Tab)',
+      'pipeline.add_loop': 'Ajouter LOOP',
+      'pipeline.add_round': 'Ajouter ROUND',
+      'pipeline.add_foreach_task': 'Ajouter FOREACH_TASK',
+      'pipeline.add_loop_title': 'Ajouter LOOP (englober la sélection ou ajouter)',
+      'pipeline.add_round_title': 'Ajouter ROUND (englober la sélection ou ajouter)',
+      'pipeline.add_foreach_task_title': 'Ajouter FOREACH_TASK (englober la sélection ou ajouter)',
       'pipeline.script_canonical': 'Script du pipeline (canonique)',
       'pipeline.json_derived': 'JSON du pipeline (dérivé)',
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.state_enabled': 'actif',
+      'pipeline.state_disabled': 'inactif',
       'pipeline.repeat_aria': 'Nombre de répétitions',
       'pipeline.repeat_title': 'Nombre de répétitions (1-10000)',
       'pipeline.repeat_err': 'Doit être 1-10000',
@@ -589,12 +653,20 @@
       'pipeline.outdent': 'Desindentar',
       'pipeline.indent_title': 'Indentar bloque seleccionado (Tab)',
       'pipeline.outdent_title': 'Desindentar (Shift+Tab)',
+      'pipeline.add_loop': 'Agregar LOOP',
+      'pipeline.add_round': 'Agregar ROUND',
+      'pipeline.add_foreach_task': 'Agregar FOREACH_TASK',
+      'pipeline.add_loop_title': 'Agregar LOOP (envolver selección o añadir)',
+      'pipeline.add_round_title': 'Agregar ROUND (envolver selección o añadir)',
+      'pipeline.add_foreach_task_title': 'Agregar FOREACH_TASK (envolver selección o añadir)',
       'pipeline.script_canonical': 'Script del pipeline (canónico)',
       'pipeline.json_derived': 'JSON del pipeline (derivado)',
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.state_enabled': 'activo',
+      'pipeline.state_disabled': 'inactivo',
       'pipeline.repeat_aria': 'Repeticiones',
       'pipeline.repeat_title': 'Repeticiones (1-10000)',
       'pipeline.repeat_err': 'Debe ser 1-10000',
@@ -657,12 +729,20 @@
       'pipeline.outdent': 'Развернуть',
       'pipeline.indent_title': 'Вложить выбранный блок (Tab)',
       'pipeline.outdent_title': 'Развернуть (Shift+Tab)',
+      'pipeline.add_loop': 'Добавить LOOP',
+      'pipeline.add_round': 'Добавить ROUND',
+      'pipeline.add_foreach_task': 'Добавить FOREACH_TASK',
+      'pipeline.add_loop_title': 'Добавить LOOP (обернуть выбранное или добавить)',
+      'pipeline.add_round_title': 'Добавить ROUND (обернуть выбранное или добавить)',
+      'pipeline.add_foreach_task_title': 'Добавить FOREACH_TASK (обернуть выбранное или добавить)',
       'pipeline.script_canonical': 'Скрипт пайплайна (канон.)',
       'pipeline.json_derived': 'JSON пайплайна (производный)',
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.state_enabled': 'включено',
+      'pipeline.state_disabled': 'выключено',
       'pipeline.repeat_aria': 'Количество повторов',
       'pipeline.repeat_title': 'Количество повторов (1-10000)',
       'pipeline.repeat_err': 'Должно быть 1-10000',
@@ -725,12 +805,20 @@
       'pipeline.outdent': 'Ausrücken',
       'pipeline.indent_title': 'Ausgewählten Block einrücken (Tab)',
       'pipeline.outdent_title': 'Ausrücken (Shift+Tab)',
+      'pipeline.add_loop': 'LOOP hinzufügen',
+      'pipeline.add_round': 'ROUND hinzufügen',
+      'pipeline.add_foreach_task': 'FOREACH_TASK hinzufügen',
+      'pipeline.add_loop_title': 'LOOP hinzufügen (Auswahl umschließen oder anhängen)',
+      'pipeline.add_round_title': 'ROUND hinzufügen (Auswahl umschließen oder anhängen)',
+      'pipeline.add_foreach_task_title': 'FOREACH_TASK hinzufügen (Auswahl umschließen oder anhängen)',
       'pipeline.script_canonical': 'Pipeline-Skript (kanonisch)',
       'pipeline.json_derived': 'Pipeline-JSON (abgeleitet)',
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.badge_foreach': 'foreach',
+      'pipeline.state_enabled': 'aktiv',
+      'pipeline.state_disabled': 'inaktiv',
       'pipeline.repeat_aria': 'Wiederholungen',
       'pipeline.repeat_title': 'Wiederholungen (1-10000)',
       'pipeline.repeat_err': 'Muss 1-10000 sein',
@@ -848,6 +936,9 @@
   const blocksEl = $('blocks');
   const pipeIndent = $('pipeIndent');
   const pipeOutdent = $('pipeOutdent');
+  const pipeAddLoop = $('pipeAddLoop');
+  const pipeAddRound = $('pipeAddRound');
+  const pipeAddForeachTask = $('pipeAddForeachTask');
   const pipeSave = $('pipeSave');
   const pipeReset = $('pipeReset');
   const pipeStatus = $('pipeStatus');
@@ -1836,7 +1927,7 @@
           badge.textContent = t('pipeline.badge_foreach');
           meta.appendChild(badge);
         } else {
-          meta.textContent = n.enabled === false ? 'disabled' : 'enabled';
+          meta.textContent = n.enabled === false ? t('pipeline.state_disabled') : t('pipeline.state_enabled');
         }
         mid.appendChild(title);
         mid.appendChild(meta);
@@ -1850,8 +1941,8 @@
         const bin = document.createElement('button');
         bin.type = 'button';
         bin.className = 'mini';
-        bin.textContent = 'Indent';
-        bin.title = 'Indent (Tab)';
+        bin.textContent = t('pipeline.indent');
+        bin.title = t('pipeline.indent_title');
         bin.addEventListener('click', (e) => {
           e.stopPropagation();
           setSelected(key);
@@ -1861,8 +1952,8 @@
         const bout = document.createElement('button');
         bout.type = 'button';
         bout.className = 'mini';
-        bout.textContent = 'Outdent';
-        bout.title = 'Outdent (Shift+Tab)';
+        bout.textContent = t('pipeline.outdent');
+        bout.title = t('pipeline.outdent_title');
         bout.addEventListener('click', (e) => {
           e.stopPropagation();
           setSelected(key);
@@ -1886,10 +1977,10 @@
             updateDerivedFromAst({ writeScript: true });
             renderPipeline();
           });
-          const t = document.createElement('span');
-          t.textContent = 'enabled';
+          const lbl = document.createElement('span');
+          lbl.textContent = t('pipeline.state_enabled');
           toggle.appendChild(cb);
-          toggle.appendChild(t);
+          toggle.appendChild(lbl);
           side.appendChild(toggle);
         }
 
@@ -2406,6 +2497,59 @@
   });
   pipeIndent.addEventListener('click', () => indentSelected());
   pipeOutdent.addEventListener('click', () => outdentSelected());
+
+  function defaultStepType() {
+    if (ALLOWED_TYPES.has('write')) return 'write';
+    if (ALLOWED_TYPES.has('plan')) return 'plan';
+    const arr = Array.from(ALLOWED_TYPES);
+    return arr.length ? arr[0] : 'write';
+  }
+
+  function insertContainer(kind) {
+    const k = String(kind || '');
+    if (k !== 'loop' && k !== 'round' && k !== 'foreach_task') return;
+
+    const wrapSelected = () => {
+      if (!selected) return false;
+      const path = parsePathKey(selected);
+      if (!path.length) return false;
+      const info = getContainerAndIndex(pipelineAst, path);
+      if (!info) return false;
+      const node = info.container[info.index];
+      if (!node || typeof node !== 'object') return false;
+      const containerNode =
+        k === 'foreach_task'
+          ? { kind: 'foreach_task', children: [node] }
+          : { kind: k, repeat: 1, children: [node] };
+      info.container.splice(info.index, 1, containerNode);
+      setSelected(pathKey(info.parentPath.concat([info.index])));
+      return true;
+    };
+
+    const appendRoot = () => {
+      const step = { kind: 'step', type: defaultStepType(), enabled: true };
+      const containerNode =
+        k === 'foreach_task'
+          ? { kind: 'foreach_task', children: [step] }
+          : { kind: k, repeat: 1, children: [step] };
+      if (!Array.isArray(pipelineAst.children)) pipelineAst.children = [];
+      pipelineAst.children.push(containerNode);
+      setSelected(pathKey([pipelineAst.children.length - 1]));
+      return true;
+    };
+
+    if (!wrapSelected()) appendRoot();
+
+    setPipeStatus('dirty');
+    removeEmptyContainers(pipelineAst);
+    updateDerivedFromAst({ writeScript: true });
+    renderPipeline();
+    updateIndentButtons();
+  }
+
+  if (pipeAddLoop) pipeAddLoop.addEventListener('click', () => insertContainer('loop'));
+  if (pipeAddRound) pipeAddRound.addEventListener('click', () => insertContainer('round'));
+  if (pipeAddForeachTask) pipeAddForeachTask.addEventListener('click', () => insertContainer('foreach_task'));
 
   pipelineScript.addEventListener('input', () => {
     setPipeStatus('dirty');

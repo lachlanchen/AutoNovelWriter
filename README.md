@@ -151,8 +151,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-15T23:45:33Z
-- current: T020_tasks_batches_index_and_pwa_panel / i18n — Task batches: index API + PWA panel
+- updated_utc: 2026-02-15T23:45:56Z
+- current: T020_tasks_batches_index_and_pwa_panel / summary — Task batches: index API + PWA panel
 - queue: total=20 done=19 pending=1
 - last_done: T019_pwa_insert_container_blocks — PWA: insert LOOP/ROUND/FOREACH_TASK blocks @ 2026-02-16T07:36:50+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260215_232137_b1

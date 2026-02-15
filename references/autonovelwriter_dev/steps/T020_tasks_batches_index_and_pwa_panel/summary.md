@@ -21,3 +21,8 @@ Verification (no TCP binds):
 ## I18N
 - Added i18n keys for the new PWA Task Batches panel across 11 UI languages:
   - `tasks_batches.title`, `tasks_batches.empty`, `tasks_batches.created`
+
+## Next
+1. Add an optional `GET /api/tasks/batches/<batch_id>` (manifest + tail of `tasks.jsonl`) so the PWA can expand a batch to view its tasks without opening files manually.
+2. Link batch selection to “activate this batch into tasks.json” (explicit user action) so the runner can pick a chosen batch as the active task list.
+3. Add a small size/entry cap to the index handler response body (e.g. max 500 batches, and omit very long paths) and surface a warning in the PWA when truncation occurs.

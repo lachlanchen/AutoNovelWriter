@@ -62,7 +62,7 @@ Never commit secrets. Use `autonovelwriter/backend/.env.example` as a template f
 
 ## Driver Workflow (Auto-Dev)
 
-`scripts/auto-autonovelwriter-development.sh` runs a resumable Codex-driven loop over tasks under `references/autonovelwriter_dev/` and **will commit/push** at the end of each task batch.
+`scripts/auto-autonovelwriter-development.sh` runs a resumable Codex-driven loop over tasks under `references/autonovelwriter_dev/` and **will commit/push after each stage** (plan/implement/debug/fix/summary/update_readme).
 
 Useful controls:
 - Stop after current task: `touch references/autonovelwriter_dev/STOP`
@@ -71,10 +71,8 @@ Useful controls:
 
 ## Contents
 - `docs/autonovelwriter_spec.md`: Product spec for the Scratch-like controller (chat + folder pipe + start/pause/stop + settings).
-- `scripts/auto-autonovelwriter-development.sh`: Auto-develop the AutoNovelWriter app itself (task loop: plan -> implement -> critique -> fix -> summary -> commit+push).
+- `scripts/auto-autonovelwriter-development.sh`: Auto-develop the AutoNovelWriter app itself (task loop: plan -> implement -> debug -> fix -> summary -> update_readme -> commit+push).
 - `docs/auto-development-guide.md`: Bilingual (EN/ZH) philosophy and requirements for a long-running, resumable auto-development agent.
 - `docs/ORDERING_RATIONALE.md`: Example rationale for sequencing screenshot-driven steps.
-- `scripts/app-auto-development.sh`: The linear pipeline driver (plan -> backend -> PWA -> Android -> iOS -> review -> summary), with resume/state support.
-- `scripts/generate_screenshot_docs.sh`: Screenshot -> markdown description generator (Codex-driven).
-- `scripts/setup_backend_env.sh`: Backend conda env bootstrap for local runs.
+- `scripts-legacy/`: older automation scripts kept for reference but not used by AutoNovelWriter.
 - `examples/ralph-wiggum-example.sh`: Example Codex CLI automation helper.

@@ -20,3 +20,8 @@ Verification (no TCP binds):
 
 ## I18N
 - No PWA user-facing strings were added/changed in this task. The new `output_created` WS event and runner log lines are backend-side diagnostics and are not localized.
+
+## Next
+1. Switch runner execution to use v2 pipeline parsing/AST (including loop repeat semantics) so it matches the PWA nested block view.
+2. Add a small outputs index API (`GET /api/outputs/index`) and/or PWA UI handling of `output_created` to surface created drafts.
+3. Extend `task_status.json` schema to track per-block start/end + errors consistently and keep tasks retriable instead of terminal error.

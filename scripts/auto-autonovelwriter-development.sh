@@ -20,6 +20,7 @@ Options:
   --reset-state             Clear task state (keeps queue)
   --batch-size <n>          Generate at most n new tasks per batch (default: 6)
   --max-batches <n>         Stop after n batches (default: 1; 0 = infinite)
+  --max-tasks <n>           Stop after processing n tasks total (default: 0; 0 = infinite)
   --stop-file <path>        Stop after current task if this file exists
                             (default: references/autonovelwriter_dev/STOP)
   --no-tmux                 Do not create/manage tmux dev session
@@ -47,6 +48,7 @@ new_session=0
 reset_state=0
 batch_size=6
 max_batches=1
+max_tasks=0
 stop_file="references/autonovelwriter_dev/STOP"
 no_tmux=0
 tmux_session="autonovelwriter_dev"
@@ -63,6 +65,7 @@ while [ $# -gt 0 ]; do
     --reset-state) reset_state=1 ;;
     --batch-size) batch_size="${2:-}"; shift ;;
     --max-batches) max_batches="${2:-}"; shift ;;
+    --max-tasks) max_tasks="${2:-}"; shift ;;
     --stop-file) stop_file="${2:-}"; shift ;;
     --no-tmux) no_tmux=1 ;;
     --tmux-session) tmux_session="${2:-}"; shift ;;
@@ -313,7 +316,8 @@ state_mark() {
 git_commit_push_if_dirty() {
   local msg="$1"
   local body_file="${2:-}"
-  if git -C "$repo_root" diff --quiet && git -C "$repo_root" diff --cached --quiet; then
+  # Include untracked files in the dirty check (git diff ignores them).
+  if [ -z "$(git -C "$repo_root" status --porcelain)" ]; then
     log "No changes to commit for: $msg"
     return 0
   fi
@@ -345,6 +349,70 @@ git_commit_push_if_dirty() {
   done
 }
 
+pick_free_port() {
+  python3 - <<'PY'
+import socket
+s = socket.socket()
+s.bind(("127.0.0.1", 0))
+port = s.getsockname()[1]
+s.close()
+print(port)
+PY
+}
+
+host_smoke_backend() {
+  local server_py="$backend_root/server.py"
+  if [ ! -f "$server_py" ]; then
+    return 0
+  fi
+
+  # Run a real socket bind outside Codex sandbox, on a free port.
+  local port
+  port="$(pick_free_port)"
+
+  local log_file="/tmp/anw_smoke_backend_${port}.log"
+  local pid_file="/tmp/anw_smoke_backend_${port}.pid"
+  rm -f "$pid_file" "$log_file"
+
+  (python3 "$server_py" --host 127.0.0.1 --port "$port" >"$log_file" 2>&1 & echo $! >"$pid_file")
+  sleep 0.5
+
+  set +e
+  curl -fsS "http://127.0.0.1:${port}/api/health" >/dev/null
+  local curl_rc=$?
+  if [ "$curl_rc" -ne 0 ]; then
+    echo "[smoke] backend health failed (port $port). Last log lines:" >&2
+    tail -n 80 "$log_file" >&2 || true
+  fi
+
+  python3 - <<PY >/dev/null 2>&1
+import asyncio
+from tornado.websocket import websocket_connect
+
+async def main():
+    c = await websocket_connect("ws://127.0.0.1:${port}/ws")
+    msg = await c.read_message()
+    if not msg:
+        raise SystemExit(2)
+    c.close()
+
+asyncio.run(main())
+PY
+  local ws_rc=$?
+
+  if [ -f "$pid_file" ]; then
+    kill "$(cat "$pid_file")" >/dev/null 2>&1 || true
+  fi
+  rm -f "$pid_file"
+
+  set -e
+
+  if [ "$curl_rc" -ne 0 ] || [ "$ws_rc" -ne 0 ]; then
+    return 1
+  fi
+  return 0
+}
+
 ensure_tmux() {
   if [ "$no_tmux" -eq 1 ]; then
     return 0
@@ -354,17 +422,25 @@ ensure_tmux() {
     return 0
   fi
 
-  if tmux has-session -t "$tmux_session" 2>/dev/null; then
+  if ! tmux has-session -t "$tmux_session" 2>/dev/null; then
+    local backend_cmd="cd \"$repo_root\" && python3 \"$backend_root/server.py\" --port \"$backend_port\""
+    local pwa_cmd="cd \"$repo_root\" && python3 -m http.server \"$pwa_port\" --directory \"$pwa_root\""
+
+    tmux new-session -d -s "$tmux_session" -n dev "bash -lc 'echo \"[backend pane] waiting for $backend_root/server.py\"; if [ -f \"$backend_root/server.py\" ]; then $backend_cmd; else while true; do sleep 3600; done; fi'"
+    tmux split-window -h -t "$tmux_session:dev" "bash -lc 'echo \"[pwa pane] serving $pwa_root on :$pwa_port\"; if [ -d \"$pwa_root\" ]; then $pwa_cmd; else while true; do sleep 3600; done; fi'"
+    tmux select-layout -t "$tmux_session:dev" even-horizontal >/dev/null 2>&1 || true
+    log "tmux session created: $tmux_session (backend + pwa). Attach with: tmux attach -t $tmux_session"
     return 0
   fi
 
-  local backend_cmd="cd \"$repo_root\" && python3 \"$backend_root/server.py\" --port \"$backend_port\""
-  local pwa_cmd="cd \"$repo_root\" && python3 -m http.server \"$pwa_port\" --directory \"$pwa_root\""
-
-  tmux new-session -d -s "$tmux_session" -n dev "bash -lc 'echo \"[backend pane] waiting for $backend_root/server.py\"; if [ -f \"$backend_root/server.py\" ]; then $backend_cmd; else while true; do sleep 3600; done; fi'"
-  tmux split-window -h -t "$tmux_session:dev" "bash -lc 'echo \"[pwa pane] serving $pwa_root on :$pwa_port\"; if [ -d \"$pwa_root\" ]; then $pwa_cmd; else while true; do sleep 3600; done; fi'"
-  tmux select-layout -t "$tmux_session:dev" even-horizontal >/dev/null 2>&1 || true
-  log "tmux session created: $tmux_session (backend + pwa). Attach with: tmux attach -t $tmux_session"
+  # Session exists but may be missing the second pane (e.g., after a crash). Ensure 2 panes.
+  local pane_count
+  pane_count="$(tmux list-panes -t "$tmux_session:dev" 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "$pane_count" -lt 2 ]; then
+    local pwa_cmd="cd \"$repo_root\" && python3 -m http.server \"$pwa_port\" --directory \"$pwa_root\""
+    tmux split-window -h -t "$tmux_session:dev" "bash -lc 'echo \"[pwa pane] serving $pwa_root on :$pwa_port\"; if [ -d \"$pwa_root\" ]; then $pwa_cmd; else while true; do sleep 3600; done; fi'"
+    tmux select-layout -t "$tmux_session:dev" even-horizontal >/dev/null 2>&1 || true
+  fi
 }
 
 tmux_restart_panes_if_running() {
@@ -375,18 +451,24 @@ tmux_restart_panes_if_running() {
     return 0
   fi
 
+  ensure_tmux
+
   local backend_cmd="cd \"$repo_root\" && python3 \"$backend_root/server.py\" --port \"$backend_port\""
   local pwa_cmd="cd \"$repo_root\" && python3 -m http.server \"$pwa_port\" --directory \"$pwa_root\""
 
   tmux send-keys -t "$tmux_session:dev.0" C-c >/dev/null 2>&1 || true
   tmux send-keys -t "$tmux_session:dev.0" "bash -lc 'if [ -f \"$backend_root/server.py\" ]; then $backend_cmd; else echo \"backend not ready\"; fi'" Enter || true
 
-  tmux send-keys -t "$tmux_session:dev.1" C-c >/dev/null 2>&1 || true
-  tmux send-keys -t "$tmux_session:dev.1" "bash -lc 'if [ -d \"$pwa_root\" ]; then $pwa_cmd; else echo \"pwa not ready\"; fi'" Enter || true
+  # Pane 1 may not exist if tmux split failed; guard it.
+  if tmux list-panes -t "$tmux_session:dev" -F '#{pane_index}' 2>/dev/null | grep -qx '1'; then
+    tmux send-keys -t "$tmux_session:dev.1" C-c >/dev/null 2>&1 || true
+    tmux send-keys -t "$tmux_session:dev.1" "bash -lc 'if [ -d \"$pwa_root\" ]; then $pwa_cmd; else echo \"pwa not ready\"; fi'" Enter || true
+  fi
 }
 
 ensure_spec_docs
 ensure_seed_queue
+git_commit_push_if_dirty "AutoNovelWriter: bootstrap driver artifacts"
 
 if [ "$reset_state" -eq 1 ]; then
   log "Resetting state file: $state_file"
@@ -562,14 +644,17 @@ EOF
 - Plan must include:
   - files to change/create
   - acceptance checklist
-  - minimal verification commands
+  - minimal verification commands (avoid binding TCP ports; Codex sandbox may block socket binds)
 EOF
       ;;
     implement)
       cat >> "$out_prompt" <<EOF
 - Implement the task. Keep scope tight and verifiable.
 - Ensure runtime defaults exist under: $runtime_root/ (create dirs/files as needed).
-- After implementing, run minimal verification commands (no long-running daemons).
+- After implementing, run minimal verification commands:
+  - Do NOT bind TCP ports or start servers inside this Codex step (sandbox may deny with PermissionError).
+  - Prefer syntax/import/build checks (e.g., py_compile/compileall, eslint/typecheck, unit tests).
+  - The outer driver will run real socket-binding smoke tests on the host.
 - Write a brief implementation note into: $step_dir/summary.md (append section \"## Implement\").
 EOF
       ;;
@@ -583,7 +668,9 @@ EOF
     fix)
       cat >> "$out_prompt" <<EOF
 - Apply fixes for issues found in $step_dir/critique.md.
-- Keep fixes minimal; rerun verification commands.
+- Keep fixes minimal; rerun verification commands:
+  - Do NOT bind TCP ports or start servers inside this Codex step.
+  - Prefer syntax/import/build checks only.
 - Append a \"## Fixes\" section to: $step_dir/summary.md
 EOF
       ;;
@@ -640,26 +727,33 @@ PY
     write_prompt_for_stage "$task_id" "$task_title" "$stage" "$pfile"
     log "Codex stage: $task_id/$stage"
     run_codex_resume_from_file "$session_id" "$pfile" "$jfile"
+
+    # Host-side smoke checks (outside Codex sandbox) for stages that can change code.
+    if [ "$stage" = "implement" ] || [ "$stage" = "fix" ]; then
+      host_smoke_backend
+      tmux_restart_panes_if_running
+    fi
+
+    # Commit + push after ANY edit (including prompts/step artifacts), per repo philosophy.
+    local tmp_body
+    tmp_body="$(mktemp)"
+    {
+      printf 'Task ID: %s\n' "$task_id"
+      printf 'Title: %s\n' "$task_title"
+      printf 'Stage: %s\n\n' "$stage"
+      printf 'Step dir: %s\n' "$step_dir"
+      printf 'Spec: %s\n' "$spec_doc"
+    } > "$tmp_body"
+    git_commit_push_if_dirty "AutoNovelWriter: ${task_id} ${stage}" "$tmp_body"
+    rm -f "$tmp_body"
   done
-
-  if [ -d "$backend_root" ]; then
-    python3 -m compileall "$backend_root" >/dev/null 2>&1 || true
-  fi
-
-  tmux_restart_panes_if_running
-
-  local body_file="$step_dir/commit_body.txt"
-  {
-    printf '%s\n\n' "AutoNovelWriter task: $task_id"
-    printf '%s\n\n' "See step summary: $step_dir/summary.md"
-  } > "$body_file"
-  git_commit_push_if_dirty "AutoNovelWriter: $task_title" "$body_file"
 
   state_mark "$task_id" "done"
   log "Task done: $task_id"
 }
 
 batch=0
+tasks_processed=0
 while true; do
   batch=$((batch+1))
   if [ "$max_batches" -ne 0 ] && [ "$batch" -gt "$max_batches" ]; then
@@ -678,17 +772,27 @@ while true; do
     batch_file="$tasks_dir/tasks_batch_$(date +%Y%m%d_%H%M%S).jsonl"
     generate_tasks_batch "$batch_file"
     cat "$batch_file" >> "$queue_file"
+    git_commit_push_if_dirty "AutoNovelWriter: append generated tasks batch"
   fi
 
   log "Starting batch $batch"
-  iterate_tasks | while read -r task_meta; do
+  while read -r task_meta; do
     if [ -f "$stop_file" ]; then
       log "Stop file present ($stop_file). Stopping before next task."
       break
     fi
     process_one_task "$task_meta"
-  done
+    tasks_processed=$((tasks_processed+1))
+    if [ "$max_tasks" -ne 0 ] && [ "$tasks_processed" -ge "$max_tasks" ]; then
+      log "Reached --max-tasks=$max_tasks; stopping."
+      break
+    fi
+  done < <(iterate_tasks)
   log "Finished batch $batch"
+
+  if [ "$max_tasks" -ne 0 ] && [ "$tasks_processed" -ge "$max_tasks" ]; then
+    break
+  fi
 done
 
 log "AutoNovelWriter auto-development driver finished."

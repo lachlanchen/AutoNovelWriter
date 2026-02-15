@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import subprocess
 import time
 import uuid
 from pathlib import Path
@@ -73,9 +74,11 @@ def default_settings(paths: dict, host: str, port: int) -> dict:
             "state": str(paths["state"]),
         },
         "agent": {
+            "enabled": False,
             "sdk": "codex",
             "model": os.environ.get("AUTONOVELWRITER_MODEL", ""),
             "vision_model": os.environ.get("AUTONOVELWRITER_VISION_MODEL", ""),
+            "codex_cli_path": os.environ.get("AUTONOVELWRITER_CODEX_CLI_PATH", ""),
         },
     }
 
@@ -102,6 +105,47 @@ def save_settings(paths: dict, settings: dict) -> None:
     p = Path(paths["settings_json"])
     _safe_mkdir(p.parent)
     p.write_text(json.dumps(settings, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def is_codex_gate_enabled() -> bool:
+    return os.environ.get("AUTONOVELWRITER_ENABLE_CODEX", "").strip() in ("1", "true", "yes", "on")
+
+
+def get_agent_settings(paths: dict) -> dict:
+    # Read from persisted settings to avoid relying on in-memory settings object.
+    obj = _load_json(Path(paths["settings_json"]), {})
+    if isinstance(obj, dict) and isinstance(obj.get("agent"), dict):
+        return obj["agent"]
+    return {}
+
+
+def run_codex_stub(paths: dict, args: list[str], timeout_s: float = 3.0) -> dict:
+    agent = get_agent_settings(paths)
+    enabled = bool(agent.get("enabled", False))
+    sdk = agent.get("sdk", "")
+    if sdk != "codex" or not enabled or not is_codex_gate_enabled():
+        return {"ok": False, "disabled": True, "reason": "codex_disabled_or_not_selected"}
+
+    cli = (agent.get("codex_cli_path") or "").strip() or "codex"
+    try:
+        cp = subprocess.run(
+            [cli, *args],
+            capture_output=True,
+            text=True,
+            timeout=timeout_s,
+            check=False,
+        )
+    except Exception as e:
+        return {"ok": False, "error": "spawn_failed", "detail": str(e), "cli": cli, "args": args}
+
+    return {
+        "ok": cp.returncode == 0,
+        "cli": cli,
+        "args": args,
+        "returncode": cp.returncode,
+        "stdout": (cp.stdout or "")[-4000:],
+        "stderr": (cp.stderr or "")[-4000:],
+    }
 
 
 # Maps to the block types listed in docs/autonovelwriter_spec.md.
@@ -644,6 +688,7 @@ class Runner:
         self._task_id = None
         self._block = None
         self._loop_active = False
+        self._codex_stub_ran = False
 
         # Safe restart behavior: if previous run was 'running', come up paused.
         state = _load_json(Path(paths["runner_state_json"]), {})
@@ -718,6 +763,23 @@ class Runner:
         with p.open("a", encoding="utf-8") as f:
             f.write(line.rstrip("\n") + "\n")
         self._hub.broadcast({"type": "log", "ts_ms": _now_ms(), "line": line.rstrip("\n")})
+
+    def _maybe_run_codex_stub_once(self) -> None:
+        if self._codex_stub_ran:
+            return
+        self._codex_stub_ran = True
+        res = run_codex_stub(self._paths, ["--version"], timeout_s=2.0)
+        if res.get("disabled"):
+            # Only log the disabled note if the user actually asked for codex in settings.
+            agent = get_agent_settings(self._paths)
+            if agent.get("sdk") == "codex" and bool(agent.get("enabled", False)):
+                self._log("[codex] disabled (set AUTONOVELWRITER_ENABLE_CODEX=1 to allow subprocess)")
+            return
+        if not res.get("ok"):
+            self._log(f"[codex] stub failed: {json.dumps(res)}")
+            return
+        out = (res.get("stdout") or "").strip() or (res.get("stderr") or "").strip()
+        self._log(f"[codex] stub ok: {out}")
 
     async def start(self) -> dict:
         async with self._lock:
@@ -829,6 +891,9 @@ class Runner:
                     {"type": "task_status", "ts_ms": _now_ms(), "task_id": next_task, "status": "running"}
                 )
 
+                # Optional, gated codex subprocess stub (does not run by default).
+                self._maybe_run_codex_stub_once()
+
                 for b in blocks:
                     async with self._lock:
                         if self._stop:
@@ -912,6 +977,18 @@ class RunStatusHandler(BaseHandler):
         self.write_json({"ok": True, "status": self._runner.status()})
 
 
+class AgentTestHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    def post(self):
+        # Gated: will only attempt subprocess if settings + env allow it.
+        res = run_codex_stub(self._paths, ["--version"], timeout_s=2.0)
+        if res.get("disabled"):
+            return self.write_json({"ok": False, "disabled": True, "reason": res.get("reason")}, status=403)
+        return self.write_json({"ok": bool(res.get("ok")), "result": res}, status=200 if res.get("ok") else 500)
+
+
 def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Application:
     hub = WebSocketHub()
     chat_store = ChatStore(Path(paths["chat_jsonl"]))
@@ -928,6 +1005,7 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
         (r"/api/run/resume", RunResumeHandler, {"runner": runner}),
         (r"/api/run/stop", RunStopHandler, {"runner": runner}),
         (r"/api/run/status", RunStatusHandler, {"runner": runner}),
+        (r"/api/agent/test", AgentTestHandler, {"paths": paths}),
         (r"/ws", EventsWebSocket, {"hub": hub, "paths": paths, "chat_store": chat_store}),
     ]
 

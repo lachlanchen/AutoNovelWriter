@@ -21,6 +21,16 @@
   const runPause = $('runPause');
   const runResume = $('runResume');
   const runStop = $('runStop');
+  const openSettings = $('openSettings');
+  const settingsModal = $('settingsModal');
+  const closeSettings = $('closeSettings');
+  const settingsForm = $('settingsForm');
+  const agentSdk = $('agentSdk');
+  const agentModel = $('agentModel');
+  const agentVisionModel = $('agentVisionModel');
+  const codexCliPath = $('codexCliPath');
+  const agentEnabled = $('agentEnabled');
+  const testCodex = $('testCodex');
 
   const LS_WS_URL = 'anw_ws_url';
   const LS_PIPELINE = 'anw_pipeline';
@@ -128,6 +138,91 @@
     }
     const proto = u.protocol === 'wss:' ? 'https:' : 'http:';
     return `${proto}//${u.host}${pathname}`;
+  }
+
+  let settingsCache = null;
+
+  function openModal() {
+    settingsModal.classList.add('open');
+    settingsModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeModal() {
+    settingsModal.classList.remove('open');
+    settingsModal.setAttribute('aria-hidden', 'true');
+  }
+
+  function fillSettingsForm(settings) {
+    const a = (settings && settings.agent) || {};
+    agentSdk.value = a.sdk || 'codex';
+    agentModel.value = a.model || '';
+    agentVisionModel.value = a.vision_model || '';
+    codexCliPath.value = a.codex_cli_path || '';
+    agentEnabled.checked = !!a.enabled;
+  }
+
+  async function loadSettings() {
+    const url = backendApiUrl('/api/settings');
+    if (!url) return;
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const obj = await res.json();
+      if (!obj || !obj.ok || !obj.settings) return;
+      settingsCache = obj.settings;
+      fillSettingsForm(settingsCache);
+    } catch (_) {}
+  }
+
+  async function saveSettingsFromForm() {
+    const url = backendApiUrl('/api/settings');
+    if (!url) {
+      addMsg('err', 'settings', 'cannot derive backend api url');
+      return;
+    }
+    const agent = {
+      enabled: !!agentEnabled.checked,
+      sdk: String(agentSdk.value || 'codex'),
+      model: String(agentModel.value || ''),
+      vision_model: String(agentVisionModel.value || ''),
+      codex_cli_path: String(codexCliPath.value || '')
+    };
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agent })
+      });
+      const obj = await res.json();
+      if (obj && obj.ok && obj.settings) {
+        settingsCache = obj.settings;
+        addMsg('hello', 'settings', 'saved');
+        return;
+      }
+      addMsg('err', 'settings', JSON.stringify(obj));
+    } catch (e) {
+      addMsg('err', 'settings', String(e));
+    }
+  }
+
+  async function testCodexStub() {
+    const url = backendApiUrl('/api/agent/test');
+    if (!url) {
+      addMsg('err', 'codex', 'cannot derive backend api url');
+      return;
+    }
+    try {
+      const res = await fetch(url, { method: 'POST' });
+      const obj = await res.json();
+      if (obj && obj.ok && obj.result) {
+        const out = (obj.result.stdout || obj.result.stderr || '').trim();
+        addMsg('hello', 'codex', out || 'ok');
+      } else {
+        addMsg('err', 'codex', JSON.stringify(obj));
+      }
+    } catch (e) {
+      addMsg('err', 'codex', String(e));
+    }
   }
 
   async function loadChatHistory() {
@@ -543,6 +638,7 @@
     // Keep seenChatIds so history reload doesn't duplicate existing messages.
     loadChatHistory();
     loadRunStatus();
+    loadSettings();
   });
 
   pipeSave.addEventListener('click', () => savePipeline());
@@ -556,8 +652,24 @@
   runResume.addEventListener('click', () => callRun('/api/run/resume'));
   runStop.addEventListener('click', () => callRun('/api/run/stop'));
 
+  openSettings.addEventListener('click', () => {
+    openModal();
+    loadSettings();
+  });
+  closeSettings.addEventListener('click', () => closeModal());
+  settingsModal.addEventListener('click', (e) => {
+    const t = e.target;
+    if (t && t.dataset && t.dataset.close) closeModal();
+  });
+  settingsForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveSettingsFromForm().then(() => closeModal());
+  });
+  testCodex.addEventListener('click', () => testCodexStub());
+
   connect();
   loadPipeline();
   loadChatHistory();
   loadRunStatus();
+  loadSettings();
 })();

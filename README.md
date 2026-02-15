@@ -47,7 +47,18 @@ The PWA shows the script in a textarea and renders the derived blocks list.
 - Pipeline (canonical script + derived JSON): `GET/POST /api/pipeline`
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
+- Agent test (gated): `POST /api/agent/test` (runs `codex --version` only when enabled + env gate)
 - WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `run_status`, `task_status`, `log`)
+
+## Agent Settings / Codex Gate
+
+The PWA Settings panel persists agent settings via `/api/settings` under `autonovelwriter/runtime/state/settings.json`.
+
+For safety, the backend will not spawn the `codex` CLI unless both are true:
+- `settings.agent.enabled=true` and `settings.agent.sdk="codex"`
+- `AUTONOVELWRITER_ENABLE_CODEX=1` is set in the environment
+
+Never commit secrets. Use `autonovelwriter/backend/.env.example` as a template for local env vars.
 
 ## Driver Workflow (Auto-Dev)
 

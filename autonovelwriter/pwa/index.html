@@ -30,6 +30,7 @@
           <button id="runPause" class="btn" type="button">Pause</button>
           <button id="runResume" class="btn" type="button">Resume</button>
           <button id="runStop" class="btn" type="button">Stop</button>
+          <button id="openSettings" class="btn" type="button">Settings</button>
         </div>
       </header>
 
@@ -92,5 +93,56 @@
     </div>
 
     <script src="app.js" defer></script>
+
+    <div id="settingsModal" class="modal" aria-hidden="true">
+      <div class="modal-backdrop" data-close="1"></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-label="Settings">
+        <div class="modal-head">
+          <div class="panel-title">Settings</div>
+          <button id="closeSettings" class="btn" type="button">Close</button>
+        </div>
+
+        <form id="settingsForm" class="modal-body">
+          <div class="field">
+            <label class="label" for="agentSdk">Agent SDK</label>
+            <select id="agentSdk" class="input">
+              <option value="codex">codex</option>
+              <option value="copilot">copilot</option>
+              <option value="gemini">gemini</option>
+              <option value="claude">claude</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label" for="agentModel">Model</label>
+            <input id="agentModel" class="input" type="text" placeholder="(optional)" />
+          </div>
+
+          <div class="field">
+            <label class="label" for="agentVisionModel">Vision model</label>
+            <input id="agentVisionModel" class="input" type="text" placeholder="(optional)" />
+          </div>
+
+          <div class="field">
+            <label class="label" for="codexCliPath">Codex CLI path</label>
+            <input id="codexCliPath" class="input" type="text" placeholder="codex" />
+          </div>
+
+          <label class="check">
+            <input id="agentEnabled" type="checkbox" />
+            <span>Enable agent runner (backend still requires env gate for Codex)</span>
+          </label>
+
+          <div class="modal-actions">
+            <button id="saveSettings" class="btn btn-primary" type="submit">Save</button>
+            <button id="testCodex" class="btn" type="button" title="Runs a gated `codex --version` on backend">Test Codex</button>
+          </div>
+
+          <div class="hint">
+            Codex subprocess is disabled by default. To enable: set <code>AUTONOVELWRITER_ENABLE_CODEX=1</code> in your environment and set Agent SDK to <code>codex</code> with “Enable agent runner”.
+          </div>
+        </form>
+      </div>
+    </div>
   </body>
 </html>

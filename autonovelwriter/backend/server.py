@@ -397,6 +397,27 @@ def parse_pipeline_script_with_warnings(script: str) -> tuple[dict, list]:
     return pipeline, warnings
 
 
+def flatten_enabled_steps_from_script_v2(script: str) -> tuple[list[str], list, list]:
+    """
+    Returns (enabled_step_types, warnings, errors) using the canonical v2 parser/AST.
+    LOOP repeat counts are ignored for now; order is deterministic AST preorder.
+    """
+    pipeline, _ast, warnings, errors = parse_pipeline_script_v2(script)
+    blocks = pipeline.get("blocks") if isinstance(pipeline, dict) else None
+    if not isinstance(blocks, list):
+        return [], warnings, errors
+    enabled = []
+    for b in blocks:
+        if not isinstance(b, dict):
+            continue
+        if not bool(b.get("enabled", True)):
+            continue
+        t = b.get("type")
+        if isinstance(t, str) and t:
+            enabled.append(t)
+    return enabled, warnings, errors
+
+
 def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
     # v2 supports:
     # - STEP <type>
@@ -1342,7 +1363,16 @@ class Runner:
                         return
 
                 script = load_pipeline_script(self._paths)
-                pipeline = parse_pipeline_script(script)
+                pipeline, pipeline_ast, warnings, errors = parse_pipeline_script_v2(script)
+                if errors:
+                    # Fail-safe: do not run an ambiguous pipeline. Fall back to a safe default.
+                    self._log(f"[runner] pipeline parse errors: {json.dumps(errors)}")
+                    pipeline = default_pipeline()
+                    pipeline_ast = _ast_root(
+                        [_ast_step(b["type"], bool(b.get("enabled", True))) for b in pipeline.get("blocks", [])]
+                    )
+                if warnings:
+                    self._log(f"[runner] pipeline parse warnings: {json.dumps(warnings)}")
                 blocks = [b for b in pipeline.get("blocks", []) if isinstance(b, dict) and b.get("enabled", True)]
 
                 tasks = self._load_tasks()

@@ -1,0 +1,12 @@
+# T012 Summary: Runner executes v2 pipeline script/AST
+
+## Implement
+- Runner now derives enabled steps using the canonical v2 pipeline parser (`parse_pipeline_script_v2`) so execution order matches the PWA’s nested pipeline script/AST semantics (deterministic AST preorder; LOOP repeat counts still ignored).
+- Runner logs pipeline parse warnings/errors; on fatal parse errors it falls back to a safe default pipeline instead of running an ambiguous step list.
+- Added a tiny helper for unit-style verification without starting the server:
+  - `flatten_enabled_steps_from_script_v2(script) -> (enabled_steps, warnings, errors)`
+
+Verification (no TCP binds):
+- `python3 -m py_compile autonovelwriter/backend/server.py`
+- `python3 - <<'PY'\nfrom autonovelwriter.backend import server as s\nscript='''# test\nLOOP 2\n  STEP plan\n  LOOP 3\n    STEP write\nSTEP summary\n'''\nsteps, w, e = s.flatten_enabled_steps_from_script_v2(script)\nprint(steps)\nassert steps == ['plan','write','summary']\nassert e == []\nPY`
+

@@ -188,6 +188,18 @@ code{ font-family: var(--mono); font-size: .92em; }
   max-height: 160px;
 }
 
+.pipe-script{
+  width: 100%;
+  min-height: 140px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.55);
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  resize: vertical;
+}
+
 .pill{
   padding: 7px 10px;
   border-radius: 999px;

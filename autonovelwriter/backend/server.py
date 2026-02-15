@@ -12,6 +12,7 @@ import tornado.ioloop
 import tornado.locks
 import tornado.web
 import tornado.websocket
+import tornado.gen
 
 
 def _now_ms() -> int:
@@ -41,8 +42,13 @@ def resolve_paths() -> dict:
         "state": runtime_root / "state",
         "settings_json": runtime_root / "state" / "settings.json",
         "pipeline_json": runtime_root / "state" / "pipeline.json",
+        "pipeline_script": runtime_root / "state" / "pipeline.script",
         "chat_jsonl": runtime_root / "state" / "chat.jsonl",
         "inbox_state_json": runtime_root / "state" / "inbox_state.json",
+        "runner_state_json": runtime_root / "state" / "runner_state.json",
+        "task_status_json": runtime_root / "state" / "task_status.json",
+        "tasks_json": runtime_root / "tasks" / "tasks.json",
+        "runner_log": runtime_root / "logs" / "runner.log",
     }
     return paths
 
@@ -116,6 +122,8 @@ PIPELINE_BLOCK_TYPES = [
     "commit_push",
 ]
 
+PIPELINE_SCRIPT_HEADER = "# AutoNovelWriter pipeline script v1\n"
+
 
 def default_pipeline() -> dict:
     return {"blocks": [{"id": t, "type": t, "enabled": True} for t in PIPELINE_BLOCK_TYPES]}
@@ -141,6 +149,80 @@ def save_pipeline(paths: dict, pipeline: dict) -> None:
     p = Path(paths["pipeline_json"])
     _safe_mkdir(p.parent)
     p.write_text(json.dumps(pipeline, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def render_pipeline_script(pipeline: dict) -> str:
+    # Shell-ish, line-based format:
+    #   STEP <type>
+    #   DISABLED <type>
+    lines = [PIPELINE_SCRIPT_HEADER.rstrip("\n")]
+    blocks = pipeline.get("blocks") if isinstance(pipeline, dict) else None
+    if not isinstance(blocks, list):
+        blocks = default_pipeline()["blocks"]
+    for b in blocks:
+        if not isinstance(b, dict):
+            continue
+        t = b.get("type")
+        if not isinstance(t, str) or not t:
+            continue
+        enabled = bool(b.get("enabled", True))
+        lines.append(("STEP " if enabled else "DISABLED ") + t)
+    return "\n".join(lines) + "\n"
+
+
+def parse_pipeline_script(script: str) -> dict:
+    blocks = []
+    allowed = set(PIPELINE_BLOCK_TYPES)
+    for raw in (script or "").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        verb = parts[0].upper()
+        t = parts[1].strip()
+        if t not in allowed:
+            # Ignore unknown tokens; the API handler can choose to reject instead.
+            continue
+        enabled = verb == "STEP"
+        if verb not in ("STEP", "DISABLED"):
+            continue
+        blocks.append({"id": t, "type": t, "enabled": enabled})
+    if not blocks:
+        return default_pipeline()
+    return {"blocks": blocks}
+
+
+def load_pipeline_script(paths: dict) -> str:
+    p = Path(paths["pipeline_script"])
+    if not p.exists():
+        return render_pipeline_script(default_pipeline())
+    try:
+        return p.read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return render_pipeline_script(default_pipeline())
+
+
+def save_pipeline_script(paths: dict, script: str) -> None:
+    p = Path(paths["pipeline_script"])
+    _safe_mkdir(p.parent)
+    p.write_text(script, encoding="utf-8", errors="replace")
+
+
+def _load_json(p: Path, default):
+    try:
+        if not p.exists():
+            return default
+        obj = json.loads(p.read_text(encoding="utf-8"))
+        return obj
+    except Exception:
+        return default
+
+
+def _save_json(p: Path, obj) -> None:
+    _safe_mkdir(p.parent)
+    p.write_text(json.dumps(obj, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -202,8 +284,11 @@ class PipelineHandler(BaseHandler):
         self._paths = paths
 
     def get(self):
-        pipeline = load_pipeline(self._paths)
-        self.write_json({"ok": True, "pipeline": pipeline})
+        # Canonical artifact is the script; JSON is derived.
+        script = load_pipeline_script(self._paths)
+        pipeline = parse_pipeline_script(script)
+        save_pipeline(self._paths, pipeline)
+        self.write_json({"ok": True, "script": script, "pipeline": pipeline})
 
     def post(self):
         try:
@@ -213,6 +298,16 @@ class PipelineHandler(BaseHandler):
 
         if not isinstance(body, dict):
             return self.write_json({"ok": False, "error": "expected_object"}, status=400)
+
+        if isinstance(body.get("script"), str):
+            script = body.get("script", "")
+            pipeline = parse_pipeline_script(script)
+            # Reject if script produced no blocks (probably invalid).
+            if not pipeline.get("blocks"):
+                return self.write_json({"ok": False, "error": "invalid_script"}, status=400)
+            save_pipeline_script(self._paths, script)
+            save_pipeline(self._paths, pipeline)
+            return self.write_json({"ok": True, "script": script, "pipeline": pipeline})
 
         blocks = body.get("blocks")
         if not isinstance(blocks, list):
@@ -239,7 +334,9 @@ class PipelineHandler(BaseHandler):
 
         pipeline = {"blocks": cleaned}
         save_pipeline(self._paths, pipeline)
-        self.write_json({"ok": True, "pipeline": pipeline})
+        script = render_pipeline_script(pipeline)
+        save_pipeline_script(self._paths, script)
+        self.write_json({"ok": True, "script": script, "pipeline": pipeline})
 
 
 class ChatStore:
@@ -527,9 +624,273 @@ class WebSocketHub:
             self._clients.discard(ws)
 
 
+class Runner:
+    def __init__(self, paths: dict, hub: WebSocketHub):
+        self._paths = paths
+        self._hub = hub
+        self._lock = tornado.locks.Lock()
+        self._status = "idle"  # idle|running|paused|stopping
+        self._stop = False
+        self._paused = False
+        self._task_id = None
+        self._block = None
+
+        # Safe restart behavior: if previous run was 'running', come up paused.
+        state = _load_json(Path(paths["runner_state_json"]), {})
+        if isinstance(state, dict) and state.get("status") == "running":
+            self._status = "paused"
+            self._paused = True
+        elif isinstance(state, dict) and isinstance(state.get("status"), str):
+            self._status = state.get("status")
+            self._paused = self._status == "paused"
+
+        self._save_state()
+
+    def _save_state(self) -> None:
+        _save_json(
+            Path(self._paths["runner_state_json"]),
+            {
+                "status": self._status,
+                "ts_ms": _now_ms(),
+                "task_id": self._task_id,
+                "block": self._block,
+            },
+        )
+
+    def _emit_status(self) -> None:
+        self._hub.broadcast(
+            {
+                "type": "run_status",
+                "ts_ms": _now_ms(),
+                "status": self._status,
+                "task_id": self._task_id,
+                "block": self._block,
+            }
+        )
+
+    def status(self) -> dict:
+        return {
+            "status": self._status,
+            "task_id": self._task_id,
+            "block": self._block,
+        }
+
+    def _load_tasks(self) -> list:
+        p = Path(self._paths["tasks_json"])
+        tasks = _load_json(p, [])
+        if not isinstance(tasks, list):
+            tasks = []
+        if not tasks:
+            # Seed a minimal task list so the runner has something to do.
+            tasks = [
+                {
+                    "id": "task_001",
+                    "title": "Seed task",
+                    "payload": {},
+                }
+            ]
+            _save_json(p, tasks)
+        return tasks
+
+    def _load_task_status(self) -> dict:
+        p = Path(self._paths["task_status_json"])
+        st = _load_json(p, {})
+        if not isinstance(st, dict):
+            return {}
+        return st
+
+    def _save_task_status(self, st: dict) -> None:
+        _save_json(Path(self._paths["task_status_json"]), st)
+
+    def _log(self, line: str) -> None:
+        p = Path(self._paths["runner_log"])
+        _safe_mkdir(p.parent)
+        with p.open("a", encoding="utf-8") as f:
+            f.write(line.rstrip("\n") + "\n")
+        self._hub.broadcast({"type": "log", "ts_ms": _now_ms(), "line": line.rstrip("\n")})
+
+    async def start(self) -> dict:
+        async with self._lock:
+            if self._status in ("running",):
+                return self.status()
+            self._stop = False
+            self._paused = False
+            self._status = "running"
+            self._save_state()
+            self._emit_status()
+            tornado.ioloop.IOLoop.current().spawn_callback(self._run_loop)
+            return self.status()
+
+    async def pause(self) -> dict:
+        async with self._lock:
+            if self._status != "running":
+                return self.status()
+            self._paused = True
+            self._status = "paused"
+            self._save_state()
+            self._emit_status()
+            return self.status()
+
+    async def resume(self) -> dict:
+        async with self._lock:
+            if self._status != "paused":
+                return self.status()
+            self._paused = False
+            self._status = "running"
+            self._save_state()
+            self._emit_status()
+            tornado.ioloop.IOLoop.current().spawn_callback(self._run_loop)
+            return self.status()
+
+    async def stop(self) -> dict:
+        async with self._lock:
+            self._stop = True
+            if self._status in ("idle",):
+                return self.status()
+            self._status = "stopping"
+            self._save_state()
+            self._emit_status()
+            return self.status()
+
+    async def _run_loop(self) -> None:
+        # Ensure only one run loop is active at a time.
+        async with self._lock:
+            if self._status != "running":
+                return
+
+        while True:
+            async with self._lock:
+                if self._stop:
+                    self._status = "idle"
+                    self._task_id = None
+                    self._block = None
+                    self._save_state()
+                    self._emit_status()
+                    return
+                if self._paused or self._status != "running":
+                    self._save_state()
+                    self._emit_status()
+                    return
+
+            script = load_pipeline_script(self._paths)
+            pipeline = parse_pipeline_script(script)
+            blocks = [b for b in pipeline.get("blocks", []) if isinstance(b, dict) and b.get("enabled", True)]
+
+            tasks = self._load_tasks()
+            st = self._load_task_status()
+
+            next_task = None
+            for t in tasks:
+                tid = t.get("id")
+                if not isinstance(tid, str) or not tid:
+                    continue
+                status = st.get(tid, {}).get("status", "pending")
+                if status in ("pending", "queued"):
+                    next_task = tid
+                    break
+
+            if not next_task:
+                async with self._lock:
+                    self._status = "idle"
+                    self._task_id = None
+                    self._block = None
+                    self._save_state()
+                    self._emit_status()
+                return
+
+            async with self._lock:
+                self._task_id = next_task
+                self._block = None
+                self._save_state()
+                self._emit_status()
+
+            st.setdefault(next_task, {})
+            st[next_task].update({"status": "running", "ts_ms": _now_ms()})
+            self._save_task_status(st)
+            self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": next_task, "status": "running"})
+
+            for b in blocks:
+                async with self._lock:
+                    if self._stop:
+                        break
+                    if self._paused:
+                        break
+                    self._block = b.get("type")
+                    self._save_state()
+                    self._emit_status()
+
+                self._log(f"[runner] task={next_task} block={self._block} start")
+                # Stub work unit.
+                yield tornado.gen.sleep(0.25)
+                self._log(f"[runner] task={next_task} block={self._block} done")
+
+            async with self._lock:
+                if self._stop:
+                    self._status = "idle"
+                    self._task_id = None
+                    self._block = None
+                    self._save_state()
+                    self._emit_status()
+                    return
+                if self._paused:
+                    self._status = "paused"
+                    self._save_state()
+                    self._emit_status()
+                    return
+
+            st[next_task].update({"status": "done", "ts_ms": _now_ms()})
+            self._save_task_status(st)
+            self._hub.broadcast({"type": "task_status", "ts_ms": _now_ms(), "task_id": next_task, "status": "done"})
+
+
+class RunStartHandler(BaseHandler):
+    def initialize(self, runner: Runner):
+        self._runner = runner
+
+    async def post(self):
+        st = await self._runner.start()
+        self.write_json({"ok": True, "status": st})
+
+
+class RunPauseHandler(BaseHandler):
+    def initialize(self, runner: Runner):
+        self._runner = runner
+
+    async def post(self):
+        st = await self._runner.pause()
+        self.write_json({"ok": True, "status": st})
+
+
+class RunResumeHandler(BaseHandler):
+    def initialize(self, runner: Runner):
+        self._runner = runner
+
+    async def post(self):
+        st = await self._runner.resume()
+        self.write_json({"ok": True, "status": st})
+
+
+class RunStopHandler(BaseHandler):
+    def initialize(self, runner: Runner):
+        self._runner = runner
+
+    async def post(self):
+        st = await self._runner.stop()
+        self.write_json({"ok": True, "status": st})
+
+
+class RunStatusHandler(BaseHandler):
+    def initialize(self, runner: Runner):
+        self._runner = runner
+
+    def get(self):
+        self.write_json({"ok": True, "status": self._runner.status()})
+
+
 def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Application:
     hub = WebSocketHub()
     chat_store = ChatStore(Path(paths["chat_jsonl"]))
+    runner = Runner(paths, hub=hub)
 
     handlers = [
         (r"/api/health", HealthHandler),
@@ -537,6 +898,11 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
         (r"/api/pipeline", PipelineHandler, {"paths": paths}),
         (r"/api/chat/history", ChatHistoryHandler, {"chat_store": chat_store}),
         (r"/api/chat/send", ChatSendHandler, {"paths": paths, "chat_store": chat_store, "hub": hub}),
+        (r"/api/run/start", RunStartHandler, {"runner": runner}),
+        (r"/api/run/pause", RunPauseHandler, {"runner": runner}),
+        (r"/api/run/resume", RunResumeHandler, {"runner": runner}),
+        (r"/api/run/stop", RunStopHandler, {"runner": runner}),
+        (r"/api/run/status", RunStatusHandler, {"runner": runner}),
         (r"/ws", EventsWebSocket, {"hub": hub, "paths": paths, "chat_store": chat_store}),
     ]
 
@@ -556,6 +922,7 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
     # Attach for setup in main() (poller startup, etc).
     app.anw_hub = hub
     app.anw_chat_store = chat_store
+    app.anw_runner = runner
     return app
 
 
@@ -574,6 +941,9 @@ def main() -> None:
     app = make_app(paths, settings, debug=args.debug)
     # Load chat tail before listening.
     tornado.ioloop.IOLoop.current().run_sync(lambda: app.anw_chat_store.load_tail(limit=200))
+    # Ensure canonical pipeline script exists.
+    if not Path(paths["pipeline_script"]).exists():
+        save_pipeline_script(paths, render_pipeline_script(default_pipeline()))
     app.listen(args.port, address=args.host)
 
     print(f"[autonovelwriter] listening on http://{args.host}:{args.port}")

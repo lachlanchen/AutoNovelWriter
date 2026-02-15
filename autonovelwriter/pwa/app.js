@@ -14,6 +14,13 @@
   const pipeReset = $('pipeReset');
   const pipeStatus = $('pipeStatus');
   const pipelineJson = $('pipelineJson');
+  const pipelineScript = $('pipelineScript');
+
+  const runPill = $('runPill');
+  const runStart = $('runStart');
+  const runPause = $('runPause');
+  const runResume = $('runResume');
+  const runStop = $('runStop');
 
   const LS_WS_URL = 'anw_ws_url';
   const LS_PIPELINE = 'anw_pipeline';
@@ -68,6 +75,16 @@
     pipeStatus.classList.remove('ok', 'warn');
     if (state === 'saved' || state === 'loaded') pipeStatus.classList.add('ok');
     else if (state === 'dirty' || state === 'saving' || state === 'local') pipeStatus.classList.add('warn');
+  }
+
+  function setRunStatus(state, taskId, block) {
+    runPill.textContent = state || 'idle';
+    runPill.classList.remove('ok', 'warn');
+    if (state === 'running') runPill.classList.add('warn');
+    if (state === 'paused') runPill.classList.add('warn');
+    if (state === 'idle') runPill.classList.add('ok');
+    const extra = [taskId ? `task=${taskId}` : null, block ? `block=${block}` : null].filter(Boolean).join(' ');
+    runPill.title = extra || 'Runner status';
   }
 
   function parseBackendWsUrl() {
@@ -296,6 +313,7 @@
         const obj = await res.json();
         if (obj && obj.ok && obj.pipeline) {
           pipeline = normalizePipeline(obj.pipeline);
+          if (typeof obj.script === 'string') pipelineScript.value = obj.script;
           window.localStorage.setItem(LS_PIPELINE, JSON.stringify(pipeline));
           setPipeStatus('loaded');
           renderPipeline();
@@ -316,6 +334,7 @@
 
     pipeline = defaultPipeline();
     setPipeStatus('loaded');
+    pipelineScript.value = '# AutoNovelWriter pipeline script v1\n' + pipeline.blocks.map((b) => `STEP ${b.type}`).join('\n') + '\n';
     renderPipeline();
   }
 
@@ -334,10 +353,13 @@
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pipeline)
+        body: JSON.stringify({ blocks: pipeline.blocks, script: pipelineScript.value })
       });
       const obj = await res.json();
       if (obj && obj.ok) {
+        if (obj.pipeline) pipeline = normalizePipeline(obj.pipeline);
+        if (typeof obj.script === 'string') pipelineScript.value = obj.script;
+        renderPipeline();
         setPipeStatus('saved');
         return;
       }
@@ -352,7 +374,37 @@
   function resetPipeline() {
     pipeline = defaultPipeline();
     setPipeStatus('dirty');
+    pipelineScript.value = '# AutoNovelWriter pipeline script v1\n' + pipeline.blocks.map((b) => `STEP ${b.type}`).join('\n') + '\n';
     renderPipeline();
+  }
+
+  async function callRun(path) {
+    const url = backendApiUrl(path);
+    if (!url) {
+      addMsg('err', 'run', 'cannot derive backend api url');
+      return;
+    }
+    try {
+      const res = await fetch(url, { method: 'POST' });
+      const obj = await res.json();
+      if (obj && obj.ok && obj.status) {
+        setRunStatus(obj.status.status, obj.status.task_id, obj.status.block);
+      }
+    } catch (e) {
+      addMsg('err', 'run', String(e));
+    }
+  }
+
+  async function loadRunStatus() {
+    const url = backendApiUrl('/api/run/status');
+    if (!url) return;
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const obj = await res.json();
+      if (obj && obj.ok && obj.status) {
+        setRunStatus(obj.status.status, obj.status.task_id, obj.status.block);
+      }
+    } catch (_) {}
   }
 
   let ws = null;
@@ -400,6 +452,12 @@
         addChatMessage(obj.message);
       } else if (obj && obj.type === 'outbox_written' && obj.outbox && obj.outbox.filename) {
         addMsg('hello', 'outbox', `wrote ${obj.outbox.filename}`);
+      } else if (obj && obj.type === 'run_status') {
+        setRunStatus(obj.status, obj.task_id, obj.block);
+      } else if (obj && obj.type === 'task_status') {
+        addMsg('hello', 'task', `${obj.task_id}: ${obj.status}`);
+      } else if (obj && obj.type === 'log' && obj.line) {
+        addMsg('hello', 'log', String(obj.line));
       } else if (obj && obj.type) {
         addMsg('hello', obj.type, JSON.stringify(obj));
       } else {
@@ -476,6 +534,7 @@
     chatHistoryLoadedKey = null;
     // Keep seenChatIds so history reload doesn't duplicate existing messages.
     loadChatHistory();
+    loadRunStatus();
   });
 
   pipeSave.addEventListener('click', () => savePipeline());
@@ -484,7 +543,13 @@
     savePipeline();
   });
 
+  runStart.addEventListener('click', () => callRun('/api/run/start'));
+  runPause.addEventListener('click', () => callRun('/api/run/pause'));
+  runResume.addEventListener('click', () => callRun('/api/run/resume'));
+  runStop.addEventListener('click', () => callRun('/api/run/stop'));
+
   connect();
   loadPipeline();
   loadChatHistory();
+  loadRunStatus();
 })();

@@ -25,10 +25,11 @@
         </div>
 
         <div class="controls" aria-label="Run controls">
-          <button class="btn" disabled>Start</button>
-          <button class="btn" disabled>Pause</button>
-          <button class="btn" disabled>Resume</button>
-          <button class="btn" disabled>Stop</button>
+          <div id="runPill" class="pill" title="Runner status">idle</div>
+          <button id="runStart" class="btn btn-primary" type="button">Start</button>
+          <button id="runPause" class="btn" type="button">Pause</button>
+          <button id="runResume" class="btn" type="button">Resume</button>
+          <button id="runStop" class="btn" type="button">Stop</button>
         </div>
       </header>
 
@@ -51,7 +52,9 @@
               <ol id="blocks" class="blocks" aria-label="Pipeline blocks"></ol>
 
               <div class="pipe-bottom">
-                <div class="pipe-sub">Current pipeline JSON</div>
+                <div class="pipe-sub">Pipeline script (canonical)</div>
+                <textarea id="pipelineScript" class="pipe-script" spellcheck="false" aria-label="Pipeline script"></textarea>
+                <div class="pipe-sub">Pipeline JSON (derived)</div>
                 <pre id="pipelineJson" class="pipe-json" aria-label="Pipeline JSON"></pre>
               </div>
             </div>

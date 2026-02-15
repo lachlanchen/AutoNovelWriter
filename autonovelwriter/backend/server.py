@@ -1365,12 +1365,15 @@ class Runner:
                 script = load_pipeline_script(self._paths)
                 pipeline, pipeline_ast, warnings, errors = parse_pipeline_script_v2(script)
                 if errors:
-                    # Fail-safe: do not run an ambiguous pipeline. Fall back to a safe default.
-                    self._log(f"[runner] pipeline parse errors: {json.dumps(errors)}")
-                    pipeline = default_pipeline()
-                    pipeline_ast = _ast_root(
-                        [_ast_step(b["type"], bool(b.get("enabled", True))) for b in pipeline.get("blocks", [])]
-                    )
+                    # Fail-safe: do not run an ambiguous pipeline. Require user correction.
+                    self._log(f"[runner] pipeline parse errors (stopping run): {json.dumps(errors)}")
+                    async with self._lock:
+                        self._status = "idle"
+                        self._task_id = None
+                        self._block = None
+                        self._save_state()
+                        self._emit_status()
+                    return
                 if warnings:
                     self._log(f"[runner] pipeline parse warnings: {json.dumps(warnings)}")
                 blocks = [b for b in pipeline.get("blocks", []) if isinstance(b, dict) and b.get("enabled", True)]

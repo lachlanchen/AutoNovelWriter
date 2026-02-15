@@ -10,3 +10,5 @@ Verification (no TCP binds):
 - `python3 -m py_compile autonovelwriter/backend/server.py`
 - `python3 - <<'PY'\nfrom autonovelwriter.backend import server as s\nscript='''# test\nLOOP 2\n  STEP plan\n  LOOP 3\n    STEP write\nSTEP summary\n'''\nsteps, w, e = s.flatten_enabled_steps_from_script_v2(script)\nprint(steps)\nassert steps == ['plan','write','summary']\nassert e == []\nPY`
 
+## Fixes
+- Runner now stops the run on fatal v2 pipeline parse errors (logs errors and transitions to `idle`) instead of executing the default pipeline.

@@ -12,15 +12,15 @@
   - Added a Settings modal to edit/persist agent settings via `/api/settings`.
   - Added “Test Codex” button calling `/api/agent/test` and rendering output in chat.
 
-## README
-- Updated `README.md` to document the agent settings persistence and Codex gating rules.
-
 Verification notes:
 - No socket-binding smoke tests were run in this Codex sandbox; only syntax/greps.
 
 ## Fixes
 - `/api/settings` GET now reloads settings from disk (source of truth) so UI reflects persisted state reliably.
 - Codex gate now returns more specific disabled reasons (`agent_sdk_not_codex`, `agent_disabled`, `env_gate_disabled`) to make troubleshooting clearer.
+
+## README
+- Added/updated sections documenting agent settings persistence (`/api/settings` -> `autonovelwriter/runtime/state/settings.json`), Codex subprocess gating (`AUTONOVELWRITER_ENABLE_CODEX=1`), and the gated `POST /api/agent/test` helper.
 
 ## Next
 1. Add settings for runtime path overrides (inbox/outbox/tasks/logs/state) and surface them in the UI (with validation).

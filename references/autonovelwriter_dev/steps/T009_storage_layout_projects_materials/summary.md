@@ -33,3 +33,6 @@ Verification (no TCP binds):
 2. Add a minimal “create project” flow in the PWA (new project name input) and backend `POST /api/projects` (or reuse `/api/projects/active` to implicitly create).
 3. Add file-type/extension + folder grouping in materials UI (dirs first, then files) and optionally expose a `GET /api/materials/read?path=` for previewing small text files.
 4. Add incremental/cached materials indexing (mtime-based) to avoid full `rglob` scans for large materials trees.
+
+## README
+- Updated `README.md` to document per-project storage under `autonovelwriter/runtime/projects/<project_id>/...`, the persisted active project pointer (`autonovelwriter/runtime/state/active_project.json`), and the new backend endpoints (`/api/projects`, `/api/projects/active`, `/api/materials/index`).

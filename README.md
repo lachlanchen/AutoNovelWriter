@@ -38,8 +38,11 @@ All mutable state and IO live under `autonovelwriter/runtime/` (ignored by git):
 - `autonovelwriter/runtime/io/inbox/` user -> system (drop `.txt`/`.md`)
 - `autonovelwriter/runtime/io/outbox/` system -> user (backend writes chat messages)
 - `autonovelwriter/runtime/state/` persisted JSON state (settings, pipeline, runner, chat)
+- `autonovelwriter/runtime/state/active_project.json` persisted “active project” pointer
 - `autonovelwriter/runtime/tasks/` task queue files
 - `autonovelwriter/runtime/logs/` logs
+- `autonovelwriter/runtime/projects/<project_id>/materials/` project materials (inputs)
+- `autonovelwriter/runtime/projects/<project_id>/outputs/` project outputs (drafts/exports)
 
 ## Pipeline Script (Canonical Artifact)
 
@@ -64,6 +67,8 @@ The PWA shows the script in a textarea (source of truth) and renders nested bloc
 
 - Health: `GET /api/health`
 - Settings: `GET/POST /api/settings`
+- Projects: `GET /api/projects`, `POST /api/projects/active`
+- Materials index (active project): `GET /api/materials/index`
 - Pipeline (canonical script + derived JSON): `GET/POST /api/pipeline`
 - Pipeline validate (preview only): `POST /api/pipeline/validate`
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`

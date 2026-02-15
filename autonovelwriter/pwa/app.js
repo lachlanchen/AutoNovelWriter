@@ -1282,6 +1282,7 @@
 
   function defaultPipeline() {
     const types = [
+      'meta_tasks_generate',
       'plan',
       'write',
       'critique_story',

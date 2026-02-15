@@ -88,6 +88,7 @@ Blocks UI notes:
 - Projects: `GET /api/projects`, `POST /api/projects/active`
 - Materials index (active project): `GET /api/materials/index`
 - Outputs index (active project): `GET /api/outputs/index`
+- Task batches index: `GET /api/tasks/batches/index` (optional: `?project=<project_id>`)
 - Pipeline (canonical script + derived JSON): `GET/POST /api/pipeline`
 - Pipeline validate (preview only): `POST /api/pipeline/validate`
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
@@ -114,6 +115,8 @@ When the pipeline contains a `STEP meta_tasks_generate` block, the backend runne
 The backend emits:
 - WS event `tasks_batch_created` with `batch_dir`, `tasks_jsonl`, and `task_count`
 - a `log` line `[tasks] created batch: ...`
+
+The PWA includes a minimal Task Batches panel which lists batches via `GET /api/tasks/batches/index` and refreshes on `tasks_batch_created`.
 
 ## Agent Settings / Codex Gate
 
@@ -151,8 +154,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-15T23:45:56Z
-- current: T020_tasks_batches_index_and_pwa_panel / summary — Task batches: index API + PWA panel
+- updated_utc: 2026-02-15T23:46:32Z
+- current: T020_tasks_batches_index_and_pwa_panel / update_readme — Task batches: index API + PWA panel
 - queue: total=20 done=19 pending=1
 - last_done: T019_pwa_insert_container_blocks — PWA: insert LOOP/ROUND/FOREACH_TASK blocks @ 2026-02-16T07:36:50+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260215_232137_b1

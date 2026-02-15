@@ -26,3 +26,6 @@ Verification (no TCP binds):
 1. Add an optional `GET /api/tasks/batches/<batch_id>` (manifest + tail of `tasks.jsonl`) so the PWA can expand a batch to view its tasks without opening files manually.
 2. Link batch selection to “activate this batch into tasks.json” (explicit user action) so the runner can pick a chosen batch as the active task list.
 3. Add a small size/entry cap to the index handler response body (e.g. max 500 batches, and omit very long paths) and surface a warning in the PWA when truncation occurs.
+
+## README
+- Updated `README.md` to document `GET /api/tasks/batches/index` and that the PWA Task Batches panel refreshes on WS `tasks_batch_created`.

@@ -28,3 +28,6 @@ Verification (no TCP binds):
 2. Emit a structured WS event when the pipeline script hash changes and the resume cursor is invalidated (so the PWA can surface a clear “restart required” message).
 3. Update the PWA to display the new `task_status` context fields (`round_index`, `phase`, `block`) and show the current `run_status.ast_path` in the pipeline UI for better observability.
 4. Add a minimal unit test (no socket bind) that simulates a crash between “start” and “done” and verifies the pending-step resume behavior.
+
+## README
+- Updated `README.md` to reflect that the runner now executes v2 `ROUND`/`FOREACH_TASK` semantics and persists a resumable cursor (`runner_state.json`) that only advances after successful block completion.

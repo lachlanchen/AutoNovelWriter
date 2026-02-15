@@ -56,7 +56,14 @@ The backend serves it via `GET/POST /api/pipeline` as:
 - `pipeline_ast` (derived, nested structure used for loops + indentation UI)
 
 The runner executes steps derived from the same v2 parser/AST so what the PWA displays matches what runs.
-Note: execution currently flattens container blocks into a single pass; true repeat/foreach execution semantics are tracked separately and will be implemented in the runner.
+Runner control flow supports v2 containers:
+- `ROUND <n>` repeats its children `n` times.
+- `FOREACH_TASK` runs its children once per task in the active task list (`autonovelwriter/runtime/tasks/tasks.json`).
+
+Resumability:
+- The runner persists a resumable execution cursor to `autonovelwriter/runtime/state/runner_state.json`.
+- The cursor only advances after a block completes successfully (so restarts do not skip unfinished work).
+- If the canonical pipeline script changes (hash mismatch), the runner stops and requires a restart (cursor invalidated).
 
 Pipeline script v2 supports nesting:
 - `LOOP <n>` introduces a loop block
@@ -143,8 +150,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-15T15:42:56Z
-- current: T018_runner_execute_foreach_round / summary — Runner: execute ROUND/FOREACH_TASK semantics
+- updated_utc: 2026-02-15T15:43:48Z
+- current: T018_runner_execute_foreach_round / update_readme — Runner: execute ROUND/FOREACH_TASK semantics
 - queue: total=20 done=17 pending=3
 - last_done: T017_meta_tasks_generate_stub — Runner: meta_tasks_generate writes task batch @ 2026-02-15T23:15:34+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260215_232137_b1

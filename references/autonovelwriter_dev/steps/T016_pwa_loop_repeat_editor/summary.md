@@ -10,3 +10,6 @@ Verification (no TCP binds):
 
 ## Fixes
 - Added a visible focus outline for the repeat editor input to improve keyboard/accessibility clarity without requiring a block re-render.
+
+## I18N
+- Added localized strings for the repeat editor label/tooltip/error (`pipeline.repeat_aria`, `pipeline.repeat_title`, `pipeline.repeat_err`) across all required UI languages.

@@ -23,3 +23,6 @@ Verification (no TCP binds):
 
 Verification (no TCP binds):
 - `node --check autonovelwriter/pwa/app.js`
+
+## I18N
+- Added i18n keys for the new block container labels shown in the PWA pipeline blocks list (`ROUND`, `FOREACH_TASK`) and the `foreach` badge, for all required UI languages.

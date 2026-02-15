@@ -47,6 +47,10 @@
       'pipeline.outdent_title': 'Outdent selected block (Shift+Tab)',
       'pipeline.script_canonical': 'Pipeline script (canonical)',
       'pipeline.json_derived': 'Pipeline JSON (derived)',
+      'pipeline.verb_loop': 'LOOP',
+      'pipeline.verb_round': 'ROUND',
+      'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.badge_foreach': 'foreach',
       'ui.chat': 'Chat',
       'ws.status_title': 'WebSocket status',
       'ws.disconnected': 'disconnected',
@@ -108,6 +112,10 @@
       'pipeline.outdent_title': '取消缩进 (Shift+Tab)',
       'pipeline.script_canonical': '流水线脚本（规范）',
       'pipeline.json_derived': '流水线 JSON（派生）',
+      'pipeline.verb_loop': 'LOOP',
+      'pipeline.verb_round': 'ROUND',
+      'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.badge_foreach': 'foreach',
       'ui.chat': '聊天',
       'ws.status_title': 'WebSocket 状态',
       'ws.disconnected': '未连接',
@@ -169,6 +177,10 @@
       'pipeline.outdent_title': '取消縮排 (Shift+Tab)',
       'pipeline.script_canonical': '流程腳本（規範）',
       'pipeline.json_derived': '流程 JSON（衍生）',
+      'pipeline.verb_loop': 'LOOP',
+      'pipeline.verb_round': 'ROUND',
+      'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.badge_foreach': 'foreach',
       'ui.chat': '聊天',
       'ws.status_title': 'WebSocket 狀態',
       'ws.disconnected': '未連線',
@@ -230,6 +242,10 @@
       'pipeline.outdent_title': 'アウトデント (Shift+Tab)',
       'pipeline.script_canonical': 'パイプラインスクリプト（正）',
       'pipeline.json_derived': 'パイプライン JSON（派生）',
+      'pipeline.verb_loop': 'LOOP',
+      'pipeline.verb_round': 'ROUND',
+      'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.badge_foreach': 'foreach',
       'ui.chat': 'チャット',
       'ws.status_title': 'WebSocket 状態',
       'ws.disconnected': '未接続',
@@ -291,6 +307,10 @@
       'pipeline.outdent_title': '내어쓰기 (Shift+Tab)',
       'pipeline.script_canonical': '파이프라인 스크립트(원본)',
       'pipeline.json_derived': '파이프라인 JSON(파생)',
+      'pipeline.verb_loop': 'LOOP',
+      'pipeline.verb_round': 'ROUND',
+      'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.badge_foreach': 'foreach',
       'ui.chat': '채팅',
       'ws.status_title': 'WebSocket 상태',
       'ws.disconnected': '연결 끊김',
@@ -352,6 +372,10 @@
       'pipeline.outdent_title': 'Thut ra (Shift+Tab)',
       'pipeline.script_canonical': 'Script pipeline (chuan)',
       'pipeline.json_derived': 'Pipeline JSON (suy ra)',
+      'pipeline.verb_loop': 'LOOP',
+      'pipeline.verb_round': 'ROUND',
+      'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.badge_foreach': 'foreach',
       'ui.chat': 'Chat',
       'ws.status_title': 'Trang thai WebSocket',
       'ws.disconnected': 'mat ket noi',
@@ -413,6 +437,10 @@
       'pipeline.outdent_title': 'إزاحة للخارج (Shift+Tab)',
       'pipeline.script_canonical': 'نص خط الأنابيب (مرجعي)',
       'pipeline.json_derived': 'JSON لخط الأنابيب (مشتق)',
+      'pipeline.verb_loop': 'LOOP',
+      'pipeline.verb_round': 'ROUND',
+      'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.badge_foreach': 'foreach',
       'ui.chat': 'الدردشة',
       'ws.status_title': 'حالة WebSocket',
       'ws.disconnected': 'غير متصل',
@@ -474,6 +502,10 @@
       'pipeline.outdent_title': 'Désindenter (Shift+Tab)',
       'pipeline.script_canonical': 'Script du pipeline (canonique)',
       'pipeline.json_derived': 'JSON du pipeline (dérivé)',
+      'pipeline.verb_loop': 'LOOP',
+      'pipeline.verb_round': 'ROUND',
+      'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.badge_foreach': 'foreach',
       'ui.chat': 'Chat',
       'ws.status_title': 'Statut WebSocket',
       'ws.disconnected': 'déconnecté',
@@ -535,6 +567,10 @@
       'pipeline.outdent_title': 'Desindentar (Shift+Tab)',
       'pipeline.script_canonical': 'Script del pipeline (canónico)',
       'pipeline.json_derived': 'JSON del pipeline (derivado)',
+      'pipeline.verb_loop': 'LOOP',
+      'pipeline.verb_round': 'ROUND',
+      'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.badge_foreach': 'foreach',
       'ui.chat': 'Chat',
       'ws.status_title': 'Estado de WebSocket',
       'ws.disconnected': 'desconectado',
@@ -596,6 +632,10 @@
       'pipeline.outdent_title': 'Развернуть (Shift+Tab)',
       'pipeline.script_canonical': 'Скрипт пайплайна (канон.)',
       'pipeline.json_derived': 'JSON пайплайна (производный)',
+      'pipeline.verb_loop': 'LOOP',
+      'pipeline.verb_round': 'ROUND',
+      'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.badge_foreach': 'foreach',
       'ui.chat': 'Чат',
       'ws.status_title': 'Статус WebSocket',
       'ws.disconnected': 'нет связи',
@@ -657,6 +697,10 @@
       'pipeline.outdent_title': 'Ausrücken (Shift+Tab)',
       'pipeline.script_canonical': 'Pipeline-Skript (kanonisch)',
       'pipeline.json_derived': 'Pipeline-JSON (abgeleitet)',
+      'pipeline.verb_loop': 'LOOP',
+      'pipeline.verb_round': 'ROUND',
+      'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.badge_foreach': 'foreach',
       'ui.chat': 'Chat',
       'ws.status_title': 'WebSocket-Status',
       'ws.disconnected': 'getrennt',
@@ -1653,9 +1697,9 @@
         const title = document.createElement('div');
         title.className = 'btitle';
         title.textContent =
-          n.kind === 'loop' ? 'LOOP'
-            : n.kind === 'round' ? 'ROUND'
-              : n.kind === 'foreach_task' ? 'FOREACH_TASK'
+          n.kind === 'loop' ? t('pipeline.verb_loop')
+            : n.kind === 'round' ? t('pipeline.verb_round')
+              : n.kind === 'foreach_task' ? t('pipeline.verb_foreach_task')
                 : n.type;
         const meta = document.createElement('div');
         meta.className = 'btype';
@@ -1663,7 +1707,7 @@
           const badge = document.createElement('span');
           badge.className = 'badge';
           badge.textContent =
-            n.kind === 'foreach_task' ? 'foreach'
+            n.kind === 'foreach_task' ? t('pipeline.badge_foreach')
               : `x${n.repeat || 1}`;
           meta.appendChild(badge);
         } else {

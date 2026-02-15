@@ -1,0 +1,17 @@
+{
+  "id": "T020_tasks_batches_index_and_pwa_panel",
+  "title": "Task batches: index API + PWA panel",
+  "notes": "Make generated task batches first-class. Add backend API `GET /api/tasks/batches/index` listing batches under `autonovelwriter/runtime/tasks/batches/` (id, created time, task_count, paths), and a PWA panel to display them. Hook WS `tasks_batch_created` to refresh the panel and show an immediate UI notification. Keep this separate from the driver queue under `references/autonovelwriter_dev/`.",
+  "acceptance": [
+    "Backend `GET /api/tasks/batches/index` returns batches with stable fields (batch_id, batch_dir, tasks_jsonl, task_count, created_utc).",
+    "PWA displays the batches list and refreshes automatically on WS `tasks_batch_created` without requiring manual reload.",
+    "Feature is fully operable without binding extra ports in tests: backend import/py_compile passes, PWA `node --check` passes, and a unit-style call can index batches from disk."
+  ],
+  "tags": [
+    "backend",
+    "pwa",
+    "tasks",
+    "storage",
+    "ws"
+  ]
+}

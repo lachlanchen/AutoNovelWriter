@@ -14,3 +14,9 @@
 
 ## I18N
 - Added localized UI strings for the new Delete action: `pipeline.delete` and `pipeline.delete_title` in all required UI languages (en, zh-Hans, zh-Hant, ja, ko, vi, ar, fr, es, ru, de).
+
+## Next
+1. Add an undo/redo stack for pipeline AST edits (delete/indent/outdent/insert).
+2. Add `FOREACH_ACTION` container support in script parse/render and the PWA insert toolbar.
+3. Add Action Library and make STEP blocks reference `action_id` (copy-on-edit semantics).
+4. Add a “batch details + activate” flow in Task Batches panel (view manifest, set active batch for FOREACH_TASK).

@@ -1,0 +1,16 @@
+{
+  "id": "T014_pwa_outputs_panel",
+  "title": "PWA: outputs panel + WS hook",
+  "notes": "Add a minimal Outputs panel in the PWA that lists active project outputs via /api/outputs/index and reacts to WS output_created events (append a toast/log and refresh index with debounce). Keep light theme and i18n keys for all 11 UI languages.",
+  "acceptance": [
+    "PWA shows outputs list for active project and updates after output_created WS event",
+    "New UI strings are localized for en, zh-Hans, zh-Hant, ja, ko, vi, ar, fr, es, ru, de",
+    "node --check passes; no server start required in sandbox"
+  ],
+  "tags": [
+    "pwa",
+    "outputs",
+    "ws",
+    "i18n"
+  ]
+}

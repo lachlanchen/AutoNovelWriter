@@ -14,3 +14,6 @@
 Verification (no TCP binds):
 - `python3 -m py_compile autonovelwriter/backend/server.py`
 
+## Fixes
+- Persist `project_rel_path` alongside absolute paths for created outputs (and include it in the `output_created` WS event).
+- If draft write fails, persist per-block `status="error"` and mark the task `status="error"` (do not finalize to `done`).

@@ -19,3 +19,6 @@ Verification (no TCP binds):
 - Fixed resumability correctness: the runner now records a `cursor.pending` step and only advances the cursor after the block completes successfully (prevents skipping unfinished blocks after restart).
 - Improved observability: `run_status.ast_path` now points at the active pending step node path while a block is in-flight.
 - Added container context to `task_status` WS broadcasts (`pipeline_hash`, `phase`, `round_index`, `round_repeat_total`; plus `block` on `running`/`error`).
+
+## I18N
+- No new/changed PWA user-facing strings in this task (backend-only runner semantics/WS payload changes), so no translation updates were required.

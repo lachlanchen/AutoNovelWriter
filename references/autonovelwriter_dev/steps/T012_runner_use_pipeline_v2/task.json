@@ -1,0 +1,16 @@
+{
+  "id": "T012_runner_use_pipeline_v2",
+  "title": "Runner: execute v2 pipeline script/AST",
+  "notes": "Switch runner block selection to use the canonical pipeline script v2 parser/AST (indent + LOOP) so execution order matches what the PWA edits/displays. Initially ignore LOOP repeat counts (treat LOOP as grouping) or implement repeat deterministically; but runner must not use legacy flat parsing that can diverge from UI.",
+  "acceptance": [
+    "Runner uses v2 pipeline parsing (same as /api/pipeline) to derive enabled steps",
+    "A pipeline with nested LOOPs results in a deterministic flattened execution order matching the AST preorder",
+    "No TCP-bind verification needed: py_compile passes and a small unit-style function test can flatten AST to steps"
+  ],
+  "tags": [
+    "backend",
+    "runner",
+    "pipeline",
+    "resumability"
+  ]
+}

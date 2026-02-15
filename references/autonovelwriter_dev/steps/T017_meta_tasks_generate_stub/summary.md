@@ -29,3 +29,6 @@ Verification (no TCP binds):
 2. Add an API/UI flow to view task batches and promote a selected batch to the active task list (`autonovelwriter/runtime/tasks/tasks.json`).
 3. Add PWA handling for WS `tasks_batch_created` (show toast/log + link/path) so batch creation is visible without tailing logs.
 4. Consider persisting the run-session batch pointer so reuse works across restarts (e.g., store last batch_id in `runner_state.json`).
+
+## README
+- Documented `meta_tasks_generate` batch output location (`autonovelwriter/runtime/tasks/batches/<batch_id>/`) and added `tasks_batch_created` to the WebSocket event list.

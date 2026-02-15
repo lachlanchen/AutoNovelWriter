@@ -40,6 +40,7 @@ All mutable state and IO live under `autonovelwriter/runtime/` (ignored by git):
 - `autonovelwriter/runtime/state/` persisted JSON state (settings, pipeline, runner, chat)
 - `autonovelwriter/runtime/state/active_project.json` persisted “active project” pointer
 - `autonovelwriter/runtime/tasks/` task queue files
+- `autonovelwriter/runtime/tasks/batches/<batch_id>/` generated task batches (e.g. from `meta_tasks_generate`)
 - `autonovelwriter/runtime/logs/` logs
 - `autonovelwriter/runtime/projects/<project_id>/materials/` project materials (inputs)
 - `autonovelwriter/runtime/projects/<project_id>/outputs/` project outputs (drafts/exports)
@@ -84,7 +85,7 @@ Blocks UI notes:
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
 - Agent test (gated): `POST /api/agent/test` (runs `codex --version` only when enabled + env gate)
-- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `run_status`, `task_status`, `log`, `pipeline_updated`)
+- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `run_status`, `task_status`, `log`, `pipeline_updated`)
 
 ## Runner Outputs (Draft Stub)
 
@@ -96,6 +97,15 @@ The backend also emits:
 - a `log` line `[output] created: ...`
 
 The PWA includes a minimal Outputs panel which lists files via `GET /api/outputs/index` and refreshes on `output_created`.
+
+## Runner Tasks (Batch Stub)
+
+When the pipeline contains a `STEP meta_tasks_generate` block, the backend runner will create a stub task batch under:
+- `autonovelwriter/runtime/tasks/batches/<batch_id>/`
+
+The backend emits:
+- WS event `tasks_batch_created` with `batch_dir`, `tasks_jsonl`, and `task_count`
+- a `log` line `[tasks] created batch: ...`
 
 ## Agent Settings / Codex Gate
 

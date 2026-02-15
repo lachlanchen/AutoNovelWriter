@@ -1,0 +1,15 @@
+{
+  "id": "T004_folder_chat_pipe",
+  "title": "Folder-based inbox/outbox + backend polling + UI sync",
+  "notes": "Implement runtime/io/inbox and outbox. Backend polls inbox, appends to chat history, emits WS events; UI can send message to backend which writes to outbox.",
+  "acceptance": [
+    "Drop a .md/.txt into inbox and it appears in UI",
+    "Sending chat from UI writes a file to outbox",
+    "All events visible via WS"
+  ],
+  "tags": [
+    "backend",
+    "io",
+    "chat"
+  ]
+}

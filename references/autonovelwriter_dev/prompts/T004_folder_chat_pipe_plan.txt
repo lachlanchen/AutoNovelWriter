@@ -1,0 +1,37 @@
+You are being invoked by scripts/auto-autonovelwriter-development.sh (ONE shared Codex session).
+
+Overall goal (repeat for every step):
+- Build AutoNovelWriter: Scratch-like PWA controller + Python Tornado backend.
+- Light theme by default.
+- Must support chat + folder-based inbox/outbox interruption during a running pipeline.
+
+Read these first:
+- references/autonovelwriter_dev/CONTEXT.md
+- docs/autonovelwriter_spec.md
+- Existing code under: autonovelwriter/backend/ and autonovelwriter/pwa/
+- Task definition JSON (notes + acceptance): references/autonovelwriter_dev/steps/T004_folder_chat_pipe/task.json
+
+This step:
+- Task ID: T004_folder_chat_pipe
+- Task title: Folder-based inbox/outbox + backend polling + UI sync
+- Stage: plan (strict)
+
+Required workspace/output paths:
+- Step working dir: references/autonovelwriter_dev/steps/T004_folder_chat_pipe/
+- Write your outputs (notes/plan/critique/summary) into files under references/autonovelwriter_dev/steps/T004_folder_chat_pipe/:
+  - plan: references/autonovelwriter_dev/steps/T004_folder_chat_pipe/plan.md
+  - critique: references/autonovelwriter_dev/steps/T004_folder_chat_pipe/critique.md
+  - summary: references/autonovelwriter_dev/steps/T004_folder_chat_pipe/summary.md
+
+Operational constraints:
+- Do NOT commit or push. Do NOT create new remotes. The outer driver handles git.
+- Prefer small, safe changes. Keep the app runnable.
+- No secrets in git. If you add config, create .env.example and read env vars.
+
+Stage-specific instructions:
+- Do NOT modify app code in this stage.
+- Produce a short plan in: references/autonovelwriter_dev/steps/T004_folder_chat_pipe/plan.md
+- Plan must include:
+  - files to change/create
+  - acceptance checklist
+  - minimal verification commands (avoid binding TCP ports; Codex sandbox may block socket binds)

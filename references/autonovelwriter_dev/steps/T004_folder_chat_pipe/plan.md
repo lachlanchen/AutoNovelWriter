@@ -6,6 +6,10 @@ Implement the file-based interruption channel:
 - Backend polls inbox, appends messages to chat history, and broadcasts events over `/ws`.
 - UI can send chat; backend writes a file to `autonovelwriter/runtime/io/outbox/` and broadcasts an event.
 
+Non-goals for T004:
+- Do not conflate the *driver stages* (plan/implement/fix/summary) with the *in-app pipeline* being controlled. T004 only adds the chat pipe.
+- Pipeline-script visualization module is out of scope for T004 (will be handled in a dedicated task).
+
 ## Files To Create/Change
 - Backend
   - Change `autonovelwriter/backend/server.py`
@@ -43,7 +47,7 @@ Implement the file-based interruption channel:
 python3 -m py_compile autonovelwriter/backend/server.py
 
 # Confirm runtime paths used by server include inbox/outbox and state paths
-rg -n -- "io_inbox|io_outbox|chat\.jsonl|PeriodicCallback|/api/chat" autonovelwriter/backend/server.py
+rg -n -- "io_inbox|io_outbox|chat\\.jsonl|PeriodicCallback|/api/chat" autonovelwriter/backend/server.py
 
 # PWA wiring checks (no browser)
 rg -n -- "/api/chat/history|/api/chat/send|type: 'chat'|outbox" autonovelwriter/pwa/app.js

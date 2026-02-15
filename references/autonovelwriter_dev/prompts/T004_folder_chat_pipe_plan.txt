@@ -4,6 +4,11 @@ Overall goal (repeat for every step):
 - Build AutoNovelWriter: Scratch-like PWA controller + Python Tornado backend.
 - Light theme by default.
 - Must support chat + folder-based inbox/outbox interruption during a running pipeline.
+- Must support a pipeline-script visualization module:
+  - Parse a formatted pipeline script (shell-ish text) into structured tasks/steps/actions/blocks.
+  - Render the structured pipeline back into a formatted script the UI can generate/export.
+- Do NOT confuse driver stages (plan/implement/debug/fix/summary) with the *in-app* pipelines
+  (novel-writing vs app-development) that AutoNovelWriter controls.
 
 Read these first:
 - references/autonovelwriter_dev/CONTEXT.md
@@ -18,9 +23,9 @@ This step:
 
 Required workspace/output paths:
 - Step working dir: references/autonovelwriter_dev/steps/T004_folder_chat_pipe/
-- Write your outputs (notes/plan/critique/summary) into files under references/autonovelwriter_dev/steps/T004_folder_chat_pipe/:
+- Write your outputs (notes/plan/debug/summary) into files under references/autonovelwriter_dev/steps/T004_folder_chat_pipe/:
   - plan: references/autonovelwriter_dev/steps/T004_folder_chat_pipe/plan.md
-  - critique: references/autonovelwriter_dev/steps/T004_folder_chat_pipe/critique.md
+  - debug: references/autonovelwriter_dev/steps/T004_folder_chat_pipe/debug.md
   - summary: references/autonovelwriter_dev/steps/T004_folder_chat_pipe/summary.md
 
 Operational constraints:

@@ -29,3 +29,6 @@ references/autonovelwriter_dev/*.lock
 references/autonovelwriter_dev/state.tsv
 references/autonovelwriter_dev/STOP
 references/autonovelwriter_dev/steps/*/commit_body.txt
+
+# Generated task-batch prompts (ephemeral; keep canonical prompts under T###_*.txt tracked)
+references/autonovelwriter_dev/prompts/GEN_tasks_*.txt

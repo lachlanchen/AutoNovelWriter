@@ -18,7 +18,19 @@ python3 -m http.server 5173 --directory autonovelwriter/pwa
 
 Open the PWA at `http://127.0.0.1:5173` and point it at the backend (default `ws://127.0.0.1:8787/ws`).
 
-The repo’s driver script (`scripts/auto-autonovelwriter-development.sh`) can also start a tmux session with both panes.
+tmux (launch both panes + log tail):
+```bash
+scripts/run_autonovelwriter_tmux.sh --no-attach
+tmux attach -t autonovelwriter_app
+```
+
+Conda env helper:
+```bash
+scripts/setup_conda_env.sh --name autonovelwriter
+scripts/run_autonovelwriter_tmux.sh --env autonovelwriter
+```
+
+The repo’s driver script (`scripts/auto-autonovelwriter-development.sh`) can also start a tmux session during auto-dev.
 
 ## Runtime Paths
 

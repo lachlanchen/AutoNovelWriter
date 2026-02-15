@@ -7,6 +7,7 @@ Overall goal:
 - Tech: Python Tornado backend + Scratch-like PWA (light theme).
 - Key feature: user can interrupt a running pipeline via chat UI and folder-based inbox/outbox.
 - Key feature: pipeline-script visualization (formatted script <-> blocks/tasks/steps/actions).
+- Key feature: standardized storage layout for materials/interactions/outputs/projects/tasks/state/logs.
 
 Hard constraints:
 - Keep steps small and resumable.

@@ -587,6 +587,8 @@ Constraints:
   - observable pipeline + chat pipe
   - pipeline-script visualization: script <-> blocks translation + import/export
   - clear separation of in-app pipelines (novel-writing vs app-development)
+  - standardized storage layout for: input materials, interactions, outputs, docs, references,
+    scripts, tools, logs, auto-novels/projects, task management, and resume state
 - Do NOT do any implementation now.
 - Append tasks to: $out_file
 
@@ -649,6 +651,11 @@ Overall goal (repeat for every step):
 - Build AutoNovelWriter: Scratch-like PWA controller + Python Tornado backend.
 - Light theme by default.
 - Must support chat + folder-based inbox/outbox interruption during a running pipeline.
+- Must standardize and document storage and naming conventions for:
+  - input materials, interactions, outputs
+  - docs/references/scripts/tools/logs
+  - auto-novels/projects storage
+  - task management + resumable state
 - Must support a pipeline-script visualization module:
   - Parse a formatted pipeline script (shell-ish text) into structured tasks/steps/actions/blocks.
   - Render the structured pipeline back into a formatted script the UI can generate/export.
@@ -658,6 +665,7 @@ Overall goal (repeat for every step):
 Read these first:
 - $context_doc
 - $spec_doc
+- README.md
 - Existing code under: $backend_root/ and $pwa_root/
 - Task definition JSON (notes + acceptance): $step_dir/task.json
 
@@ -688,6 +696,10 @@ EOF
 - Do NOT modify app code in this stage.
 - Produce a short plan in: $step_dir/plan.md
 - Plan must include:
+  - a brief architecture/design note answering:
+    - how this task fits the standardized app storage layout (materials/interactions/outputs/logs/projects/tasks/state)
+    - what is persisted vs derived vs ephemeral, and what must be gitignored
+    - what API/WS events must exist to keep the PWA observable and resumable
   - files to change/create
   - acceptance checklist
   - minimal verification commands (avoid binding TCP ports; Codex sandbox may block socket binds)
@@ -697,6 +709,7 @@ EOF
       cat >> "$out_prompt" <<EOF
 - Implement the task. Keep scope tight and verifiable.
 - Ensure runtime defaults exist under: $runtime_root/ (create dirs/files as needed).
+- Avoid introducing new folders/artifacts without updating the standardized layout in docs/spec.
 - When implementing pipeline behavior, treat the formatted pipeline script as the canonical artifact:
   - backend stores script + structured JSON
   - UI can import/export script and visualize it as blocks

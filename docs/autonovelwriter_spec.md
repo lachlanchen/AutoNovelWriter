@@ -20,6 +20,17 @@ Example in-app pipeline templates (editable):
 - Novel: `plan -> write -> critique_story -> fix_story -> critique_tone -> fix_tone -> critique_dialogue -> fix_dialogue -> critique_character -> fix_character -> summary -> log -> update_readme -> commit_push`
 - App-dev: `plan -> implement -> debug -> fix -> summary -> log -> update_readme -> commit_push`
 
+## 0.1) Standardized Storage Layout (Requirement)
+AutoNovelWriter must define and document a consistent layout and naming scheme for:
+- input materials (research, story background, prompts)
+- interactions (chat + inbox/outbox)
+- outputs (drafts, revisions, exports)
+- docs/references/scripts/tools/logs
+- auto-novels/projects storage
+- task management + resumable state
+
+The design must be configurable via settings, but have clear defaults and stable paths.
+
 ## 1) UI (Scratch-like)
 - Light theme by default (no dark-first UI).
 - Drag & drop “blocks” that form a pipeline (pipeline templates are built-in and editable).

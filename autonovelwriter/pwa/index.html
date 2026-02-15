@@ -42,13 +42,15 @@
           </div>
           <div class="stage-body">
             <div class="pipeline">
-              <div class="pipe-top">
-                <div class="pipe-title">Blocks</div>
-                <div class="pipe-actions">
-                  <button id="pipeSave" class="btn btn-primary" type="button">Save</button>
-                  <button id="pipeReset" class="btn" type="button">Reset</button>
-                </div>
-              </div>
+	              <div class="pipe-top">
+	                <div class="pipe-title">Blocks</div>
+	                <div class="pipe-actions">
+	                  <button id="pipeIndent" class="btn" type="button" title="Indent selected block (Tab)">Indent</button>
+	                  <button id="pipeOutdent" class="btn" type="button" title="Outdent selected block (Shift+Tab)">Outdent</button>
+	                  <button id="pipeSave" class="btn btn-primary" type="button">Save</button>
+	                  <button id="pipeReset" class="btn" type="button">Reset</button>
+	                </div>
+	              </div>
 
               <ol id="blocks" class="blocks" aria-label="Pipeline blocks"></ol>
 

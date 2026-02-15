@@ -10,6 +10,8 @@
   const backendHint = $('backendHint');
 
   const blocksEl = $('blocks');
+  const pipeIndent = $('pipeIndent');
+  const pipeOutdent = $('pipeOutdent');
   const pipeSave = $('pipeSave');
   const pipeReset = $('pipeReset');
   const pipeStatus = $('pipeStatus');
@@ -34,6 +36,8 @@
 
   const LS_WS_URL = 'anw_ws_url';
   const LS_PIPELINE = 'anw_pipeline';
+  const LS_PIPELINE_SCRIPT = 'anw_pipeline_script';
+  const LS_PIPELINE_AST = 'anw_pipeline_ast';
   let chatHistoryLoadedKey = null;
   const seenChatIds = new Set();
 
@@ -274,131 +278,432 @@
     return { blocks };
   }
 
-  let pipeline = defaultPipeline();
-  let dragFrom = null;
+  function pipelineAstFromPipeline(p) {
+    const pp = normalizePipeline(p);
+    return {
+      kind: 'root',
+      version: 2,
+      children: (pp.blocks || []).map((b) => ({ kind: 'step', type: b.type, enabled: b.enabled !== false }))
+    };
+  }
+
+  function defaultPipelineAst() {
+    const p = defaultPipeline();
+    return {
+      kind: 'root',
+      version: 2,
+      children: (p.blocks || []).map((b) => ({ kind: 'step', type: b.type, enabled: b.enabled !== false }))
+    };
+  }
+
+  function normalizePipelineAst(ast) {
+    const cleanStep = (n) => {
+      if (!n || typeof n !== 'object') return null;
+      const type = typeof n.type === 'string' ? n.type : '';
+      if (!type) return null;
+      return { kind: 'step', type, enabled: n.enabled !== false };
+    };
+    const cleanLoop = (n) => {
+      if (!n || typeof n !== 'object') return null;
+      const r = Number.isFinite(n.repeat) ? n.repeat : parseInt(String(n.repeat || '1'), 10);
+      const repeat = Number.isFinite(r) && r > 0 ? r : 1;
+      const kids = Array.isArray(n.children) ? n.children : [];
+      const children = [];
+      for (const c of kids) {
+        const cc = cleanNode(c);
+        if (cc) children.push(cc);
+      }
+      return { kind: 'loop', repeat, children };
+    };
+    const cleanNode = (n) => {
+      if (!n || typeof n !== 'object') return null;
+      if (n.kind === 'step') return cleanStep(n);
+      if (n.kind === 'loop') return cleanLoop(n);
+      return null;
+    };
+
+    const kids = ast && typeof ast === 'object' && Array.isArray(ast.children) ? ast.children : null;
+    if (!kids) return defaultPipelineAst();
+    const children = [];
+    for (const c of kids) {
+      const cc = cleanNode(c);
+      if (cc) children.push(cc);
+    }
+    if (!children.length) return defaultPipelineAst();
+    return { kind: 'root', version: 2, children };
+  }
+
+  function flattenAstSteps(ast) {
+    const out = [];
+    const walk = (n) => {
+      if (!n || typeof n !== 'object') return;
+      if (n.kind === 'step') {
+        out.push({ id: n.type, type: n.type, enabled: n.enabled !== false });
+        return;
+      }
+      if (n.kind === 'loop' && Array.isArray(n.children)) {
+        for (const c of n.children) walk(c);
+      }
+    };
+    if (ast && typeof ast === 'object' && Array.isArray(ast.children)) {
+      for (const c of ast.children) walk(c);
+    }
+    return out;
+  }
+
+  function astHasLoop(n) {
+    if (!n || typeof n !== 'object') return false;
+    if (n.kind === 'loop') return true;
+    const kids = Array.isArray(n.children) ? n.children : [];
+    for (const c of kids) {
+      if (astHasLoop(c)) return true;
+    }
+    return false;
+  }
+
+  function renderScriptFromAst(ast) {
+    const header = astHasLoop(ast) ? '# AutoNovelWriter pipeline script v2' : '# AutoNovelWriter pipeline script v1';
+    const lines = [header];
+    const emit = (n, level) => {
+      if (!n || typeof n !== 'object') return;
+      const indent = '  '.repeat(level);
+      if (n.kind === 'step') {
+        const verb = n.enabled === false ? 'DISABLED' : 'STEP';
+        lines.push(`${indent}${verb} ${n.type}`);
+        return;
+      }
+      if (n.kind === 'loop') {
+        const repeat = Number.isFinite(n.repeat) ? n.repeat : parseInt(String(n.repeat || '1'), 10);
+        lines.push(`${indent}LOOP ${repeat > 0 ? repeat : 1}`);
+        const kids = Array.isArray(n.children) ? n.children : [];
+        for (const c of kids) emit(c, level + 1);
+      }
+    };
+    const kids = ast && typeof ast === 'object' && Array.isArray(ast.children) ? ast.children : [];
+    for (const c of kids) emit(c, 0);
+    return lines.join('\n') + '\n';
+  }
+
+  function pathKey(path) {
+    if (!Array.isArray(path) || !path.length) return '';
+    return path.map((n) => String(n)).join('.');
+  }
+
+  function parsePathKey(key) {
+    if (!key) return [];
+    const parts = String(key).split('.');
+    const out = [];
+    for (const p of parts) {
+      const n = parseInt(p, 10);
+      if (!Number.isFinite(n) || n < 0) return [];
+      out.push(n);
+    }
+    return out;
+  }
+
+  function getContainerAndIndex(ast, path) {
+    if (!ast || typeof ast !== 'object') return null;
+    if (!Array.isArray(path) || !path.length) return null;
+    let parent = ast;
+    let container = Array.isArray(ast.children) ? ast.children : null;
+    if (!container) return null;
+    for (let d = 0; d < path.length - 1; d++) {
+      const idx = path[d];
+      const node = container[idx];
+      if (!node || typeof node !== 'object' || node.kind !== 'loop' || !Array.isArray(node.children)) return null;
+      parent = node;
+      container = node.children;
+    }
+    const index = path[path.length - 1];
+    if (index < 0 || index >= container.length) return null;
+    return { parent, container, index, node: container[index], parentPath: path.slice(0, -1) };
+  }
 
   function clearDropTargets() {
     const els = blocksEl.querySelectorAll('.drop-target');
     for (const el of els) el.classList.remove('drop-target');
   }
 
-  function moveBlock(from, to) {
-    if (from === to) return;
-    if (from < 0 || from >= pipeline.blocks.length) return;
-    if (to < 0) to = 0;
-    if (to > pipeline.blocks.length) to = pipeline.blocks.length;
+  let pipelineAst = defaultPipelineAst();
+  let pipeline = normalizePipeline({ blocks: flattenAstSteps(pipelineAst) });
+  let selected = '';
+  let dragFrom = '';
+  let dragParent = '';
 
-    const item = pipeline.blocks.splice(from, 1)[0];
-    // If moving down, the removal shifts the target index by -1.
-    if (to > from) to -= 1;
-    pipeline.blocks.splice(to, 0, item);
+  function setSelected(key) {
+    selected = String(key || '');
+  }
+
+  function updateDerivedFromAst(opts) {
+    const writeScript = opts && opts.writeScript;
+    pipeline = normalizePipeline({ blocks: flattenAstSteps(pipelineAst) });
+    pipelineJson.textContent = JSON.stringify({ pipeline, pipeline_ast: pipelineAst }, null, 2);
+
+    if (writeScript) {
+      pipelineScript.value = renderScriptFromAst(pipelineAst);
+    }
+
+    try {
+      window.localStorage.setItem(LS_PIPELINE, JSON.stringify(pipeline));
+      window.localStorage.setItem(LS_PIPELINE_AST, JSON.stringify(pipelineAst));
+      window.localStorage.setItem(LS_PIPELINE_SCRIPT, String(pipelineScript.value || ''));
+    } catch (_) {}
   }
 
   function renderPipeline() {
     blocksEl.innerHTML = '';
 
-    for (let i = 0; i < pipeline.blocks.length; i++) {
-      const b = pipeline.blocks[i];
-      const li = document.createElement('li');
-      li.className = 'block' + (b.enabled ? '' : ' disabled');
-      li.draggable = true;
-      li.dataset.index = String(i);
-
-      const handle = document.createElement('div');
-      handle.className = 'handle';
-      handle.textContent = '::';
-      handle.title = 'Drag to reorder';
-
-      const mid = document.createElement('div');
-      const title = document.createElement('div');
-      title.className = 'btitle';
-      title.textContent = b.type;
-      const type = document.createElement('div');
-      type.className = 'btype';
-      type.textContent = b.enabled ? 'enabled' : 'disabled';
-      mid.appendChild(title);
-      mid.appendChild(type);
-
-      const toggle = document.createElement('label');
-      toggle.className = 'btoggle';
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = !!b.enabled;
-      cb.addEventListener('change', () => {
-        b.enabled = cb.checked;
-        setPipeStatus('dirty');
-        renderPipeline();
-      });
-      const t = document.createElement('span');
-      t.textContent = 'enabled';
-      toggle.appendChild(cb);
-      toggle.appendChild(t);
-
-      li.appendChild(handle);
-      li.appendChild(mid);
-      li.appendChild(toggle);
-
-      li.addEventListener('dragstart', (e) => {
-        dragFrom = i;
-        li.classList.add('dragging');
-        try {
-          e.dataTransfer.effectAllowed = 'move';
-          e.dataTransfer.setData('text/plain', String(i));
-        } catch (_) {}
-      });
-
-      li.addEventListener('dragend', () => {
-        dragFrom = null;
-        li.classList.remove('dragging');
-        clearDropTargets();
-      });
-
-      li.addEventListener('dragover', (e) => {
+    function attachContainerDrop(ol, parentPath) {
+      const parentKey = pathKey(parentPath);
+      ol.addEventListener('dragover', (e) => {
+        if (!dragFrom) return;
+        if (dragParent !== parentKey) return;
         e.preventDefault();
         try { e.dataTransfer.dropEffect = 'move'; } catch (_) {}
-        clearDropTargets();
-        li.classList.add('drop-target');
       });
-
-      li.addEventListener('drop', (e) => {
+      ol.addEventListener('drop', (e) => {
+        if (!dragFrom) return;
+        if (dragParent !== parentKey) return;
         e.preventDefault();
         clearDropTargets();
-        let from = dragFrom;
-        if (from === null) {
-          try { from = Number(e.dataTransfer.getData('text/plain')); } catch (_) {}
+        const fromPath = parsePathKey(dragFrom);
+        if (!fromPath.length) return;
+        const fromIndex = fromPath[fromPath.length - 1];
+        let container = null;
+        if (parentPath.length) {
+          const info = getContainerAndIndex(pipelineAst, parentPath);
+          container = info && info.node && Array.isArray(info.node.children) ? info.node.children : null;
+        } else {
+          container = pipelineAst.children;
         }
-        const to = i;
-        if (typeof from !== 'number' || Number.isNaN(from)) return;
-        moveBlock(from, to);
-        setPipeStatus('dirty');
-        renderPipeline();
+        const toIndex = Array.isArray(container) ? container.length : 0;
+        moveWithinParent(parentPath, fromIndex, toIndex);
       });
-
-      blocksEl.appendChild(li);
     }
 
-    pipelineJson.textContent = JSON.stringify(pipeline, null, 2);
+    const renderList = (ol, kids, parentPath) => {
+      ol.dataset.parentPath = pathKey(parentPath);
+      for (let i = 0; i < kids.length; i++) {
+        const n = kids[i];
+        const p = parentPath.concat([i]);
+        const key = pathKey(p);
+        const parentKey = pathKey(parentPath);
+
+        const li = document.createElement('li');
+        li.className = 'block' + (key === selected ? ' selected' : '') + (n.kind === 'loop' ? ' loop' : '') + (n.enabled === false ? ' disabled' : '');
+        li.draggable = true;
+        li.dataset.path = key;
+        li.dataset.parent = parentKey;
+
+        const handle = document.createElement('div');
+        handle.className = 'handle';
+        handle.textContent = '::';
+        handle.title = 'Drag to reorder (same level only)';
+
+        const mid = document.createElement('div');
+        const title = document.createElement('div');
+        title.className = 'btitle';
+        title.textContent = n.kind === 'loop' ? 'LOOP' : n.type;
+        const meta = document.createElement('div');
+        meta.className = 'btype';
+        if (n.kind === 'loop') {
+          const badge = document.createElement('span');
+          badge.className = 'badge';
+          badge.textContent = `x${n.repeat || 1}`;
+          meta.appendChild(badge);
+        } else {
+          meta.textContent = n.enabled === false ? 'disabled' : 'enabled';
+        }
+        mid.appendChild(title);
+        mid.appendChild(meta);
+
+        const side = document.createElement('div');
+        side.className = 'bside';
+
+        const actions = document.createElement('div');
+        actions.className = 'bactions';
+
+        const bin = document.createElement('button');
+        bin.type = 'button';
+        bin.className = 'mini';
+        bin.textContent = 'Indent';
+        bin.title = 'Indent (Tab)';
+        bin.addEventListener('click', (e) => {
+          e.stopPropagation();
+          setSelected(key);
+          indentSelected();
+        });
+
+        const bout = document.createElement('button');
+        bout.type = 'button';
+        bout.className = 'mini';
+        bout.textContent = 'Outdent';
+        bout.title = 'Outdent (Shift+Tab)';
+        bout.addEventListener('click', (e) => {
+          e.stopPropagation();
+          setSelected(key);
+          outdentSelected();
+        });
+
+        actions.appendChild(bin);
+        actions.appendChild(bout);
+        side.appendChild(actions);
+
+        if (n.kind === 'step') {
+          const toggle = document.createElement('label');
+          toggle.className = 'btoggle';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = n.enabled !== false;
+          cb.addEventListener('change', (e) => {
+            e.stopPropagation();
+            n.enabled = !!cb.checked;
+            setPipeStatus('dirty');
+            updateDerivedFromAst({ writeScript: true });
+            renderPipeline();
+          });
+          const t = document.createElement('span');
+          t.textContent = 'enabled';
+          toggle.appendChild(cb);
+          toggle.appendChild(t);
+          side.appendChild(toggle);
+        }
+
+        li.appendChild(handle);
+        li.appendChild(mid);
+        li.appendChild(side);
+
+        li.addEventListener('click', () => {
+          setSelected(key);
+          renderPipeline();
+        });
+
+        li.addEventListener('dragstart', (e) => {
+          dragFrom = key;
+          dragParent = parentKey;
+          li.classList.add('dragging');
+          try {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', key);
+          } catch (_) {}
+        });
+
+        li.addEventListener('dragend', () => {
+          dragFrom = '';
+          dragParent = '';
+          li.classList.remove('dragging');
+          clearDropTargets();
+        });
+
+        li.addEventListener('dragover', (e) => {
+          if (!dragFrom) return;
+          if (dragParent !== parentKey) return;
+          e.preventDefault();
+          try { e.dataTransfer.dropEffect = 'move'; } catch (_) {}
+          clearDropTargets();
+          li.classList.add('drop-target');
+        });
+
+        li.addEventListener('drop', (e) => {
+          if (!dragFrom) return;
+          if (dragParent !== parentKey) return;
+          e.preventDefault();
+          clearDropTargets();
+          const fromPath = parsePathKey(dragFrom);
+          const toPath = p;
+          if (!fromPath.length || !toPath.length) return;
+          const fromIndex = fromPath[fromPath.length - 1];
+          const toIndex = toPath[toPath.length - 1];
+          const parentPathArr = parentPath;
+          moveWithinParent(parentPathArr, fromIndex, toIndex);
+        });
+
+        ol.appendChild(li);
+
+        if (n.kind === 'loop' && Array.isArray(n.children)) {
+          const childOl = document.createElement('ol');
+          childOl.className = 'blocks nested';
+          attachContainerDrop(childOl, p);
+          renderList(childOl, n.children, p);
+          li.appendChild(childOl);
+        }
+      }
+    };
+
+    // Root container.
+    attachContainerDrop(blocksEl, []);
+    const kids = Array.isArray(pipelineAst.children) ? pipelineAst.children : [];
+    renderList(blocksEl, kids, []);
   }
 
-  blocksEl.addEventListener('dragover', (e) => {
-    // Allow dropping into empty list / after last element.
-    e.preventDefault();
-    try { e.dataTransfer.dropEffect = 'move'; } catch (_) {}
-  });
-
-  blocksEl.addEventListener('drop', (e) => {
-    // Drop on the list container appends to end.
-    e.preventDefault();
-    clearDropTargets();
-    let from = dragFrom;
-    if (from === null) {
-      try { from = Number(e.dataTransfer.getData('text/plain')); } catch (_) {}
+  function moveWithinParent(parentPath, fromIndex, toIndex) {
+    let kids = null;
+    if (parentPath && parentPath.length) {
+      const info = getContainerAndIndex(pipelineAst, parentPath);
+      kids = info && info.node && Array.isArray(info.node.children) ? info.node.children : null;
+    } else {
+      kids = pipelineAst.children;
     }
-    if (typeof from !== 'number' || Number.isNaN(from)) return;
-    moveBlock(from, pipeline.blocks.length);
+    if (!Array.isArray(kids)) return;
+    if (fromIndex < 0 || fromIndex >= kids.length) return;
+    if (toIndex < 0) toIndex = 0;
+    if (toIndex > kids.length) toIndex = kids.length;
+    if (fromIndex === toIndex) return;
+    const item = kids.splice(fromIndex, 1)[0];
+    if (toIndex > fromIndex) toIndex -= 1;
+    kids.splice(toIndex, 0, item);
+    setSelected(pathKey(parentPath.concat([toIndex])));
     setPipeStatus('dirty');
+    updateDerivedFromAst({ writeScript: true });
     renderPipeline();
-  });
+  }
+
+  function indentSelected() {
+    if (!selected) return;
+    const path = parsePathKey(selected);
+    if (path.length < 1) return;
+    const info = getContainerAndIndex(pipelineAst, path);
+    if (!info) return;
+    const { container, index, parentPath } = info;
+    if (index <= 0) return;
+    const prev = container[index - 1];
+    if (!prev || typeof prev !== 'object' || prev.kind !== 'loop' || !Array.isArray(prev.children)) {
+      addMsg('err', 'pipeline', 'indent requires previous sibling to be a LOOP');
+      return;
+    }
+    const node = container.splice(index, 1)[0];
+    prev.children.push(node);
+    setSelected(pathKey(parentPath.concat([index - 1, prev.children.length - 1])));
+    setPipeStatus('dirty');
+    updateDerivedFromAst({ writeScript: true });
+    renderPipeline();
+  }
+
+  function outdentSelected() {
+    if (!selected) return;
+    const path = parsePathKey(selected);
+    if (path.length < 2) return;
+    const info = getContainerAndIndex(pipelineAst, path);
+    if (!info) return;
+    const { container, index, parentPath } = info;
+    // parentPath points to the parent loop node.
+    const loopPath = parentPath;
+    const loopInfo = getContainerAndIndex(pipelineAst, loopPath);
+    if (!loopInfo || !loopInfo.node || loopInfo.node.kind !== 'loop') return;
+    const outerParentPath = loopInfo.parentPath;
+    const outerInfo = outerParentPath.length ? getContainerAndIndex(pipelineAst, outerParentPath) : null;
+    const outerKids = outerParentPath.length
+      ? (outerInfo && outerInfo.node && Array.isArray(outerInfo.node.children) ? outerInfo.node.children : null)
+      : pipelineAst.children;
+    if (!Array.isArray(outerKids)) return;
+    const loopIndex = loopInfo.index;
+    const node = container.splice(index, 1)[0];
+    outerKids.splice(loopIndex + 1, 0, node);
+    setSelected(pathKey(outerParentPath.concat([loopIndex + 1])));
+    setPipeStatus('dirty');
+    updateDerivedFromAst({ writeScript: true });
+    renderPipeline();
+  }
 
   async function loadPipeline() {
     setPipeStatus('loading');
@@ -408,15 +713,20 @@
       try {
         const res = await fetch(url, { method: 'GET' });
         const obj = await res.json();
-        if (obj && obj.ok && obj.pipeline) {
-          pipeline = normalizePipeline(obj.pipeline);
-          if (typeof obj.script === 'string') pipelineScript.value = obj.script;
+        if (obj && obj.ok && typeof obj.script === 'string') {
+          pipelineScript.value = obj.script;
+          if (obj.pipeline_ast && typeof obj.pipeline_ast === 'object') pipelineAst = normalizePipelineAst(obj.pipeline_ast);
+          else if (obj.pipeline) pipelineAst = pipelineAstFromPipeline(obj.pipeline);
+          setSelected('');
+          updateDerivedFromAst({ writeScript: false });
+          renderPipeline();
           if (Array.isArray(obj.warnings) && obj.warnings.length) {
             addMsg('err', 'pipeline warnings', JSON.stringify(obj.warnings.slice(0, 5)));
           }
-          window.localStorage.setItem(LS_PIPELINE, JSON.stringify(pipeline));
+          if (Array.isArray(obj.errors) && obj.errors.length) {
+            addMsg('err', 'pipeline errors', JSON.stringify(obj.errors.slice(0, 5)));
+          }
           setPipeStatus('loaded');
-          renderPipeline();
           return;
         }
       } catch (_) {
@@ -425,16 +735,27 @@
     }
 
     try {
-      const cached = JSON.parse(window.localStorage.getItem(LS_PIPELINE) || 'null');
-      pipeline = normalizePipeline(cached);
+      const cachedAst = JSON.parse(window.localStorage.getItem(LS_PIPELINE_AST) || 'null');
+      const cachedScript = window.localStorage.getItem(LS_PIPELINE_SCRIPT) || '';
+      if (cachedAst && typeof cachedAst === 'object') pipelineAst = normalizePipelineAst(cachedAst);
+      else {
+        const cached = JSON.parse(window.localStorage.getItem(LS_PIPELINE) || 'null');
+        pipelineAst = pipelineAstFromPipeline(cached);
+      }
+      if (cachedScript) pipelineScript.value = cachedScript;
+      else pipelineScript.value = renderScriptFromAst(pipelineAst);
+      setSelected('');
+      updateDerivedFromAst({ writeScript: false });
       setPipeStatus('local');
       renderPipeline();
       return;
     } catch (_) {}
 
-    pipeline = defaultPipeline();
+    pipelineAst = defaultPipelineAst();
+    pipelineScript.value = renderScriptFromAst(pipelineAst);
+    setSelected('');
+    updateDerivedFromAst({ writeScript: false });
     setPipeStatus('loaded');
-    pipelineScript.value = '# AutoNovelWriter pipeline script v1\n' + pipeline.blocks.map((b) => `STEP ${b.type}`).join('\n') + '\n';
     renderPipeline();
   }
 
@@ -457,8 +778,11 @@
       });
       const obj = await res.json();
       if (obj && obj.ok) {
-        if (obj.pipeline) pipeline = normalizePipeline(obj.pipeline);
         if (typeof obj.script === 'string') pipelineScript.value = obj.script;
+        if (obj.pipeline_ast && typeof obj.pipeline_ast === 'object') pipelineAst = normalizePipelineAst(obj.pipeline_ast);
+        else if (obj.pipeline) pipelineAst = pipelineAstFromPipeline(obj.pipeline);
+        setSelected('');
+        updateDerivedFromAst({ writeScript: false });
         renderPipeline();
         if (Array.isArray(obj.warnings) && obj.warnings.length) {
           addMsg('err', 'pipeline warnings', JSON.stringify(obj.warnings.slice(0, 5)));
@@ -475,10 +799,47 @@
   }
 
   function resetPipeline() {
-    pipeline = defaultPipeline();
+    pipelineAst = defaultPipelineAst();
+    setSelected('');
     setPipeStatus('dirty');
-    pipelineScript.value = '# AutoNovelWriter pipeline script v1\n' + pipeline.blocks.map((b) => `STEP ${b.type}`).join('\n') + '\n';
+    updateDerivedFromAst({ writeScript: true });
     renderPipeline();
+  }
+
+  let scriptValidateTimer = null;
+
+  async function validatePipelineScript(script, opts) {
+    const url = backendApiUrl('/api/pipeline/validate');
+    if (!url) return;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ script: String(script || '') })
+      });
+      const obj = await res.json();
+      if (obj && obj.ok && obj.pipeline_ast) {
+        pipelineAst = normalizePipelineAst(obj.pipeline_ast);
+        setSelected('');
+        updateDerivedFromAst({ writeScript: false });
+        renderPipeline();
+        if (!opts || !opts.quiet) {
+          if (Array.isArray(obj.warnings) && obj.warnings.length) {
+            addMsg('err', 'pipeline warnings', JSON.stringify(obj.warnings.slice(0, 5)));
+          }
+        }
+        return;
+      }
+      if (!opts || !opts.quiet) {
+        if (obj && Array.isArray(obj.errors) && obj.errors.length) {
+          addMsg('err', 'pipeline errors', JSON.stringify(obj.errors.slice(0, 5)));
+        } else {
+          addMsg('err', 'pipeline validate', JSON.stringify(obj));
+        }
+      }
+    } catch (e) {
+      if (!opts || !opts.quiet) addMsg('err', 'pipeline validate', String(e));
+    }
   }
 
   async function callRun(path) {
@@ -555,6 +916,14 @@
         addChatMessage(obj.message);
       } else if (obj && obj.type === 'outbox_written' && obj.outbox && obj.outbox.filename) {
         addMsg('hello', 'outbox', `wrote ${obj.outbox.filename}`);
+      } else if (obj && obj.type === 'pipeline_updated' && typeof obj.script === 'string') {
+        pipelineScript.value = obj.script;
+        if (Array.isArray(obj.warnings) && obj.warnings.length) {
+          addMsg('err', 'pipeline warnings', JSON.stringify(obj.warnings.slice(0, 5)));
+        }
+        // Refresh nested UI from the canonical script (best-effort).
+        validatePipelineScript(obj.script, { quiet: true });
+        setPipeStatus('loaded');
       } else if (obj && obj.type === 'run_status') {
         setRunStatus(obj.status, obj.task_id, obj.block);
       } else if (obj && obj.type === 'task_status') {
@@ -645,6 +1014,30 @@
   pipeReset.addEventListener('click', () => {
     resetPipeline();
     savePipeline();
+  });
+  pipeIndent.addEventListener('click', () => indentSelected());
+  pipeOutdent.addEventListener('click', () => outdentSelected());
+
+  pipelineScript.addEventListener('input', () => {
+    setPipeStatus('dirty');
+    try { window.localStorage.setItem(LS_PIPELINE_SCRIPT, String(pipelineScript.value || '')); } catch (_) {}
+    if (scriptValidateTimer) clearTimeout(scriptValidateTimer);
+    scriptValidateTimer = setTimeout(() => {
+      scriptValidateTimer = null;
+      validatePipelineScript(pipelineScript.value);
+    }, 500);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!e || e.key !== 'Tab') return;
+    const ae = document.activeElement;
+    const tag = ae && ae.tagName ? String(ae.tagName).toUpperCase() : '';
+    // Respect typing in inputs/textarea.
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (!selected) return;
+    e.preventDefault();
+    if (e.shiftKey) outdentSelected();
+    else indentSelected();
   });
 
   runStart.addEventListener('click', () => callRun('/api/run/start'));

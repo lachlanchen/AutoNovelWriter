@@ -200,6 +200,11 @@ code{ font-family: var(--mono); font-size: .92em; }
   cursor: pointer;
 }
 .mini:disabled{ opacity: .55; cursor: not-allowed; }
+.mini.danger{
+  border-color: rgba(240,106,58,.25);
+  background: rgba(240,106,58,.10);
+  color: rgba(140,45,20,.92);
+}
 
 .badge{
   padding: 4px 8px;

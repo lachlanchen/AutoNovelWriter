@@ -20,3 +20,6 @@ Verification (no TCP binds):
 ## Fixes
 - Made `meta_tasks_generate` run-session scoped: subsequent tasks reuse the first created batch (avoids creating one batch per task while `FOREACH_TASK` execution semantics are still flattened).
 - If `autonovelwriter/runtime/tasks/tasks.json` is still the seeded placeholder, the generated stub tasks are promoted into `tasks.json` so the runner can pick them up next.
+
+## I18N
+- No new user-facing UI strings were introduced in this task (PWA change was adding a new internal pipeline step type to the default list).

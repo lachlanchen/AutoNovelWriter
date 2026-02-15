@@ -15,3 +15,8 @@ Verification (no TCP binds):
 
 ## I18N
 - No PWA user-facing strings were added/changed in this task (runner-only behavior and backend logs).
+
+## Next
+1. Implement LOOP repeat semantics in the runner (deterministic counters + persisted resume pointers).
+2. Add a runner-visible “pipeline invalid” state (persisted) and surface it in the PWA instead of relying on logs.
+3. Extend the pipeline script grammar for the desired default layout (`ROUND`, `FOREACH_TASK`, editable prompts/params) and update script <-> blocks rendering accordingly.

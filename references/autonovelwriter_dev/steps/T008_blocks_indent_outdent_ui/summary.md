@@ -19,3 +19,8 @@ Verification (no TCP binds):
 - Made `Indent` always actionable by wrapping the selected node in a neutral `LOOP 1` when no preceding `LOOP` exists (preserves semantics while enabling indentation-driven nesting).
 - Prevented generation of invalid empty loops by pruning empty `LOOP` nodes after outdent/moves.
 - Added a local v2 script parser fallback so the blocks view can update from the canonical script even if `/api/pipeline/validate` is unreachable; backend validation is still used when available.
+
+## I18N
+- Scaffolded a minimal PWA i18n system in `autonovelwriter/pwa/app.js` with language detection via `?lang=` / localStorage (`anw_lang`) / browser locale.
+- Migrated the new `Indent`/`Outdent` UI strings and core UI labels/tooltips/placeholders to `data-i18n*` keys in `autonovelwriter/pwa/index.html`.
+- Added translations for required UI languages: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar` (RTL via `dir=rtl`), `fr`, `es`, `ru`, `de`.

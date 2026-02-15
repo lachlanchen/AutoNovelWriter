@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+	<html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f7f4ee" />
 
-    <title>AutoNovelWriter</title>
+	    <title data-i18n="app.title">AutoNovelWriter</title>
 
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
@@ -24,51 +24,51 @@
           </div>
         </div>
 
-        <div class="controls" aria-label="Run controls">
-          <div id="runPill" class="pill" title="Runner status">idle</div>
-          <button id="runStart" class="btn btn-primary" type="button">Start</button>
-          <button id="runPause" class="btn" type="button">Pause</button>
-          <button id="runResume" class="btn" type="button">Resume</button>
-          <button id="runStop" class="btn" type="button">Stop</button>
-          <button id="openSettings" class="btn" type="button">Settings</button>
-        </div>
+	        <div class="controls" aria-label="Run controls">
+	          <div id="runPill" class="pill" data-i18n-title="run.status_title" title="Runner status" data-i18n="run.idle">idle</div>
+	          <button id="runStart" class="btn btn-primary" type="button" data-i18n="run.start">Start</button>
+	          <button id="runPause" class="btn" type="button" data-i18n="run.pause">Pause</button>
+	          <button id="runResume" class="btn" type="button" data-i18n="run.resume">Resume</button>
+	          <button id="runStop" class="btn" type="button" data-i18n="run.stop">Stop</button>
+	          <button id="openSettings" class="btn" type="button" data-i18n="ui.settings">Settings</button>
+	        </div>
       </header>
 
       <main class="main">
         <section class="stage" aria-label="Pipeline">
-          <div class="panel-head">
-            <div class="panel-title">Pipeline</div>
-            <div id="pipeStatus" class="pill" title="Pipeline persistence status">loading</div>
-          </div>
+	          <div class="panel-head">
+	            <div class="panel-title" data-i18n="ui.pipeline">Pipeline</div>
+	            <div id="pipeStatus" class="pill" data-i18n-title="pipeline.status_title" title="Pipeline persistence status" data-i18n="pipeline.loading">loading</div>
+	          </div>
           <div class="stage-body">
             <div class="pipeline">
 	              <div class="pipe-top">
-	                <div class="pipe-title">Blocks</div>
-	                <div class="pipe-actions">
-	                  <button id="pipeIndent" class="btn" type="button" title="Indent selected block (Tab)">Indent</button>
-	                  <button id="pipeOutdent" class="btn" type="button" title="Outdent selected block (Shift+Tab)">Outdent</button>
-	                  <button id="pipeSave" class="btn btn-primary" type="button">Save</button>
-	                  <button id="pipeReset" class="btn" type="button">Reset</button>
-	                </div>
-	              </div>
+		                <div class="pipe-title" data-i18n="pipeline.blocks">Blocks</div>
+		                <div class="pipe-actions">
+		                  <button id="pipeIndent" class="btn" type="button" data-i18n-title="pipeline.indent_title" title="Indent selected block (Tab)" data-i18n="pipeline.indent">Indent</button>
+		                  <button id="pipeOutdent" class="btn" type="button" data-i18n-title="pipeline.outdent_title" title="Outdent selected block (Shift+Tab)" data-i18n="pipeline.outdent">Outdent</button>
+		                  <button id="pipeSave" class="btn btn-primary" type="button" data-i18n="ui.save">Save</button>
+		                  <button id="pipeReset" class="btn" type="button" data-i18n="ui.reset">Reset</button>
+		                </div>
+		              </div>
 
               <ol id="blocks" class="blocks" aria-label="Pipeline blocks"></ol>
 
               <div class="pipe-bottom">
-                <div class="pipe-sub">Pipeline script (canonical)</div>
-                <textarea id="pipelineScript" class="pipe-script" spellcheck="false" aria-label="Pipeline script"></textarea>
-                <div class="pipe-sub">Pipeline JSON (derived)</div>
-                <pre id="pipelineJson" class="pipe-json" aria-label="Pipeline JSON"></pre>
-              </div>
+	                <div class="pipe-sub" data-i18n="pipeline.script_canonical">Pipeline script (canonical)</div>
+	                <textarea id="pipelineScript" class="pipe-script" spellcheck="false" aria-label="Pipeline script"></textarea>
+	                <div class="pipe-sub" data-i18n="pipeline.json_derived">Pipeline JSON (derived)</div>
+	                <pre id="pipelineJson" class="pipe-json" aria-label="Pipeline JSON"></pre>
+	              </div>
             </div>
           </div>
         </section>
 
         <aside class="chat" aria-label="Chat">
-          <div class="panel-head">
-            <div class="panel-title">Chat</div>
-            <div id="conn" class="pill" title="WebSocket status">disconnected</div>
-          </div>
+	          <div class="panel-head">
+	            <div class="panel-title" data-i18n="ui.chat">Chat</div>
+	            <div id="conn" class="pill" data-i18n-title="ws.status_title" title="WebSocket status" data-i18n="ws.disconnected">disconnected</div>
+	          </div>
 
           <ol id="chatLog" class="chat-log" aria-label="Chat log"></ol>
 
@@ -77,37 +77,39 @@
               id="chatInput"
               class="chat-input"
               type="text"
-              placeholder="Type a message (echoed over WS for now)…"
-              aria-label="Chat input"
-            />
-            <button id="chatSend" class="btn btn-primary" type="submit">Send</button>
-          </form>
+	              data-i18n-placeholder="chat.placeholder"
+	              placeholder="Type a message (echoed over WS for now)…"
+	              aria-label="Chat input"
+	            />
+	            <button id="chatSend" class="btn btn-primary" type="submit" data-i18n="chat.send">Send</button>
+	          </form>
 
-          <div class="hint">
-            Backend: <code id="backendHint" class="linkish" title="Click to set WS URL">ws://127.0.0.1:8787/ws</code>
-          </div>
+	          <div class="hint">
+	            <span data-i18n="ui.backend">Backend:</span>
+	            <code id="backendHint" class="linkish" data-i18n-title="ws.set_url_title" title="Click to set WS URL">ws://127.0.0.1:8787/ws</code>
+	          </div>
         </aside>
       </main>
 
-      <footer class="footer">
-        <span class="muted">Offline shell enabled via Service Worker.</span>
-      </footer>
+	      <footer class="footer">
+	        <span class="muted" data-i18n="ui.offline_shell">Offline shell enabled via Service Worker.</span>
+	      </footer>
     </div>
 
     <script src="app.js" defer></script>
 
-    <div id="settingsModal" class="modal" aria-hidden="true">
-      <div class="modal-backdrop" data-close="1"></div>
-      <div class="modal-card" role="dialog" aria-modal="true" aria-label="Settings">
-        <div class="modal-head">
-          <div class="panel-title">Settings</div>
-          <button id="closeSettings" class="btn" type="button">Close</button>
-        </div>
+	    <div id="settingsModal" class="modal" aria-hidden="true">
+	      <div class="modal-backdrop" data-close="1"></div>
+	      <div class="modal-card" role="dialog" aria-modal="true" aria-label="Settings">
+	        <div class="modal-head">
+	          <div class="panel-title" data-i18n="ui.settings">Settings</div>
+	          <button id="closeSettings" class="btn" type="button" data-i18n="ui.close">Close</button>
+	        </div>
 
         <form id="settingsForm" class="modal-body">
-          <div class="field">
-            <label class="label" for="agentSdk">Agent SDK</label>
-            <select id="agentSdk" class="input">
+	          <div class="field">
+	            <label class="label" for="agentSdk" data-i18n="settings.agent_sdk">Agent SDK</label>
+	            <select id="agentSdk" class="input">
               <option value="codex">codex</option>
               <option value="copilot">copilot</option>
               <option value="gemini">gemini</option>
@@ -115,34 +117,38 @@
             </select>
           </div>
 
-          <div class="field">
-            <label class="label" for="agentModel">Model</label>
-            <input id="agentModel" class="input" type="text" placeholder="(optional)" />
-          </div>
+	          <div class="field">
+	            <label class="label" for="agentModel" data-i18n="settings.model">Model</label>
+	            <input id="agentModel" class="input" type="text" placeholder="(optional)" />
+	          </div>
 
-          <div class="field">
-            <label class="label" for="agentVisionModel">Vision model</label>
-            <input id="agentVisionModel" class="input" type="text" placeholder="(optional)" />
-          </div>
+	          <div class="field">
+	            <label class="label" for="agentVisionModel" data-i18n="settings.vision_model">Vision model</label>
+	            <input id="agentVisionModel" class="input" type="text" placeholder="(optional)" />
+	          </div>
 
-          <div class="field">
-            <label class="label" for="codexCliPath">Codex CLI path</label>
-            <input id="codexCliPath" class="input" type="text" placeholder="codex" />
-          </div>
+	          <div class="field">
+	            <label class="label" for="codexCliPath" data-i18n="settings.codex_cli_path">Codex CLI path</label>
+	            <input id="codexCliPath" class="input" type="text" placeholder="codex" />
+	          </div>
 
-          <label class="check">
-            <input id="agentEnabled" type="checkbox" />
-            <span>Enable agent runner (backend still requires env gate for Codex)</span>
-          </label>
+	          <label class="check">
+	            <input id="agentEnabled" type="checkbox" />
+	            <span data-i18n="settings.enable_agent_runner">Enable agent runner (backend still requires env gate for Codex)</span>
+	          </label>
 
-          <div class="modal-actions">
-            <button id="saveSettings" class="btn btn-primary" type="submit">Save</button>
-            <button id="testCodex" class="btn" type="button" title="Runs a gated `codex --version` on backend">Test Codex</button>
-          </div>
+	          <div class="modal-actions">
+	            <button id="saveSettings" class="btn btn-primary" type="submit" data-i18n="ui.save">Save</button>
+	            <button id="testCodex" class="btn" type="button" data-i18n-title="settings.test_codex_title" title="Runs a gated `codex --version` on backend" data-i18n="settings.test_codex">Test Codex</button>
+	          </div>
 
-          <div class="hint">
-            Codex subprocess is disabled by default. To enable: set <code>AUTONOVELWRITER_ENABLE_CODEX=1</code> in your environment and set Agent SDK to <code>codex</code> with “Enable agent runner”.
-          </div>
+	          <div class="hint">
+	            <span data-i18n="settings.codex_gate_hint">Codex subprocess is disabled by default. To enable: set</span>
+	            <code>AUTONOVELWRITER_ENABLE_CODEX=1</code>
+	            <span data-i18n="settings.codex_gate_hint_2">in your environment and set Agent SDK to</span>
+	            <code>codex</code>
+	            <span data-i18n="settings.codex_gate_hint_3">with “Enable agent runner”.</span>
+	          </div>
         </form>
       </div>
     </div>

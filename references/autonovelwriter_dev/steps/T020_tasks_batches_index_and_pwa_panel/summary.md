@@ -17,3 +17,7 @@ Verification (no TCP binds):
 ## Fixes
 - Added optional `?project=<project_id>` filtering to `/api/tasks/batches/index` (filters by `project_id` from batch manifests when present) and updated the PWA to request batches scoped to the active project.
 - Added a file-size guard when falling back to counting `tasks.jsonl` lines for `task_count` (skips counting very large files).
+
+## I18N
+- Added i18n keys for the new PWA Task Batches panel across 11 UI languages:
+  - `tasks_batches.title`, `tasks_batches.empty`, `tasks_batches.created`

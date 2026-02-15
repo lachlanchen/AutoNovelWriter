@@ -22,3 +22,9 @@ Verification (no TCP binds):
 
 ## I18N
 - No new/changed PWA user-facing strings in this task (backend-only runner semantics/WS payload changes), so no translation updates were required.
+
+## Next
+1. Decide and implement the `FOREACH_TASK` policy for tasks with status `done` (skip vs rerun-per-round), and align `task_status.json` semantics accordingly.
+2. Emit a structured WS event when the pipeline script hash changes and the resume cursor is invalidated (so the PWA can surface a clear “restart required” message).
+3. Update the PWA to display the new `task_status` context fields (`round_index`, `phase`, `block`) and show the current `run_status.ast_path` in the pipeline UI for better observability.
+4. Add a minimal unit test (no socket bind) that simulates a crash between “start” and “done” and verifies the pending-step resume behavior.

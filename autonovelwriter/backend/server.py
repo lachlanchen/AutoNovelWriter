@@ -39,6 +39,7 @@ def resolve_paths() -> dict:
         "logs": runtime_root / "logs",
         "state": runtime_root / "state",
         "settings_json": runtime_root / "state" / "settings.json",
+        "pipeline_json": runtime_root / "state" / "pipeline.json",
     }
     return paths
 
@@ -94,6 +95,48 @@ def save_settings(paths: dict, settings: dict) -> None:
     p.write_text(json.dumps(settings, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def default_pipeline() -> dict:
+    # Maps to the block types listed in docs/autonovelwriter_spec.md.
+    types = [
+        "plan",
+        "write",
+        "critique_story",
+        "fix_story",
+        "critique_tone",
+        "fix_tone",
+        "critique_dialogue",
+        "fix_dialogue",
+        "critique_character",
+        "fix_character",
+        "summary",
+        "log",
+        "commit_push",
+    ]
+    return {"blocks": [{"id": t, "type": t, "enabled": True} for t in types]}
+
+
+def load_pipeline(paths: dict) -> dict:
+    p = Path(paths["pipeline_json"])
+    if not p.exists():
+        return default_pipeline()
+    try:
+        obj = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return default_pipeline()
+    if not isinstance(obj, dict):
+        return default_pipeline()
+    blocks = obj.get("blocks")
+    if not isinstance(blocks, list):
+        return default_pipeline()
+    return {"blocks": blocks}
+
+
+def save_pipeline(paths: dict, pipeline: dict) -> None:
+    p = Path(paths["pipeline_json"])
+    _safe_mkdir(p.parent)
+    p.write_text(json.dumps(pipeline, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 class BaseHandler(tornado.web.RequestHandler):
     def set_default_headers(self) -> None:
         # Dev-friendly CORS so the PWA can be served on another port.
@@ -146,6 +189,46 @@ class SettingsHandler(BaseHandler):
 
         save_settings(self._paths, self._settings)
         self.write_json({"ok": True, "settings": self._settings})
+
+
+class PipelineHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    def get(self):
+        pipeline = load_pipeline(self._paths)
+        self.write_json({"ok": True, "pipeline": pipeline})
+
+    def post(self):
+        try:
+            body = tornado.escape.json_decode(self.request.body or b"{}")
+        except Exception:
+            return self.write_json({"ok": False, "error": "invalid_json"}, status=400)
+
+        if not isinstance(body, dict):
+            return self.write_json({"ok": False, "error": "expected_object"}, status=400)
+
+        blocks = body.get("blocks")
+        if not isinstance(blocks, list):
+            return self.write_json({"ok": False, "error": "expected_blocks_list"}, status=400)
+
+        cleaned = []
+        for i, b in enumerate(blocks):
+            if not isinstance(b, dict):
+                return self.write_json({"ok": False, "error": f"block_{i}_not_object"}, status=400)
+            t = b.get("type")
+            if not isinstance(t, str) or not t:
+                return self.write_json({"ok": False, "error": f"block_{i}_missing_type"}, status=400)
+            bid = b.get("id")
+            if not isinstance(bid, str) or not bid:
+                bid = t
+            enabled = b.get("enabled", True)
+            enabled = bool(enabled)
+            cleaned.append({"id": bid, "type": t, "enabled": enabled})
+
+        pipeline = {"blocks": cleaned}
+        save_pipeline(self._paths, pipeline)
+        self.write_json({"ok": True, "pipeline": pipeline})
 
 
 class EventsWebSocket(tornado.websocket.WebSocketHandler):
@@ -210,6 +293,7 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
     handlers = [
         (r"/api/health", HealthHandler),
         (r"/api/settings", SettingsHandler, {"paths": paths, "settings": settings}),
+        (r"/api/pipeline", PipelineHandler, {"paths": paths}),
         (r"/ws", EventsWebSocket, {"hub": hub}),
     ]
 

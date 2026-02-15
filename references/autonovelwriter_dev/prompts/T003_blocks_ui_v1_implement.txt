@@ -1,0 +1,38 @@
+You are being invoked by scripts/auto-autonovelwriter-development.sh (ONE shared Codex session).
+
+Overall goal (repeat for every step):
+- Build AutoNovelWriter: Scratch-like PWA controller + Python Tornado backend.
+- Light theme by default.
+- Must support chat + folder-based inbox/outbox interruption during a running pipeline.
+
+Read these first:
+- references/autonovelwriter_dev/CONTEXT.md
+- docs/autonovelwriter_spec.md
+- Existing code under: autonovelwriter/backend/ and autonovelwriter/pwa/
+- Task definition JSON (notes + acceptance): references/autonovelwriter_dev/steps/T003_blocks_ui_v1/task.json
+
+This step:
+- Task ID: T003_blocks_ui_v1
+- Task title: Scratch-like pipeline blocks v1 (drag/drop, task list)
+- Stage: implement (strict)
+
+Required workspace/output paths:
+- Step working dir: references/autonovelwriter_dev/steps/T003_blocks_ui_v1/
+- Write your outputs (notes/plan/critique/summary) into files under references/autonovelwriter_dev/steps/T003_blocks_ui_v1/:
+  - plan: references/autonovelwriter_dev/steps/T003_blocks_ui_v1/plan.md
+  - critique: references/autonovelwriter_dev/steps/T003_blocks_ui_v1/critique.md
+  - summary: references/autonovelwriter_dev/steps/T003_blocks_ui_v1/summary.md
+
+Operational constraints:
+- Do NOT commit or push. Do NOT create new remotes. The outer driver handles git.
+- Prefer small, safe changes. Keep the app runnable.
+- No secrets in git. If you add config, create .env.example and read env vars.
+
+Stage-specific instructions:
+- Implement the task. Keep scope tight and verifiable.
+- Ensure runtime defaults exist under: autonovelwriter/runtime/ (create dirs/files as needed).
+- After implementing, run minimal verification commands:
+  - Do NOT bind TCP ports or start servers inside this Codex step (sandbox may deny with PermissionError).
+  - Prefer syntax/import/build checks (e.g., py_compile/compileall, eslint/typecheck, unit tests).
+  - The outer driver will run real socket-binding smoke tests on the host.
+- Write a brief implementation note into: references/autonovelwriter_dev/steps/T003_blocks_ui_v1/summary.md (append section \"## Implement\").

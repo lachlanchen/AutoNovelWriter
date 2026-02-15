@@ -121,14 +121,71 @@ code{ font-family: var(--mono); font-size: .92em; }
 
 .stage-body{ padding: 16px; }
 
-.placeholder{
-  border-radius: var(--radius-sm);
-  border: 1px dashed rgba(0,0,0,.18);
-  padding: 18px;
-  background: rgba(255,255,255,.55);
+.pipeline{ display: grid; grid-template-rows: auto 1fr auto; gap: 12px; min-height: 0; }
+.pipe-top{ display:flex; align-items:center; justify-content: space-between; gap: 10px; }
+.pipe-title{ font-weight: 850; }
+.pipe-actions{ display:flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+.blocks{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
 }
-.placeholder-title{ font-weight: 850; margin-bottom: 6px; }
-.placeholder-text{ color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+.block{
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  border-radius: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.62);
+  user-select: none;
+}
+
+.block[draggable="true"]{ cursor: grab; }
+.block.dragging{ opacity: .55; }
+.block.disabled{
+  opacity: .55;
+  filter: saturate(.6);
+}
+
+.handle{
+  width: 34px;
+  height: 30px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.65);
+  font-family: var(--mono);
+  font-weight: 900;
+  color: rgba(0,0,0,.55);
+}
+
+.btitle{ font-weight: 850; }
+.btype{ color: var(--muted); font-size: 12px; margin-top: 2px; }
+.btoggle{ display:flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); }
+.btoggle input{ width: 18px; height: 18px; }
+
+.pipe-bottom{ display: grid; gap: 6px; }
+.pipe-sub{ color: var(--muted); font-size: 12px; }
+.pipe-json{
+  margin: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.55);
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  overflow: auto;
+  max-height: 160px;
+}
 
 .pill{
   padding: 7px 10px;

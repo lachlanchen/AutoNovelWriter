@@ -36,13 +36,24 @@
         <section class="stage" aria-label="Pipeline">
           <div class="panel-head">
             <div class="panel-title">Pipeline</div>
-            <div class="panel-meta">(T003 will add blocks)</div>
+            <div id="pipeStatus" class="pill" title="Pipeline persistence status">loading</div>
           </div>
           <div class="stage-body">
-            <div class="placeholder">
-              <div class="placeholder-title">Blocks go here</div>
-              <div class="placeholder-text">Drag-and-drop pipeline blocks will be implemented in the next steps.</div>
-              <div class="placeholder-text">This shell focuses on light-theme UI + WebSocket chat/events.</div>
+            <div class="pipeline">
+              <div class="pipe-top">
+                <div class="pipe-title">Blocks</div>
+                <div class="pipe-actions">
+                  <button id="pipeSave" class="btn btn-primary" type="button">Save</button>
+                  <button id="pipeReset" class="btn" type="button">Reset</button>
+                </div>
+              </div>
+
+              <ol id="blocks" class="blocks" aria-label="Pipeline blocks"></ol>
+
+              <div class="pipe-bottom">
+                <div class="pipe-sub">Current pipeline JSON</div>
+                <pre id="pipelineJson" class="pipe-json" aria-label="Pipeline JSON"></pre>
+              </div>
             </div>
           </div>
         </section>

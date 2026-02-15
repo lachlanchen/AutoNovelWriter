@@ -21,3 +21,6 @@ Verification (no TCP binds):
 1. Add output file viewing/download (read-only) with safe path validation, or a “copy path” affordance in the PWA.
 2. Improve outputs list UX: show mtime, sort toggle, and optionally include directories.
 3. Integrate runner status with outputs (link `task_id` + block -> created output).
+
+## README
+- Noted in `README.md` that the PWA includes a minimal Outputs panel which lists files via `GET /api/outputs/index` and refreshes on `output_created`.

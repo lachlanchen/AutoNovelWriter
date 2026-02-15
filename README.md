@@ -88,6 +88,8 @@ The backend also emits:
 - WS event `output_created` with `path` and `project_rel_path`
 - a `log` line `[output] created: ...`
 
+The PWA includes a minimal Outputs panel which lists files via `GET /api/outputs/index` and refreshes on `output_created`.
+
 ## Agent Settings / Codex Gate
 
 The PWA Settings panel persists agent settings via `/api/settings` under `autonovelwriter/runtime/state/settings.json`.

@@ -1172,6 +1172,8 @@ class Runner:
         self._block = None
         self._loop_active = False
         self._codex_stub_ran = False
+        # Run-session scoped: reuse the same generated batch for subsequent tasks.
+        self._meta_tasks_batch = None
 
         # Safe restart behavior: if previous run was 'running', come up paused.
         state = _load_json(Path(paths["runner_state_json"]), {})
@@ -1293,6 +1295,41 @@ class Runner:
         return {"ok": True, "path": str(out_path), "project_rel_path": rel_path}
 
     def _write_tasks_batch_stub(self, task_id: str, block_type: str, st: dict) -> dict:
+        # Run-session idempotency: if we already created a batch in this runner session, reuse it.
+        if isinstance(self._meta_tasks_batch, dict):
+            out_paths = self._meta_tasks_batch.get("output_paths")
+            if (
+                isinstance(out_paths, list)
+                and out_paths
+                and all(isinstance(p, str) and p and Path(p).exists() for p in out_paths)
+            ):
+                st.setdefault(task_id, {})
+                cur = st[task_id]
+                if not isinstance(cur, dict):
+                    st[task_id] = {}
+                    cur = st[task_id]
+                cur.setdefault("blocks", {})
+                if not isinstance(cur.get("blocks"), dict):
+                    cur["blocks"] = {}
+                cur["blocks"][block_type] = {
+                    "status": "done",
+                    "ts_ms": _now_ms(),
+                    "output_paths": list(out_paths),
+                    "batch_id": self._meta_tasks_batch.get("batch_id"),
+                    "batch_dir": self._meta_tasks_batch.get("batch_dir"),
+                    "task_count": self._meta_tasks_batch.get("task_count"),
+                    "skipped": True,
+                }
+                self._log(f"[tasks] reused batch: {self._meta_tasks_batch.get('batch_dir')} for task={task_id}")
+                return {
+                    "ok": True,
+                    "skipped": True,
+                    "batch_dir": self._meta_tasks_batch.get("batch_dir"),
+                    "tasks_jsonl": self._meta_tasks_batch.get("tasks_jsonl"),
+                    "task_count": self._meta_tasks_batch.get("task_count"),
+                    "output_paths": list(out_paths),
+                }
+
         # Idempotency: if already done and outputs exist, skip.
         blocks = st.get(task_id, {}).get("blocks", {})
         if isinstance(blocks, dict):
@@ -1434,6 +1471,13 @@ class Runner:
             "task_count": len(stub),
         }
 
+        # If tasks.json is still the seeded placeholder, promote generated tasks so the runner can pick them up.
+        cur_tasks = _load_json(Path(self._paths["tasks_json"]), [])
+        if self._is_seed_tasks(cur_tasks):
+            promoted = [{"id": t.get("id"), "title": t.get("title"), "payload": {"kind": t.get("kind")}} for t in stub]
+            _save_json(Path(self._paths["tasks_json"]), promoted)
+            self._log(f"[tasks] promoted batch into tasks.json (count={len(promoted)})")
+
         evt = {
             "type": "tasks_batch_created",
             "ts_ms": _now_ms(),
@@ -1447,6 +1491,13 @@ class Runner:
         }
         self._hub.broadcast(evt)
         self._log(f"[tasks] created batch: {batch_dir} count={len(stub)}")
+        self._meta_tasks_batch = {
+            "batch_id": batch_id,
+            "batch_dir": str(batch_dir),
+            "tasks_jsonl": str(tasks_jsonl),
+            "task_count": len(stub),
+            "output_paths": [str(tasks_jsonl), str(manifest_json)],
+        }
         return {"ok": True, "batch_dir": str(batch_dir), "tasks_jsonl": str(tasks_jsonl), "task_count": len(stub)}
 
     def _save_state(self) -> None:
@@ -1494,6 +1545,15 @@ class Runner:
             ]
             _save_json(p, tasks)
         return tasks
+
+    @staticmethod
+    def _is_seed_tasks(tasks: list) -> bool:
+        if not isinstance(tasks, list) or len(tasks) != 1:
+            return False
+        t = tasks[0]
+        if not isinstance(t, dict):
+            return False
+        return t.get("id") == "task_001" and t.get("title") == "Seed task"
 
     def _load_task_status(self) -> dict:
         p = Path(self._paths["task_status_json"])

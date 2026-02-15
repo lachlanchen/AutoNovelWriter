@@ -16,3 +16,7 @@ Verification (no TCP binds):
 - `python3 -m py_compile autonovelwriter/backend/server.py`
 - `node --check autonovelwriter/pwa/app.js`
 - `python3 - <<'PY'\nfrom autonovelwriter.backend import server as s\npaths=s.resolve_paths(); s.ensure_runtime_dirs(paths)\nhub=s.WebSocketHub(); r=s.Runner(paths, hub)\nst={}\nres=r._write_tasks_batch_stub('task_test','meta_tasks_generate',st)\nassert res.get('ok')\nprint(res['batch_dir'], res['task_count'])\nPY`
+
+## Fixes
+- Made `meta_tasks_generate` run-session scoped: subsequent tasks reuse the first created batch (avoids creating one batch per task while `FOREACH_TASK` execution semantics are still flattened).
+- If `autonovelwriter/runtime/tasks/tasks.json` is still the seeded placeholder, the generated stub tasks are promoted into `tasks.json` so the runner can pick them up next.

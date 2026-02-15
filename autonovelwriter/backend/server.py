@@ -123,8 +123,12 @@ def run_codex_stub(paths: dict, args: list[str], timeout_s: float = 3.0) -> dict
     agent = get_agent_settings(paths)
     enabled = bool(agent.get("enabled", False))
     sdk = agent.get("sdk", "")
-    if sdk != "codex" or not enabled or not is_codex_gate_enabled():
-        return {"ok": False, "disabled": True, "reason": "codex_disabled_or_not_selected"}
+    if sdk != "codex":
+        return {"ok": False, "disabled": True, "reason": "agent_sdk_not_codex"}
+    if not enabled:
+        return {"ok": False, "disabled": True, "reason": "agent_disabled"}
+    if not is_codex_gate_enabled():
+        return {"ok": False, "disabled": True, "reason": "env_gate_disabled"}
 
     cli = (agent.get("codex_cli_path") or "").strip() or "codex"
     try:
@@ -312,6 +316,11 @@ class SettingsHandler(BaseHandler):
         self._settings = settings
 
     def get(self):
+        # Prefer disk as source of truth so UI always sees persisted values.
+        server = self._settings.get("server") if isinstance(self._settings, dict) else {}
+        host = server.get("host", os.environ.get("AUTONOVELWRITER_HOST", "127.0.0.1")) if isinstance(server, dict) else "127.0.0.1"
+        port = server.get("port", int(os.environ.get("AUTONOVELWRITER_PORT", "8787"))) if isinstance(server, dict) else int(os.environ.get("AUTONOVELWRITER_PORT", "8787"))
+        self._settings = load_settings(self._paths, host=host, port=int(port))
         self.write_json({"ok": True, "settings": self._settings})
 
     def post(self):
@@ -326,7 +335,12 @@ class SettingsHandler(BaseHandler):
         # Minimal: allow replacing top-level keys; deeper validation comes later.
         for k in ("paths", "agent"):
             if k in body and isinstance(body[k], dict):
-                self._settings[k] = body[k]
+                # Shallow merge into existing dict to avoid losing unknown keys.
+                cur = self._settings.get(k)
+                if not isinstance(cur, dict):
+                    cur = {}
+                cur.update(body[k])
+                self._settings[k] = cur
 
         save_settings(self._paths, self._settings)
         self.write_json({"ok": True, "settings": self._settings})
@@ -773,7 +787,10 @@ class Runner:
             # Only log the disabled note if the user actually asked for codex in settings.
             agent = get_agent_settings(self._paths)
             if agent.get("sdk") == "codex" and bool(agent.get("enabled", False)):
-                self._log("[codex] disabled (set AUTONOVELWRITER_ENABLE_CODEX=1 to allow subprocess)")
+                if res.get("reason") == "env_gate_disabled":
+                    self._log("[codex] disabled (set AUTONOVELWRITER_ENABLE_CODEX=1 to allow subprocess)")
+                else:
+                    self._log(f"[codex] disabled ({res.get('reason')})")
             return
         if not res.get("ok"):
             self._log(f"[codex] stub failed: {json.dumps(res)}")

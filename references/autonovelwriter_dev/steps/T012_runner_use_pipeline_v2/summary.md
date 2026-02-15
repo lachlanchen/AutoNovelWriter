@@ -12,3 +12,6 @@ Verification (no TCP binds):
 
 ## Fixes
 - Runner now stops the run on fatal v2 pipeline parse errors (logs errors and transitions to `idle`) instead of executing the default pipeline.
+
+## I18N
+- No PWA user-facing strings were added/changed in this task (runner-only behavior and backend logs).

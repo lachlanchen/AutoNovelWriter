@@ -52,9 +52,23 @@
 		                </div>
 		              </div>
 
-              <ol id="blocks" class="blocks" aria-label="Pipeline blocks"></ol>
+	              <ol id="blocks" class="blocks" aria-label="Pipeline blocks"></ol>
 
-              <div class="pipe-bottom">
+	              <div class="materials">
+	                <div class="materials-head">
+	                  <div class="pipe-sub">
+	                    <span data-i18n="projects.title">Project</span>
+	                    <span id="activeProject" class="badge">default</span>
+	                  </div>
+	                  <div class="materials-controls">
+	                    <label class="pipe-sub" for="projectSelect" data-i18n="projects.select">Select</label>
+	                    <select id="projectSelect" class="input input-compact" aria-label="Project selector"></select>
+	                  </div>
+	                </div>
+	                <ol id="materialsList" class="materials-list" aria-label="Materials list"></ol>
+	              </div>
+
+	              <div class="pipe-bottom">
 	                <div class="pipe-sub" data-i18n="pipeline.script_canonical">Pipeline script (canonical)</div>
 	                <textarea id="pipelineScript" class="pipe-script" spellcheck="false" aria-label="Pipeline script"></textarea>
 	                <div class="pipe-sub" data-i18n="pipeline.json_derived">Pipeline JSON (derived)</div>

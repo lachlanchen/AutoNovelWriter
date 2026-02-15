@@ -237,6 +237,44 @@ code{ font-family: var(--mono); font-size: .92em; }
   resize: vertical;
 }
 
+.materials{
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.40);
+  padding: 10px 12px;
+  display: grid;
+  gap: 8px;
+}
+.materials-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.materials-controls{ display:flex; gap: 10px; align-items:center; }
+.materials-list{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 160px;
+  overflow: auto;
+}
+.mat{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.55);
+}
+.mat .path{ font-family: var(--mono); font-size: 12px; }
+.mat .meta{ color: var(--muted); font-size: 12px; text-align: right; }
+
 .pill{
   padding: 7px 10px;
   border-radius: 999px;
@@ -337,6 +375,7 @@ code{ font-family: var(--mono); font-size: .92em; }
   background: rgba(255,255,255,.85);
   font-family: var(--font);
 }
+.input-compact{ padding: 8px 10px; border-radius: 999px; font-size: 13px; }
 .check{ display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }
 .check input{ width: 18px; height: 18px; }
 .modal-actions{ display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }

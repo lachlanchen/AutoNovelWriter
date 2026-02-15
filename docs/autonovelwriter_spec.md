@@ -31,6 +31,12 @@ AutoNovelWriter must define and document a consistent layout and naming scheme f
 
 The design must be configurable via settings, but have clear defaults and stable paths.
 
+Recommended default (gitignored) runtime layout:
+- `autonovelwriter/runtime/projects/<project_id>/materials/` (inputs)
+- `autonovelwriter/runtime/projects/<project_id>/outputs/` (drafts/exports)
+- `autonovelwriter/runtime/projects/<project_id>/interactions/` (project-local interaction artifacts)
+- `autonovelwriter/runtime/projects/<project_id>/state/` (derived caches + resume pointers)
+
 ## 1) UI (Scratch-like)
 - Light theme by default (no dark-first UI).
 - Drag & drop “blocks” that form a pipeline (pipeline templates are built-in and editable).
@@ -48,6 +54,7 @@ The design must be configurable via settings, but have clear defaults and stable
   - `autonovelwriter/runtime/logs/`
   - `autonovelwriter/runtime/state/`
   - `autonovelwriter/runtime/tasks/`
+  - `autonovelwriter/runtime/projects/` (per-project materials/outputs/state)
 - Backend monitors inbox changes (polling is OK initially); UI shows chat in real-time (WebSocket).
 
 ## 3) Start/Stop/Pause + Settings

@@ -34,6 +34,9 @@
       'pipeline.status_title': 'Pipeline persistence status',
       'pipeline.loading': 'loading',
       'pipeline.blocks': 'Blocks',
+      'projects.title': 'Project',
+      'projects.select': 'Select',
+      'materials.empty': '(no materials yet)',
       'pipeline.indent': 'Indent',
       'pipeline.outdent': 'Outdent',
       'pipeline.indent_title': 'Indent selected block (Tab)',
@@ -76,6 +79,9 @@
       'pipeline.status_title': '流水线持久化状态',
       'pipeline.loading': '加载中',
       'pipeline.blocks': '积木块',
+      'projects.title': '项目',
+      'projects.select': '选择',
+      'materials.empty': '（暂无材料）',
       'pipeline.indent': '缩进',
       'pipeline.outdent': '取消缩进',
       'pipeline.indent_title': '缩进选中块 (Tab)',
@@ -118,6 +124,9 @@
       'pipeline.status_title': '流程保存狀態',
       'pipeline.loading': '載入中',
       'pipeline.blocks': '積木',
+      'projects.title': '專案',
+      'projects.select': '選擇',
+      'materials.empty': '（尚無素材）',
       'pipeline.indent': '縮排',
       'pipeline.outdent': '取消縮排',
       'pipeline.indent_title': '縮排所選區塊 (Tab)',
@@ -160,6 +169,9 @@
       'pipeline.status_title': 'パイプライン保存状態',
       'pipeline.loading': '読み込み中',
       'pipeline.blocks': 'ブロック',
+      'projects.title': 'プロジェクト',
+      'projects.select': '選択',
+      'materials.empty': '（素材なし）',
       'pipeline.indent': 'インデント',
       'pipeline.outdent': 'アウトデント',
       'pipeline.indent_title': '選択ブロックをインデント (Tab)',
@@ -202,6 +214,9 @@
       'pipeline.status_title': '파이프라인 저장 상태',
       'pipeline.loading': '로딩 중',
       'pipeline.blocks': '블록',
+      'projects.title': '프로젝트',
+      'projects.select': '선택',
+      'materials.empty': '(자료 없음)',
       'pipeline.indent': '들여쓰기',
       'pipeline.outdent': '내어쓰기',
       'pipeline.indent_title': '선택 블록 들여쓰기 (Tab)',
@@ -244,6 +259,9 @@
       'pipeline.status_title': 'Trang thai luu pipeline',
       'pipeline.loading': 'dang tai',
       'pipeline.blocks': 'Khoi',
+      'projects.title': 'Du an',
+      'projects.select': 'Chon',
+      'materials.empty': '(chua co tai lieu)',
       'pipeline.indent': 'Thut vao',
       'pipeline.outdent': 'Thut ra',
       'pipeline.indent_title': 'Thut vao khoi da chon (Tab)',
@@ -286,6 +304,9 @@
       'pipeline.status_title': 'حالة حفظ خط الأنابيب',
       'pipeline.loading': 'جارٍ التحميل',
       'pipeline.blocks': 'الكتل',
+      'projects.title': 'المشروع',
+      'projects.select': 'اختيار',
+      'materials.empty': '(لا توجد مواد بعد)',
       'pipeline.indent': 'إزاحة للداخل',
       'pipeline.outdent': 'إزاحة للخارج',
       'pipeline.indent_title': 'إزاحة الكتلة المحددة (Tab)',
@@ -328,6 +349,9 @@
       'pipeline.status_title': 'Statut de persistance du pipeline',
       'pipeline.loading': 'chargement',
       'pipeline.blocks': 'Blocs',
+      'projects.title': 'Projet',
+      'projects.select': 'Choisir',
+      'materials.empty': '(aucun document)',
       'pipeline.indent': 'Indenter',
       'pipeline.outdent': 'Désindenter',
       'pipeline.indent_title': 'Indenter le bloc sélectionné (Tab)',
@@ -370,6 +394,9 @@
       'pipeline.status_title': 'Estado de persistencia del pipeline',
       'pipeline.loading': 'cargando',
       'pipeline.blocks': 'Bloques',
+      'projects.title': 'Proyecto',
+      'projects.select': 'Elegir',
+      'materials.empty': '(sin materiales)',
       'pipeline.indent': 'Indentar',
       'pipeline.outdent': 'Desindentar',
       'pipeline.indent_title': 'Indentar bloque seleccionado (Tab)',
@@ -412,6 +439,9 @@
       'pipeline.status_title': 'Статус сохранения пайплайна',
       'pipeline.loading': 'загрузка',
       'pipeline.blocks': 'Блоки',
+      'projects.title': 'Проект',
+      'projects.select': 'Выбрать',
+      'materials.empty': '(нет материалов)',
       'pipeline.indent': 'Вложить',
       'pipeline.outdent': 'Развернуть',
       'pipeline.indent_title': 'Вложить выбранный блок (Tab)',
@@ -454,6 +484,9 @@
       'pipeline.status_title': 'Pipeline-Speicherstatus',
       'pipeline.loading': 'lädt',
       'pipeline.blocks': 'Blöcke',
+      'projects.title': 'Projekt',
+      'projects.select': 'Auswählen',
+      'materials.empty': '(keine Materialien)',
       'pipeline.indent': 'Einrücken',
       'pipeline.outdent': 'Ausrücken',
       'pipeline.indent_title': 'Ausgewählten Block einrücken (Tab)',
@@ -562,6 +595,10 @@
   const pipelineJson = $('pipelineJson');
   const pipelineScript = $('pipelineScript');
 
+  const activeProject = $('activeProject');
+  const projectSelect = $('projectSelect');
+  const materialsList = $('materialsList');
+
   const runPill = $('runPill');
   const runStart = $('runStart');
   const runPause = $('runPause');
@@ -625,6 +662,19 @@
     addMsg(source === 'inbox' ? 'hello' : 'hello', title, text);
   }
 
+  function fmtBytes(n) {
+    const b = Number(n || 0);
+    if (!Number.isFinite(b) || b <= 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let v = b;
+    let i = 0;
+    while (v >= 1024 && i < units.length - 1) {
+      v /= 1024;
+      i += 1;
+    }
+    return `${v.toFixed(v >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
+  }
+
   function setConn(state) {
     // Keep exact WS state string for debugging; translate only the default idle/disconnected text.
     conn.textContent = state;
@@ -649,6 +699,92 @@
     if (state === 'idle') runPill.classList.add('ok');
     const extra = [taskId ? `task=${taskId}` : null, block ? `block=${block}` : null].filter(Boolean).join(' ');
     runPill.title = extra || t('run.status_title');
+  }
+
+  function renderMaterialsIndex(obj) {
+    if (!materialsList) return;
+    const active = obj && typeof obj.active_project === 'string' ? obj.active_project : '';
+    const proj = obj && typeof obj.project === 'string' ? obj.project : active;
+    if (activeProject) activeProject.textContent = proj || active || 'default';
+
+    materialsList.innerHTML = '';
+    const files = obj && Array.isArray(obj.files) ? obj.files : [];
+    const shown = files.filter((f) => f && f.kind === 'file');
+    if (!shown.length) {
+      const li = document.createElement('li');
+      li.className = 'mat';
+      const p = document.createElement('div');
+      p.className = 'path';
+      p.textContent = t('materials.empty');
+      const m = document.createElement('div');
+      m.className = 'meta';
+      m.textContent = '';
+      li.appendChild(p);
+      li.appendChild(m);
+      materialsList.appendChild(li);
+      return;
+    }
+
+    for (const f of shown.slice(0, 2000)) {
+      const li = document.createElement('li');
+      li.className = 'mat';
+      const p = document.createElement('div');
+      p.className = 'path';
+      p.textContent = String(f.path || '');
+      const m = document.createElement('div');
+      m.className = 'meta';
+      m.textContent = fmtBytes(f.size_bytes || 0);
+      li.appendChild(p);
+      li.appendChild(m);
+      materialsList.appendChild(li);
+    }
+  }
+
+  async function loadProjects() {
+    const url = backendApiUrl('/api/projects');
+    if (!url) return null;
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const obj = await res.json();
+      if (!obj || !obj.ok) return null;
+      return obj;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function setActiveProject(pid) {
+    const url = backendApiUrl('/api/projects/active');
+    if (!url) return false;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: String(pid || '') })
+      });
+      const obj = await res.json();
+      return !!(obj && obj.ok);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  async function loadMaterialsIndex(opts) {
+    const url = backendApiUrl('/api/materials/index');
+    if (!url) return null;
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const obj = await res.json();
+      if (!obj || !obj.ok) return null;
+      renderMaterialsIndex(obj);
+      if (projectSelect && !opts?.skipSelectSync) {
+        const pid = String(obj.project || obj.active_project || '');
+        if (pid) projectSelect.value = pid;
+      }
+      return obj;
+    } catch (_) {
+      return null;
+    }
   }
 
   function parseBackendWsUrl() {
@@ -1645,6 +1781,9 @@
         // Refresh nested UI from the canonical script (best-effort).
         validatePipelineScript(obj.script, { quiet: true });
         setPipeStatus('loaded');
+      } else if (obj && obj.type === 'project_active_changed' && obj.project_id) {
+        if (activeProject) activeProject.textContent = String(obj.project_id);
+        loadMaterialsIndex();
       } else if (obj && obj.type === 'run_status') {
         setRunStatus(obj.status, obj.task_id, obj.block);
       } else if (obj && obj.type === 'task_status') {
@@ -1781,9 +1920,57 @@
   });
   testCodex.addEventListener('click', () => testCodexStub());
 
+  if (projectSelect) {
+    projectSelect.addEventListener('change', () => {
+      const pid = String(projectSelect.value || '').trim();
+      if (!pid) return;
+      setActiveProject(pid).then(() => {
+        loadProjects().then((pj) => {
+          if (pj && Array.isArray(pj.projects) && projectSelect) {
+            // keep options stable
+            const cur = String(pid);
+            projectSelect.value = cur;
+          }
+        });
+        loadMaterialsIndex({ skipSelectSync: true });
+      });
+    });
+  }
+
   connect();
   loadPipeline();
   loadChatHistory();
   loadRunStatus();
   loadSettings();
+  function applyProjectsToUi(pj) {
+    if (!projectSelect) return;
+    if (!pj || !pj.ok) return;
+    projectSelect.innerHTML = '';
+    const projs = Array.isArray(pj.projects) ? pj.projects : [];
+    const active = typeof pj.active_project === 'string' ? pj.active_project : '';
+    for (const pr of projs) {
+      if (!pr || typeof pr.id !== 'string') continue;
+      const opt = document.createElement('option');
+      opt.value = pr.id;
+      opt.textContent = pr.id;
+      projectSelect.appendChild(opt);
+    }
+    if (active) projectSelect.value = active;
+    if (activeProject) activeProject.textContent = active || 'default';
+  }
+
+  loadProjects().then((pj) => {
+    applyProjectsToUi(pj);
+    loadMaterialsIndex();
+  });
+
+  // Poll materials index so dropping files shows up without reload.
+  let materialsPollN = 0;
+  setInterval(() => {
+    materialsPollN += 1;
+    loadMaterialsIndex();
+    if (projectSelect && projectSelect.childElementCount === 0 && materialsPollN % 3 === 0) {
+      loadProjects().then((pj) => applyProjectsToUi(pj));
+    }
+  }, 2000);
 })();

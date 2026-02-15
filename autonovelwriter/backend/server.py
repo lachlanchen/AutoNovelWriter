@@ -52,6 +52,8 @@ def resolve_paths() -> dict:
         "task_status_json": runtime_root / "state" / "task_status.json",
         "tasks_json": runtime_root / "tasks" / "tasks.json",
         "runner_log": runtime_root / "logs" / "runner.log",
+        "projects_root": runtime_root / "projects",
+        "active_project_json": runtime_root / "state" / "active_project.json",
     }
     return paths
 
@@ -62,6 +64,62 @@ def ensure_runtime_dirs(paths: dict) -> None:
     _safe_mkdir(Path(paths["tasks"]))
     _safe_mkdir(Path(paths["logs"]))
     _safe_mkdir(Path(paths["state"]))
+    _safe_mkdir(Path(paths["projects_root"]))
+
+
+def _is_safe_project_id(s: str) -> bool:
+    if not isinstance(s, str):
+        return False
+    s = s.strip()
+    if not s:
+        return False
+    if len(s) > 64:
+        return False
+    allowed = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_")
+    return all(ch in allowed for ch in s)
+
+
+def _ensure_project_dirs(paths: dict, project_id: str) -> dict:
+    pid = project_id.strip()
+    root = Path(paths["projects_root"]) / pid
+    materials = root / "materials"
+    interactions = root / "interactions"
+    outputs = root / "outputs"
+    state = root / "state"
+    _safe_mkdir(materials)
+    _safe_mkdir(interactions)
+    _safe_mkdir(outputs)
+    _safe_mkdir(state)
+    return {
+        "project_id": pid,
+        "project_root": root,
+        "materials_root": materials,
+        "interactions_root": interactions,
+        "outputs_root": outputs,
+        "state_root": state,
+    }
+
+
+def load_active_project(paths: dict) -> str:
+    p = Path(paths["active_project_json"])
+    try:
+        obj = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        obj = {}
+    pid = obj.get("project_id") if isinstance(obj, dict) else None
+    if not isinstance(pid, str) or not _is_safe_project_id(pid):
+        pid = "default"
+    _ensure_project_dirs(paths, pid)
+    # Best-effort: persist back if missing/invalid.
+    save_active_project(paths, pid)
+    return pid
+
+
+def save_active_project(paths: dict, project_id: str) -> None:
+    pid = project_id.strip()
+    p = Path(paths["active_project_json"])
+    _safe_mkdir(p.parent)
+    p.write_text(json.dumps({"project_id": pid}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def default_settings(paths: dict, host: str, port: int) -> dict:
@@ -74,6 +132,7 @@ def default_settings(paths: dict, host: str, port: int) -> dict:
             "tasks": str(paths["tasks"]),
             "logs": str(paths["logs"]),
             "state": str(paths["state"]),
+            "projects_root": str(paths["projects_root"]),
         },
         "agent": {
             "enabled": False,
@@ -1283,6 +1342,126 @@ class AgentTestHandler(BaseHandler):
         return self.write_json({"ok": bool(res.get("ok")), "result": res}, status=200 if res.get("ok") else 500)
 
 
+class ProjectsHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    def get(self):
+        root = Path(self._paths["projects_root"])
+        _safe_mkdir(root)
+
+        active = load_active_project(self._paths)
+
+        projects = []
+        try:
+            for p in root.iterdir():
+                if not p.is_dir():
+                    continue
+                pid = p.name
+                if not _is_safe_project_id(pid):
+                    continue
+                try:
+                    st = p.stat()
+                    mtime_ms = int(st.st_mtime * 1000)
+                except Exception:
+                    mtime_ms = 0
+                projects.append({"id": pid, "mtime_ms": mtime_ms})
+        except Exception:
+            projects = []
+
+        if not any(pr.get("id") == "default" for pr in projects):
+            _ensure_project_dirs(self._paths, "default")
+            projects.append({"id": "default", "mtime_ms": _now_ms()})
+
+        projects.sort(key=lambda x: x.get("id", ""))
+        self.write_json(
+            {
+                "ok": True,
+                "active_project": active,
+                "projects_root": str(root),
+                "projects": projects,
+            }
+        )
+
+
+class ProjectActiveHandler(BaseHandler):
+    def initialize(self, paths: dict, hub: "WebSocketHub"):
+        self._paths = paths
+        self._hub = hub
+
+    def post(self):
+        try:
+            body = tornado.escape.json_decode(self.request.body or b"{}")
+        except Exception:
+            return self.write_json({"ok": False, "error": "invalid_json"}, status=400)
+        if not isinstance(body, dict) or not isinstance(body.get("project_id"), str):
+            return self.write_json({"ok": False, "error": "expected_project_id"}, status=400)
+        pid = body.get("project_id", "").strip()
+        if not _is_safe_project_id(pid):
+            return self.write_json({"ok": False, "error": "invalid_project_id"}, status=400)
+        _ensure_project_dirs(self._paths, pid)
+        save_active_project(self._paths, pid)
+        self._hub.broadcast({"type": "project_active_changed", "ts_ms": _now_ms(), "project_id": pid})
+        self.write_json({"ok": True, "active_project": pid})
+
+
+class MaterialsIndexHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    def get(self):
+        active = load_active_project(self._paths)
+        q = self.get_query_argument("project", default="").strip()
+        pid = q if q else active
+        if not _is_safe_project_id(pid):
+            pid = active
+        pr = _ensure_project_dirs(self._paths, pid)
+        root = Path(self._paths["projects_root"])
+
+        files = []
+        materials_root = Path(pr["materials_root"])
+        try:
+            for p in materials_root.rglob("*"):
+                rel = None
+                try:
+                    rel = p.relative_to(materials_root).as_posix()
+                except Exception:
+                    continue
+                if not rel or rel.startswith("."):
+                    # Hide dotfiles for now.
+                    continue
+                try:
+                    st = p.stat()
+                    mtime_ms = int(st.st_mtime * 1000)
+                    size = int(st.st_size)
+                except Exception:
+                    mtime_ms = 0
+                    size = 0
+
+                if p.is_dir():
+                    files.append({"path": rel + "/", "kind": "dir", "mtime_ms": mtime_ms, "size_bytes": 0})
+                elif p.is_file():
+                    files.append({"path": rel, "kind": "file", "mtime_ms": mtime_ms, "size_bytes": size})
+        except Exception:
+            files = []
+
+        # Keep response bounded.
+        files.sort(key=lambda x: x.get("path", ""))
+        if len(files) > 5000:
+            return self.write_json({"ok": False, "error": "too_many_entries", "count": len(files)}, status=400)
+
+        self.write_json(
+            {
+                "ok": True,
+                "active_project": active,
+                "project": pid,
+                "projects_root": str(root),
+                "materials_root": str(materials_root),
+                "files": files,
+            }
+        )
+
+
 def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Application:
     hub = WebSocketHub()
     chat_store = ChatStore(Path(paths["chat_jsonl"]))
@@ -1291,6 +1470,9 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
     handlers = [
         (r"/api/health", HealthHandler),
         (r"/api/settings", SettingsHandler, {"paths": paths, "settings": settings}),
+        (r"/api/projects", ProjectsHandler, {"paths": paths}),
+        (r"/api/projects/active", ProjectActiveHandler, {"paths": paths, "hub": hub}),
+        (r"/api/materials/index", MaterialsIndexHandler, {"paths": paths}),
         (r"/api/pipeline", PipelineHandler, {"paths": paths, "hub": hub}),
         (r"/api/pipeline/validate", PipelineValidateHandler, {"paths": paths}),
         (r"/api/chat/history", ChatHistoryHandler, {"chat_store": chat_store}),
@@ -1333,6 +1515,8 @@ def main() -> None:
 
     paths = resolve_paths()
     ensure_runtime_dirs(paths)
+    # Ensure at least one project exists.
+    load_active_project(paths)
 
     settings = load_settings(paths, host=args.host, port=args.port)
 

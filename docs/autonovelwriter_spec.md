@@ -16,6 +16,10 @@ folder-based **inbox/outbox**. The system must be resumable, observable, and ope
   - The app must visualize that script as Scratch-like blocks (tasks/steps/actions).
   - The app must generate/export a formatted script from the block representation.
 
+Example in-app pipeline templates (editable):
+- Novel: `plan -> write -> critique_story -> fix_story -> critique_tone -> fix_tone -> critique_dialogue -> fix_dialogue -> critique_character -> fix_character -> summary -> log -> update_readme -> commit_push`
+- App-dev: `plan -> implement -> debug -> fix -> summary -> log -> update_readme -> commit_push`
+
 ## 1) UI (Scratch-like)
 - Light theme by default (no dark-first UI).
 - Drag & drop “blocks” that form a pipeline (pipeline templates are built-in and editable).

@@ -140,6 +140,7 @@
       'fix_character',
       'summary',
       'log',
+      'update_readme',
       'commit_push'
     ];
     return { blocks: types.map((t) => ({ id: t, type: t, enabled: true })) };

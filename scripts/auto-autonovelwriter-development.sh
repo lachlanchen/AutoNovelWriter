@@ -8,7 +8,7 @@ Usage: scripts/auto-autonovelwriter-development.sh [options]
 Auto-develops the "AutoNovelWriter" Scratch-like PWA + Tornado backend by
 calling Codex non-interactively in ONE shared session, task-by-task:
 
-  plan -> implement -> debug -> fix -> summary -> commit+push
+  plan -> implement -> debug -> fix -> summary -> update_readme -> commit+push
 
 It keeps a resumable queue/state under:
   references/autonovelwriter_dev/
@@ -672,6 +672,7 @@ Required workspace/output paths:
   - plan: $step_dir/plan.md
   - debug: $step_dir/debug.md
   - summary: $step_dir/summary.md
+  - update_readme: update repo root README.md and note changes in $step_dir/summary.md
 
 Operational constraints:
 - Do NOT commit or push. Do NOT create new remotes. The outer driver handles git.
@@ -732,6 +733,19 @@ EOF
 - Add a short \"## Next\" section listing 2-4 concrete follow-ups.
 EOF
       ;;
+    update_readme)
+      cat >> "$out_prompt" <<EOF
+- Do NOT modify app code in this stage.
+- Update the repo root README.md to reflect current project reality:
+  - what AutoNovelWriter is
+  - how to run backend + PWA locally
+  - major endpoints/features shipped so far
+  - the existence of the pipeline-script visualization module (even if only partially implemented)
+  - the driver workflow and how to run it safely
+- Keep README concise and actionable (commands + paths).
+- Append a short \"## README\" note to: $step_dir/summary.md describing what you changed.
+EOF
+      ;;
     *)
       echo "Invalid stage: $stage" >&2
       exit 1
@@ -772,7 +786,7 @@ PY
   state_mark "$task_id" "running"
 
   local stage
-  for stage in plan implement debug fix summary; do
+  for stage in plan implement debug fix summary update_readme; do
     local pfile="$prompt_dir/${task_id}_${stage}.txt"
     local jfile="$log_dir/${task_id}_${stage}.jsonl"
     write_prompt_for_stage "$task_id" "$task_title" "$stage" "$pfile"

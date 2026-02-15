@@ -112,6 +112,7 @@ PIPELINE_BLOCK_TYPES = [
     "fix_character",
     "summary",
     "log",
+    "update_readme",
     "commit_push",
 ]
 

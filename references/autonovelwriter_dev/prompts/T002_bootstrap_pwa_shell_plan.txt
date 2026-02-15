@@ -34,4 +34,4 @@ Stage-specific instructions:
 - Plan must include:
   - files to change/create
   - acceptance checklist
-  - minimal verification commands
+  - minimal verification commands (avoid binding TCP ports; Codex sandbox may block socket binds)

@@ -645,85 +645,87 @@ EOF
 
     run_codex_resume_from_file "$session_id" "$gen_prompt" "$gen_json"
 
-    # Extract JSONL tasks from Codex output (agent_message text) and write them to out_file.
-    python3 - "$gen_json" "$queue_file" "$batch_size" > "$tmp_out" <<'PY'
-import json, sys
+	    # Extract JSONL tasks from Codex output (agent_message text) and write them to out_file.
+	    python3 - "$gen_json" "$queue_file" "$batch_size" > "$tmp_out" <<'PY'
+import json
+import sys
+from json import JSONDecoder
 
 gen_json, queue_file, batch_size_s = sys.argv[1], sys.argv[2], sys.argv[3]
 batch_size = int(batch_size_s)
 
 existing = set()
 try:
-  with open(queue_file, "r", encoding="utf-8") as f:
-    for line in f:
-      line = line.strip()
-      if not line:
-        continue
-      try:
-        obj = json.loads(line)
-      except Exception:
-        continue
-      tid = obj.get("id")
-      if tid:
-        existing.add(tid)
+    with open(queue_file, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            tid = obj.get("id")
+            if tid:
+                existing.add(tid)
 except FileNotFoundError:
-  pass
+    pass
 
 msgs = []
 with open(gen_json, "r", encoding="utf-8") as f:
-  for line in f:
-    try:
-      obj = json.loads(line)
-    except Exception:
-      continue
-    if obj.get("type") != "item.completed":
-      continue
-    item = obj.get("item") or {}
-    if item.get("type") == "agent_message":
-      msgs.append(item.get("text") or "")
+    for line in f:
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        if obj.get("type") != "item.completed":
+            continue
+        item = obj.get("item") or {}
+        if item.get("type") == "agent_message":
+            msgs.append(item.get("text") or "")
 
 text = "\n".join(msgs)
 tasks = []
 seen = set()
 
+
 def emit(obj):
-  tid = obj.get("id") if isinstance(obj, dict) else None
-  if not tid or tid in existing or tid in seen:
-    return
-  obj.setdefault("title", "")
-  obj.setdefault("notes", "")
-  obj.setdefault("acceptance", [])
-  obj.setdefault("tags", [])
-	tasks.append(obj)
-	seen.add(tid)
+    tid = obj.get("id") if isinstance(obj, dict) else None
+    if not tid or tid in existing or tid in seen:
+        return
+    obj.setdefault("title", "")
+    obj.setdefault("notes", "")
+    obj.setdefault("acceptance", [])
+    obj.setdefault("tags", [])
+    tasks.append(obj)
+    seen.add(tid)
 
-	from json import JSONDecoder
 
-	dec = JSONDecoder()
-	i = 0
-	while True:
-	  i = text.find("{", i)
-	  if i < 0:
-	    break
-	  try:
-	    obj, end = dec.raw_decode(text[i:])
-	  except Exception:
-	    i += 1
-	    continue
-	  if isinstance(obj, list):
-	    for el in obj:
-	      if isinstance(el, dict):
-	        emit(el)
-	        if len(tasks) >= batch_size:
-	          break
-	  elif isinstance(obj, dict):
-	    emit(obj)
-	  i += end
-	  if len(tasks) >= batch_size:
-	    break
+dec = JSONDecoder()
+i = 0
+while True:
+    i = text.find("{", i)
+    if i < 0:
+        break
+    try:
+        obj, end = dec.raw_decode(text[i:])
+    except Exception:
+        i += 1
+        continue
+    if isinstance(obj, list):
+        for el in obj:
+            if isinstance(el, dict):
+                emit(el)
+                if len(tasks) >= batch_size:
+                    break
+    elif isinstance(obj, dict):
+        emit(obj)
+    i += end
+    if len(tasks) >= batch_size:
+        break
 
 for t in tasks:
-  print(json.dumps(t, ensure_ascii=False))
+    print(json.dumps(t, ensure_ascii=False))
 PY
 
     if [ -s "$tmp_out" ]; then

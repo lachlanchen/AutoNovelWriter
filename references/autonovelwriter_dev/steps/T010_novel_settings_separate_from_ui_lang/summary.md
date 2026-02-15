@@ -25,3 +25,6 @@ Verification (no TCP binds):
 1. Add backend validation/normalization for `settings.novel.*` (allowlist keys, coerce types, clamp numeric ranges).
 2. Decide scope: global vs per-project novel settings (likely per-project overrides under `runtime/projects/<project_id>/state/`).
 3. Use `settings.novel.*` inside the runner/prompt templates so writing output actually respects novel language/tone/POV/tense.
+
+## README
+- Added a short “Novel Settings” section to `README.md` documenting `settings.novel.*` storage and its separation from PWA UI language (`?lang=` / `anw_lang`).

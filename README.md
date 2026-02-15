@@ -94,6 +94,21 @@ The PWA has a lightweight built-in i18n system.
 - Persisted per-browser in localStorage: `anw_lang`.
 - Supported UI languages: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar` (RTL), `fr`, `es`, `ru`, `de`.
 
+## Novel Settings (Separate From UI Language)
+
+Novel-writing preferences are stored in backend settings under `settings.novel.*` in:
+- `autonovelwriter/runtime/state/settings.json`
+
+These are intentionally **separate** from the PWA UI language (`?lang=` / `anw_lang`).
+
+Current fields (editable in the PWA Settings modal):
+- `settings.novel.language` (BCP-47-ish codes like `en`, `ja`, `zh-Hans`, etc.)
+- `settings.novel.tone`
+- `settings.novel.target_length_words`
+- `settings.novel.pov`
+- `settings.novel.tense`
+- `settings.novel.chapter_count_target`
+
 ## Driver Workflow (Auto-Dev)
 
 `scripts/auto-autonovelwriter-development.sh` runs a resumable Codex-driven loop over tasks under `references/autonovelwriter_dev/` and **will commit/push after each stage** (plan/implement/debug/fix/summary/update_readme).

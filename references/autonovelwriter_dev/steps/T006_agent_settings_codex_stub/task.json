@@ -1,0 +1,15 @@
+{
+  "id": "T006_agent_settings_codex_stub",
+  "title": "Agent settings + codex runner stub (no secrets committed)",
+  "notes": "Add settings UI for agent sdk + model. Backend implements codex runner stub that shells out to codex CLI (disabled by default). Provide .env.example; never commit secrets.",
+  "acceptance": [
+    "Settings persist (agent sdk/model/path)",
+    "Codex runner is stubbed + gated",
+    "No secrets in git"
+  ],
+  "tags": [
+    "agents",
+    "settings",
+    "security"
+  ]
+}

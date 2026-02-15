@@ -7,3 +7,6 @@
 
 Verification (no TCP binds):
 - `node --check autonovelwriter/pwa/app.js`
+
+## Fixes
+- Added a visible focus outline for the repeat editor input to improve keyboard/accessibility clarity without requiring a block re-render.

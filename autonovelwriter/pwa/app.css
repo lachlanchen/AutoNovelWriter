@@ -230,6 +230,11 @@ code{ font-family: var(--mono); font-size: .92em; }
   font-size: 12px;
 }
 
+.repeat-input:focus{
+  outline: 3px solid rgba(240,106,58,.28);
+  outline-offset: 2px;
+}
+
 .repeat-input.invalid{
   border-color: rgba(240,106,58,.55);
   background: rgba(240,106,58,.10);

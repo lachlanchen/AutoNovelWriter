@@ -1,0 +1,16 @@
+{
+  "id": "T016_pwa_loop_repeat_editor",
+  "title": "Blocks UI: edit loop repeat counts",
+  "notes": "Add loop repeat count editing in the blocks UI for LOOP/ROUND blocks (inline input or modal), including validation (int >=1) and updating canonical script. Ensure keyboard accessibility and i18n for labels/errors.",
+  "acceptance": [
+    "User can change a loop repeat count and the canonical script updates immediately",
+    "Invalid repeats are prevented or validated with user-visible feedback",
+    "All new strings localized for 11 UI languages"
+  ],
+  "tags": [
+    "pwa",
+    "pipeline",
+    "blocks",
+    "i18n"
+  ]
+}

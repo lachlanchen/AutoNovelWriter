@@ -38,6 +38,9 @@
       'projects.select': 'Select',
       'projects.selector_aria': 'Project selector',
       'materials.empty': '(no materials yet)',
+      'outputs.title': 'Outputs',
+      'outputs.empty': '(no outputs yet)',
+      'outputs.created': 'Output created:',
       'pipeline.indent': 'Indent',
       'pipeline.outdent': 'Outdent',
       'pipeline.indent_title': 'Indent selected block (Tab)',
@@ -96,6 +99,9 @@
       'projects.select': '选择',
       'projects.selector_aria': '项目选择器',
       'materials.empty': '（暂无材料）',
+      'outputs.title': '输出',
+      'outputs.empty': '（暂无输出）',
+      'outputs.created': '已生成输出：',
       'pipeline.indent': '缩进',
       'pipeline.outdent': '取消缩进',
       'pipeline.indent_title': '缩进选中块 (Tab)',
@@ -154,6 +160,9 @@
       'projects.select': '選擇',
       'projects.selector_aria': '專案選擇器',
       'materials.empty': '（尚無素材）',
+      'outputs.title': '輸出',
+      'outputs.empty': '（尚無輸出）',
+      'outputs.created': '已產生輸出：',
       'pipeline.indent': '縮排',
       'pipeline.outdent': '取消縮排',
       'pipeline.indent_title': '縮排所選區塊 (Tab)',
@@ -212,6 +221,9 @@
       'projects.select': '選択',
       'projects.selector_aria': 'プロジェクト選択',
       'materials.empty': '（素材なし）',
+      'outputs.title': '出力',
+      'outputs.empty': '（出力なし）',
+      'outputs.created': '出力を作成:',
       'pipeline.indent': 'インデント',
       'pipeline.outdent': 'アウトデント',
       'pipeline.indent_title': '選択ブロックをインデント (Tab)',
@@ -270,6 +282,9 @@
       'projects.select': '선택',
       'projects.selector_aria': '프로젝트 선택',
       'materials.empty': '(자료 없음)',
+      'outputs.title': '출력',
+      'outputs.empty': '(출력 없음)',
+      'outputs.created': '출력 생성:',
       'pipeline.indent': '들여쓰기',
       'pipeline.outdent': '내어쓰기',
       'pipeline.indent_title': '선택 블록 들여쓰기 (Tab)',
@@ -328,6 +343,9 @@
       'projects.select': 'Chon',
       'projects.selector_aria': 'Bo chon du an',
       'materials.empty': '(chua co tai lieu)',
+      'outputs.title': 'Dau ra',
+      'outputs.empty': '(chua co dau ra)',
+      'outputs.created': 'Da tao dau ra:',
       'pipeline.indent': 'Thut vao',
       'pipeline.outdent': 'Thut ra',
       'pipeline.indent_title': 'Thut vao khoi da chon (Tab)',
@@ -386,6 +404,9 @@
       'projects.select': 'اختيار',
       'projects.selector_aria': 'محدد المشروع',
       'materials.empty': '(لا توجد مواد بعد)',
+      'outputs.title': 'المخرجات',
+      'outputs.empty': '(لا توجد مخرجات بعد)',
+      'outputs.created': 'تم إنشاء مخرج:',
       'pipeline.indent': 'إزاحة للداخل',
       'pipeline.outdent': 'إزاحة للخارج',
       'pipeline.indent_title': 'إزاحة الكتلة المحددة (Tab)',
@@ -444,6 +465,9 @@
       'projects.select': 'Choisir',
       'projects.selector_aria': 'Sélecteur de projet',
       'materials.empty': '(aucun document)',
+      'outputs.title': 'Sorties',
+      'outputs.empty': '(aucune sortie)',
+      'outputs.created': 'Sortie créée :',
       'pipeline.indent': 'Indenter',
       'pipeline.outdent': 'Désindenter',
       'pipeline.indent_title': 'Indenter le bloc sélectionné (Tab)',
@@ -502,6 +526,9 @@
       'projects.select': 'Elegir',
       'projects.selector_aria': 'Selector de proyecto',
       'materials.empty': '(sin materiales)',
+      'outputs.title': 'Salidas',
+      'outputs.empty': '(sin salidas)',
+      'outputs.created': 'Salida creada:',
       'pipeline.indent': 'Indentar',
       'pipeline.outdent': 'Desindentar',
       'pipeline.indent_title': 'Indentar bloque seleccionado (Tab)',
@@ -560,6 +587,9 @@
       'projects.select': 'Выбрать',
       'projects.selector_aria': 'Выбор проекта',
       'materials.empty': '(нет материалов)',
+      'outputs.title': 'Выходные файлы',
+      'outputs.empty': '(нет выходных файлов)',
+      'outputs.created': 'Создан выход:',
       'pipeline.indent': 'Вложить',
       'pipeline.outdent': 'Развернуть',
       'pipeline.indent_title': 'Вложить выбранный блок (Tab)',
@@ -618,6 +648,9 @@
       'projects.select': 'Auswählen',
       'projects.selector_aria': 'Projektauswahl',
       'materials.empty': '(keine Materialien)',
+      'outputs.title': 'Ausgaben',
+      'outputs.empty': '(keine Ausgaben)',
+      'outputs.created': 'Ausgabe erstellt:',
       'pipeline.indent': 'Einrücken',
       'pipeline.outdent': 'Ausrücken',
       'pipeline.indent_title': 'Ausgewählten Block einrücken (Tab)',
@@ -747,6 +780,7 @@
   const activeProject = $('activeProject');
   const projectSelect = $('projectSelect');
   const materialsList = $('materialsList');
+  const outputsList = $('outputsList');
 
   const runPill = $('runPill');
   const runStart = $('runStart');
@@ -895,6 +929,41 @@
     }
   }
 
+  function renderOutputsIndex(obj) {
+    if (!outputsList) return;
+    outputsList.innerHTML = '';
+    const files = obj && Array.isArray(obj.files) ? obj.files : [];
+    const shown = files.filter((f) => f && f.kind === 'file');
+    if (!shown.length) {
+      const li = document.createElement('li');
+      li.className = 'mat';
+      const p = document.createElement('div');
+      p.className = 'path';
+      p.textContent = t('outputs.empty');
+      const m = document.createElement('div');
+      m.className = 'meta';
+      m.textContent = '';
+      li.appendChild(p);
+      li.appendChild(m);
+      outputsList.appendChild(li);
+      return;
+    }
+
+    for (const f of shown.slice(0, 2000)) {
+      const li = document.createElement('li');
+      li.className = 'mat';
+      const p = document.createElement('div');
+      p.className = 'path';
+      p.textContent = String(f.path || '');
+      const m = document.createElement('div');
+      m.className = 'meta';
+      m.textContent = fmtBytes(f.size_bytes || 0);
+      li.appendChild(p);
+      li.appendChild(m);
+      outputsList.appendChild(li);
+    }
+  }
+
   async function loadProjects() {
     const url = backendApiUrl('/api/projects');
     if (!url) return null;
@@ -940,6 +1009,34 @@
     } catch (_) {
       return null;
     }
+  }
+
+  async function loadOutputsIndex(opts) {
+    const url = backendApiUrl('/api/outputs/index');
+    if (!url) return null;
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const obj = await res.json();
+      if (!obj || !obj.ok) return null;
+      renderOutputsIndex(obj);
+      if (projectSelect && !opts?.skipSelectSync) {
+        const pid = String(obj.project || obj.active_project || '');
+        if (pid) projectSelect.value = pid;
+      }
+      return obj;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  let outputsRefreshTimer = null;
+  function scheduleOutputsRefresh(delayMs) {
+    if (!outputsList) return;
+    if (outputsRefreshTimer) clearTimeout(outputsRefreshTimer);
+    outputsRefreshTimer = setTimeout(() => {
+      outputsRefreshTimer = null;
+      loadOutputsIndex();
+    }, Math.max(0, Number(delayMs || 0)));
   }
 
   function parseBackendWsUrl() {
@@ -1962,6 +2059,11 @@
       } else if (obj && obj.type === 'project_active_changed' && obj.project_id) {
         if (activeProject) activeProject.textContent = String(obj.project_id);
         loadMaterialsIndex();
+        loadOutputsIndex();
+      } else if (obj && obj.type === 'output_created') {
+        const rel = String(obj.project_rel_path || obj.path || '').trim();
+        if (rel) addMsg('hello', t('outputs.title'), `${t('outputs.created')} ${rel}`);
+        scheduleOutputsRefresh(350);
       } else if (obj && obj.type === 'run_status') {
         setRunStatus(obj.status, obj.task_id, obj.block);
       } else if (obj && obj.type === 'task_status') {
@@ -2111,6 +2213,7 @@
           }
         });
         loadMaterialsIndex({ skipSelectSync: true });
+        loadOutputsIndex({ skipSelectSync: true });
       });
     });
   }
@@ -2140,6 +2243,7 @@
   loadProjects().then((pj) => {
     applyProjectsToUi(pj);
     loadMaterialsIndex();
+    loadOutputsIndex();
   });
 
   // Poll materials index so dropping files shows up without reload.

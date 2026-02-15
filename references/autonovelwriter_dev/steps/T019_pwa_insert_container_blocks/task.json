@@ -1,0 +1,17 @@
+{
+  "id": "T019_pwa_insert_container_blocks",
+  "title": "PWA: insert LOOP/ROUND/FOREACH_TASK blocks",
+  "notes": "Add UI controls to create container blocks (LOOP, ROUND, FOREACH_TASK) directly in the Blocks view (not only by hand-editing script). Support setting/editing repeat for LOOP/ROUND (reuse existing repeat editor), and ensure indent/outdent + drag-reorder works with the new containers. Canonical artifact remains the formatted script: any UI change must immediately update `pipeline.script` textarea via AST->script render.",
+  "acceptance": [
+    "User can insert a `ROUND` or `FOREACH_TASK` container from the Blocks UI and the canonical script updates immediately with correct 2-space indentation.",
+    "User can edit LOOP/ROUND repeat counts and the script updates immediately; invalid repeats show localized inline feedback.",
+    "All new UI strings are localized for 11 UI languages and Arabic remains RTL-safe."
+  ],
+  "tags": [
+    "pwa",
+    "pipeline",
+    "blocks",
+    "i18n",
+    "ux"
+  ]
+}

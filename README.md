@@ -150,12 +150,12 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-15T15:43:48Z
-- current: T018_runner_execute_foreach_round / update_readme — Runner: execute ROUND/FOREACH_TASK semantics
-- queue: total=20 done=17 pending=3
-- last_done: T017_meta_tasks_generate_stub — Runner: meta_tasks_generate writes task batch @ 2026-02-15T23:15:34+0800
+- updated_utc: 2026-02-15T23:25:10Z
+- current: T019_pwa_insert_container_blocks / plan — PWA: insert LOOP/ROUND/FOREACH_TASK blocks
+- queue: total=20 done=18 pending=2
+- last_done: T018_runner_execute_foreach_round — Runner: execute ROUND/FOREACH_TASK semantics @ 2026-02-15T23:43:51+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260215_232137_b1
-- autoappdev_head: 77ab7d1
+- autoappdev_head: 8bc23a5
 <!-- AUTO_DEV_PROGRESS_END -->
 
 `scripts/auto-autonovelwriter-development.sh` runs a resumable Codex-driven loop over tasks under `references/autonovelwriter_dev/` and **will commit/push after each stage** (plan/implement/debug/fix/i18n/summary/update_readme).

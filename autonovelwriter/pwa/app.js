@@ -36,6 +36,7 @@
       'pipeline.blocks': 'Blocks',
       'projects.title': 'Project',
       'projects.select': 'Select',
+      'projects.selector_aria': 'Project selector',
       'materials.empty': '(no materials yet)',
       'pipeline.indent': 'Indent',
       'pipeline.outdent': 'Outdent',
@@ -81,6 +82,7 @@
       'pipeline.blocks': '积木块',
       'projects.title': '项目',
       'projects.select': '选择',
+      'projects.selector_aria': '项目选择器',
       'materials.empty': '（暂无材料）',
       'pipeline.indent': '缩进',
       'pipeline.outdent': '取消缩进',
@@ -126,6 +128,7 @@
       'pipeline.blocks': '積木',
       'projects.title': '專案',
       'projects.select': '選擇',
+      'projects.selector_aria': '專案選擇器',
       'materials.empty': '（尚無素材）',
       'pipeline.indent': '縮排',
       'pipeline.outdent': '取消縮排',
@@ -171,6 +174,7 @@
       'pipeline.blocks': 'ブロック',
       'projects.title': 'プロジェクト',
       'projects.select': '選択',
+      'projects.selector_aria': 'プロジェクト選択',
       'materials.empty': '（素材なし）',
       'pipeline.indent': 'インデント',
       'pipeline.outdent': 'アウトデント',
@@ -216,6 +220,7 @@
       'pipeline.blocks': '블록',
       'projects.title': '프로젝트',
       'projects.select': '선택',
+      'projects.selector_aria': '프로젝트 선택',
       'materials.empty': '(자료 없음)',
       'pipeline.indent': '들여쓰기',
       'pipeline.outdent': '내어쓰기',
@@ -261,6 +266,7 @@
       'pipeline.blocks': 'Khoi',
       'projects.title': 'Du an',
       'projects.select': 'Chon',
+      'projects.selector_aria': 'Bo chon du an',
       'materials.empty': '(chua co tai lieu)',
       'pipeline.indent': 'Thut vao',
       'pipeline.outdent': 'Thut ra',
@@ -306,6 +312,7 @@
       'pipeline.blocks': 'الكتل',
       'projects.title': 'المشروع',
       'projects.select': 'اختيار',
+      'projects.selector_aria': 'محدد المشروع',
       'materials.empty': '(لا توجد مواد بعد)',
       'pipeline.indent': 'إزاحة للداخل',
       'pipeline.outdent': 'إزاحة للخارج',
@@ -351,6 +358,7 @@
       'pipeline.blocks': 'Blocs',
       'projects.title': 'Projet',
       'projects.select': 'Choisir',
+      'projects.selector_aria': 'Sélecteur de projet',
       'materials.empty': '(aucun document)',
       'pipeline.indent': 'Indenter',
       'pipeline.outdent': 'Désindenter',
@@ -396,6 +404,7 @@
       'pipeline.blocks': 'Bloques',
       'projects.title': 'Proyecto',
       'projects.select': 'Elegir',
+      'projects.selector_aria': 'Selector de proyecto',
       'materials.empty': '(sin materiales)',
       'pipeline.indent': 'Indentar',
       'pipeline.outdent': 'Desindentar',
@@ -441,6 +450,7 @@
       'pipeline.blocks': 'Блоки',
       'projects.title': 'Проект',
       'projects.select': 'Выбрать',
+      'projects.selector_aria': 'Выбор проекта',
       'materials.empty': '(нет материалов)',
       'pipeline.indent': 'Вложить',
       'pipeline.outdent': 'Развернуть',
@@ -486,6 +496,7 @@
       'pipeline.blocks': 'Blöcke',
       'projects.title': 'Projekt',
       'projects.select': 'Auswählen',
+      'projects.selector_aria': 'Projektauswahl',
       'materials.empty': '(keine Materialien)',
       'pipeline.indent': 'Einrücken',
       'pipeline.outdent': 'Ausrücken',
@@ -574,6 +585,12 @@
       const key = el.getAttribute('data-i18n-placeholder');
       if (!key) continue;
       el.placeholder = t(key);
+    }
+    const ariaEls = document.querySelectorAll('[data-i18n-aria-label]');
+    for (const el of ariaEls) {
+      const key = el.getAttribute('data-i18n-aria-label');
+      if (!key) continue;
+      el.setAttribute('aria-label', t(key));
     }
     // Keep document title in sync if it has the attribute.
     const titleEl = document.querySelector('title[data-i18n]');
@@ -1966,11 +1983,24 @@
 
   // Poll materials index so dropping files shows up without reload.
   let materialsPollN = 0;
-  setInterval(() => {
-    materialsPollN += 1;
-    loadMaterialsIndex();
-    if (projectSelect && projectSelect.childElementCount === 0 && materialsPollN % 3 === 0) {
-      loadProjects().then((pj) => applyProjectsToUi(pj));
+  let materialsPollMs = 2000;
+  function tickMaterialsPoll() {
+    const url = backendApiUrl('/api/materials/index');
+    if (!url) {
+      // Backend URL is unknown; keep a slower retry cadence.
+      materialsPollMs = Math.min(15000, Math.floor(materialsPollMs * 1.7));
+      setTimeout(tickMaterialsPoll, materialsPollMs);
+      return;
     }
-  }, 2000);
+    materialsPollN += 1;
+    loadMaterialsIndex().then((obj) => {
+      if (obj) materialsPollMs = 2000;
+      else materialsPollMs = Math.min(15000, Math.floor(materialsPollMs * 1.7));
+      if (projectSelect && projectSelect.childElementCount === 0 && materialsPollN % 3 === 0) {
+        loadProjects().then((pj) => applyProjectsToUi(pj));
+      }
+      setTimeout(tickMaterialsPoll, materialsPollMs);
+    });
+  }
+  setTimeout(tickMaterialsPoll, materialsPollMs);
 })();

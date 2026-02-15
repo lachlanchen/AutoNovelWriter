@@ -116,7 +116,9 @@ def load_active_project(paths: dict) -> str:
 
 
 def save_active_project(paths: dict, project_id: str) -> None:
-    pid = project_id.strip()
+    pid = project_id.strip() if isinstance(project_id, str) else ""
+    if not _is_safe_project_id(pid):
+        pid = "default"
     p = Path(paths["active_project_json"])
     _safe_mkdir(p.parent)
     p.write_text(json.dumps({"project_id": pid}, indent=2, sort_keys=True) + "\n", encoding="utf-8")

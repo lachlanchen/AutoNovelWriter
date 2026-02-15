@@ -18,3 +18,8 @@ Docs:
 Verification (no TCP binds):
 - `python3 -m py_compile autonovelwriter/backend/server.py`
 - `node --check autonovelwriter/pwa/app.js`
+
+## Fixes
+- Validated `project_id` inside `save_active_project()` to avoid persisting unsafe IDs (falls back to `default`).
+- Reduced noisy polling when backend is unreachable by adding a simple backoff loop for `/api/materials/index` refreshes (still updates quickly when backend is available).
+- Localized the project selector accessibility label via `data-i18n-aria-label` and extended the i18n applicator to set `aria-label`.

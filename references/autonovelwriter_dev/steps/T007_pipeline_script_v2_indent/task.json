@@ -1,0 +1,17 @@
+{
+  "id": "T007_pipeline_script_v2_indent",
+  "title": "Pipeline script v2: indent + validate",
+  "notes": "Extend canonical `pipeline.script` format to support nesting via indentation (e.g. `LOOP <n>` with indented `STEP/DISABLED`). Backend must round-trip script <-> structured JSON <-> script for supported constructs, and return parse warnings/errors explicitly (no silent ignoring). Keep v1 `STEP/DISABLED <type>` fully supported.",
+  "acceptance": [
+    "POST /api/pipeline with v1 script still returns ok and preserves behavior",
+    "POST /api/pipeline with v2 indented script returns ok and derived JSON includes nesting",
+    "GET /api/pipeline returns a canonical script that round-trips back to the same derived JSON",
+    "Invalid indent/unknown verbs produce 400 or warnings with line numbers"
+  ],
+  "tags": [
+    "backend",
+    "pipeline",
+    "script",
+    "validation"
+  ]
+}

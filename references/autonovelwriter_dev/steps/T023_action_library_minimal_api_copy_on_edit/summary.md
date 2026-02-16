@@ -31,3 +31,7 @@
 2. Extend canonical pipeline script syntax to separate “block kind” from `action_id` (e.g. `STEP <action_id>` is fine, but add `IF/ELSE` and variable bindings while keeping script stable).
 3. Implement runner `ActionResult` persistence + explicit dataflow (store inputs/outputs/artifacts per action execution; allow next action to consume prior outputs without scanning folders).
 4. Add UI affordances for Action Library browsing: search/filter defaults vs user, show origin/base_action_id, and allow deleting user actions safely.
+
+## README
+- Documented the Action Library runtime paths (`autonovelwriter/runtime/actions/{defaults,user}/`).
+- Listed Action Library endpoints under “Key Backend APIs” and noted WS `action_created`.

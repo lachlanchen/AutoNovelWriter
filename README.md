@@ -44,6 +44,8 @@ All mutable state and IO live under `autonovelwriter/runtime/` (ignored by git):
 - `autonovelwriter/runtime/logs/` logs
 - `autonovelwriter/runtime/projects/<project_id>/materials/` project materials (inputs)
 - `autonovelwriter/runtime/projects/<project_id>/outputs/` project outputs (drafts/exports)
+- `autonovelwriter/runtime/actions/defaults/` seeded default Action Library templates (treated as immutable)
+- `autonovelwriter/runtime/actions/user/` user Action Library templates (created via copy-on-edit)
 
 ## Pipeline Script (Canonical Artifact)
 
@@ -92,12 +94,13 @@ Blocks UI notes:
 - Materials index (active project): `GET /api/materials/index`
 - Outputs index (active project): `GET /api/outputs/index`
 - Task batches index: `GET /api/tasks/batches/index` (optional: `?project=<project_id>`)
+- Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`
 - Pipeline (canonical script + derived JSON): `GET/POST /api/pipeline`
 - Pipeline validate (preview only): `POST /api/pipeline/validate`
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
 - Agent test (gated): `POST /api/agent/test` (runs `codex --version` only when enabled + env gate)
-- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `run_status`, `task_status`, `log`, `pipeline_updated`)
+- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `action_created`, `run_status`, `task_status`, `log`, `pipeline_updated`)
 
 ## Runner Outputs (Draft Stub)
 
@@ -157,8 +160,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T00:33:21Z
-- current: T023_action_library_minimal_api_copy_on_edit / summary — Action Library: minimal API + copy-on-edit
+- updated_utc: 2026-02-16T00:34:06Z
+- current: T023_action_library_minimal_api_copy_on_edit / update_readme — Action Library: minimal API + copy-on-edit
 - queue: total=26 done=22 pending=4
 - last_done: T022_pipeline_foreach_action_parse_render — Pipeline: FOREACH_ACTION parse+render @ 2026-02-16T08:11:40+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_074635_b2

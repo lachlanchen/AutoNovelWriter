@@ -171,8 +171,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T01:44:26Z
-- current: T028_pwa_insert_foreach_action_and_if_else / implement — PWA: insert FOREACH_ACTION + IF/ELSE blocks
+- updated_utc: 2026-02-16T01:46:09Z
+- current: T028_pwa_insert_foreach_action_and_if_else / debug — PWA: insert FOREACH_ACTION + IF/ELSE blocks
 - queue: total=32 done=27 pending=5
 - last_done: T027_pipeline_if_else_parse_render — Pipeline: IF/ELSE parse+render @ 2026-02-16T09:33:41+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3

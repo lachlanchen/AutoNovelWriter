@@ -1,0 +1,19 @@
+{
+  "id": "T022_pipeline_foreach_action_parse_render",
+  "title": "Pipeline: FOREACH_ACTION parse+render",
+  "notes": "Extend the pipeline-script language + AST to support `FOREACH_ACTION` (nested under FOREACH_TASK). Ensure round-trip stability: script -> AST -> script preserves semantics and formatting rules (indentation, container children).",
+  "acceptance": [
+    "Parser accepts `FOREACH_ACTION` as a container block with indented children.",
+    "Renderer outputs `FOREACH_ACTION` with correct indentation and children ordering.",
+    "Round-trip test fixtures cover nesting: ROUND -> FOREACH_TASK -> FOREACH_ACTION -> STEP <action_id>.",
+    "Backend stores updated AST alongside canonical script without breaking existing scripts.",
+    "No TCP binds; minimal python/js checks or unit tests pass."
+  ],
+  "tags": [
+    "backend",
+    "pipeline",
+    "parser",
+    "renderer",
+    "runner"
+  ]
+}

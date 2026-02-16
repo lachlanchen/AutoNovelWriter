@@ -11,3 +11,6 @@
   - indented at the same level as the `IF` body (accepted, then canonicalized on render).
 - Updated PWA local fallback parser to match backend ELSE permissiveness.
 - Extended unit tests to cover indented-ELSE acceptance and canonicalization.
+
+## I18N
+- Added PWA i18n keys for conditional block verbs: `pipeline.verb_if` and `pipeline.verb_else` across all required UI languages.

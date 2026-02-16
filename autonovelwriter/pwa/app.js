@@ -68,6 +68,8 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.verb_foreach_action': 'FOREACH_ACTION',
+      'pipeline.verb_if': 'IF',
+      'pipeline.verb_else': 'ELSE',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'enabled',
       'pipeline.state_disabled': 'disabled',
@@ -168,6 +170,8 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.verb_foreach_action': 'FOREACH_ACTION',
+      'pipeline.verb_if': 'IF',
+      'pipeline.verb_else': 'ELSE',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': '启用',
       'pipeline.state_disabled': '禁用',
@@ -268,6 +272,8 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.verb_foreach_action': 'FOREACH_ACTION',
+      'pipeline.verb_if': 'IF',
+      'pipeline.verb_else': 'ELSE',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': '啟用',
       'pipeline.state_disabled': '停用',
@@ -368,6 +374,8 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.verb_foreach_action': 'FOREACH_ACTION',
+      'pipeline.verb_if': 'IF',
+      'pipeline.verb_else': 'ELSE',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': '有効',
       'pipeline.state_disabled': '無効',
@@ -468,6 +476,8 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.verb_foreach_action': 'FOREACH_ACTION',
+      'pipeline.verb_if': 'IF',
+      'pipeline.verb_else': 'ELSE',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': '사용',
       'pipeline.state_disabled': '사용 안 함',
@@ -568,6 +578,8 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.verb_foreach_action': 'FOREACH_ACTION',
+      'pipeline.verb_if': 'IF',
+      'pipeline.verb_else': 'ELSE',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'bat',
       'pipeline.state_disabled': 'tat',
@@ -668,6 +680,8 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.verb_foreach_action': 'FOREACH_ACTION',
+      'pipeline.verb_if': 'IF',
+      'pipeline.verb_else': 'ELSE',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'مفعل',
       'pipeline.state_disabled': 'معطل',
@@ -768,6 +782,8 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.verb_foreach_action': 'FOREACH_ACTION',
+      'pipeline.verb_if': 'IF',
+      'pipeline.verb_else': 'ELSE',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'actif',
       'pipeline.state_disabled': 'inactif',
@@ -868,6 +884,8 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.verb_foreach_action': 'FOREACH_ACTION',
+      'pipeline.verb_if': 'IF',
+      'pipeline.verb_else': 'ELSE',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'activo',
       'pipeline.state_disabled': 'inactivo',
@@ -968,6 +986,8 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.verb_foreach_action': 'FOREACH_ACTION',
+      'pipeline.verb_if': 'IF',
+      'pipeline.verb_else': 'ELSE',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'включено',
       'pipeline.state_disabled': 'выключено',
@@ -1068,6 +1088,8 @@
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
       'pipeline.verb_foreach_action': 'FOREACH_ACTION',
+      'pipeline.verb_if': 'IF',
+      'pipeline.verb_else': 'ELSE',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'aktiv',
       'pipeline.state_disabled': 'inaktiv',
@@ -2462,8 +2484,8 @@
 	            : n.kind === 'round' ? t('pipeline.verb_round')
 	              : n.kind === 'foreach_task' ? t('pipeline.verb_foreach_task')
 	                : n.kind === 'foreach_action' ? t('pipeline.verb_foreach_action')
-	                : n.kind === 'if' ? ('IF' + (n.expr ? ` ${String(n.expr)}` : ''))
-	                  : n.kind === 'else' ? 'ELSE'
+	                : n.kind === 'if' ? (t('pipeline.verb_if') + (n.expr ? ` ${String(n.expr)}` : ''))
+	                  : n.kind === 'else' ? t('pipeline.verb_else')
 	                : n.type;
         const meta = document.createElement('div');
         meta.className = 'btype';

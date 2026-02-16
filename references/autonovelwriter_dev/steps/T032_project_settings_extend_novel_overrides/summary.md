@@ -31,3 +31,9 @@ Verification (no TCP bind):
   - `python3 autonovelwriter/backend/tests/project_settings_novel_language_unit_test.py`
   - `python3 autonovelwriter/backend/tests/project_settings_novel_overrides_unit_test.py`
   - `node --check autonovelwriter/pwa/app.js`
+
+## I18N
+- Verified the new T032 project-settings UI strings are localized in all required languages (`en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`) in `autonovelwriter/pwa/app.js`.
+- Verified the new Settings modal fields in `autonovelwriter/pwa/index.html` are fully wired to i18n keys (`project.novel_tone*`, `project.novel_target_words*`, `project.inherit_hint`, `project.effective_label`, `project.global_label`).
+- No additional code changes were required in this i18n stage.
+- Verification run: `node --check autonovelwriter/pwa/app.js`.

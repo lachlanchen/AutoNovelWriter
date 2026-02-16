@@ -21,3 +21,7 @@
 - Reduced noisy `unknown_action_id` warnings for valid Action Library entries:
   - Backend now filters `unknown_action_id` warnings if the `action_id` exists in `runtime/actions/{defaults,user}` before returning/logging warnings.
   - PWA script parser treats action ids present in the loaded `/api/actions` index as known (so copied user action ids don’t trigger `unknown_action_id` warnings locally).
+
+## I18N
+- New Action Library UI strings added in this task (STEP action selector + “Customize”) are localized in `autonovelwriter/pwa/app.js` for all required UI languages: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`.
+- No additional user-facing strings were introduced during the Fix stage.

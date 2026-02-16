@@ -17,3 +17,9 @@ Verification (no server start):
 
 ## I18N
 - No user-facing PWA strings were added/changed in this task (runner semantics + backend-only state/WS metadata changes only).
+
+## Next
+1. Add `FOREACH_ACTION` support to the Task Batch schema (ensure `meta_tasks_generate` emits `payload.actions` explicitly, not just `kind`).
+2. Add a PWA inspector for recent `ActionResult` entries (show `vars.prev`, `vars.task.prev`, `vars.action.prev`, artifacts) driven by `action_result_committed`.
+3. Implement minimal IF evaluation + ELSE execution using explicit vars (so `IF` becomes runnable, not parse-only).
+4. Cap/evict persisted `vars_by_task_action` (store only `prev` and bound map sizes) to keep `runner_state.json` small in long runs.

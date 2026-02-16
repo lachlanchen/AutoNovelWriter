@@ -44,6 +44,7 @@ All mutable state and IO live under `autonovelwriter/runtime/` (ignored by git):
 - `autonovelwriter/runtime/logs/` logs
 - `autonovelwriter/runtime/projects/<project_id>/materials/` project materials (inputs)
 - `autonovelwriter/runtime/projects/<project_id>/outputs/` project outputs (drafts/exports)
+- `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json` per-project novel-writing settings overrides (e.g. novel language)
 - `autonovelwriter/runtime/actions/defaults/` seeded default Action Library templates (treated as immutable)
 - `autonovelwriter/runtime/actions/user/` user Action Library templates (created via copy-on-edit)
 
@@ -92,6 +93,7 @@ Blocks UI notes:
 - Health: `GET /api/health`
 - Settings: `GET/POST /api/settings`
 - Projects: `GET /api/projects`, `POST /api/projects/active`
+- Project settings (active project): `GET/POST /api/projects/settings` (per-project overrides like novel language)
 - Materials index (active project): `GET /api/materials/index`
 - Outputs index (active project): `GET /api/outputs/index`
 - Task batches index: `GET /api/tasks/batches/index` (optional: `?project=<project_id>`)
@@ -103,7 +105,7 @@ Blocks UI notes:
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
 - Agent test (gated): `POST /api/agent/test` (runs `codex --version` only when enabled + env gate)
-- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`)
+- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`, `project_active_changed`, `project_settings_updated`)
 
 ## Runner Outputs (Draft Stub)
 
@@ -153,6 +155,9 @@ Novel-writing preferences are stored in backend settings under `settings.novel.*
 
 These are intentionally **separate** from the PWA UI language (`?lang=` / `anw_lang`).
 
+Per-project overrides (currently: novel language) are stored under:
+- `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json`
+
 Current fields (editable in the PWA Settings modal):
 - `settings.novel.language` (BCP-47-ish codes like `en`, `ja`, `zh-Hans`, etc.)
 - `settings.novel.tone`
@@ -164,8 +169,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T01:12:40Z
-- current: T026_project_settings_novel_language_separate / summary — Project settings: novel language (separate from UI)
+- updated_utc: 2026-02-16T01:13:29Z
+- current: T026_project_settings_novel_language_separate / update_readme — Project settings: novel language (separate from UI)
 - queue: total=26 done=25 pending=1
 - last_done: T025_task_batches_details_and_activate — Task batches: details API + activate batch @ 2026-02-16T08:53:11+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_074635_b2

@@ -20,3 +20,6 @@
 2. Add a small PWA indicator for the effective novel language used by the runner (to help debugging when overrides exist).
 3. Extend project settings to more novel-writing preferences (tone/length/etc) while keeping UI language separate.
 4. Add a backend GET option to view settings for a specified project id (not only the active project).
+
+## README
+- Documented per-project settings storage (`runtime/projects/<project_id>/state/project_settings.json`), the new `GET/POST /api/projects/settings` endpoint, and WS events `project_active_changed` / `project_settings_updated`.

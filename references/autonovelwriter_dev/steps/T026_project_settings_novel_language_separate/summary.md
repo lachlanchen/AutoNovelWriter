@@ -14,3 +14,9 @@
 ## I18N
 - Added `project.novel_language_inherit` (new selector option label) across all required UI languages.
 - Added `errors.backend_api_url` (used when the PWA cannot derive the backend API URL) across all required UI languages.
+
+## Next
+1. Add a clear “project override enabled” toggle (or show effective vs override) so it’s obvious when a project is inheriting global settings.
+2. Add a small PWA indicator for the effective novel language used by the runner (to help debugging when overrides exist).
+3. Extend project settings to more novel-writing preferences (tone/length/etc) while keeping UI language separate.
+4. Add a backend GET option to view settings for a specified project id (not only the active project).

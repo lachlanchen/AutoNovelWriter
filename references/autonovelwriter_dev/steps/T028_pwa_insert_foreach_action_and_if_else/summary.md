@@ -18,3 +18,6 @@ Verification (no server start):
 2. Add UI for editing `IF` expressions (`expr`) inline, with immediate script re-render + validate.
 3. Tighten UX constraints around `ELSE`: prevent dragging/outdenting `ELSE` outside its owning `IF` (or show a warning and auto-fix with a clear toast).
 4. Decide how to handle `references/autonovelwriter_dev/prompts/*.txt` artifacts (commit vs gitignore) to keep the repo clean.
+
+## README
+- Updated Blocks UI notes to reflect that the toolbar can insert `FOREACH_ACTION` and `IF`, and that the editor normalizes IF/ELSE structure: `README.md`.

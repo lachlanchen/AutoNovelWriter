@@ -87,8 +87,9 @@ If the backend validate endpoint is unreachable, the PWA falls back to a local p
 
 Blocks UI notes:
 - `LOOP` and `ROUND` repeat counts are editable inline in the blocks list; valid edits immediately update the canonical script textarea.
-- The Blocks toolbar can insert `LOOP`, `ROUND`, and `FOREACH_TASK` containers without hand-editing the script (wraps the selected block, or appends a valid non-empty container).
+- The Blocks toolbar can insert `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, and `IF` containers without hand-editing the script (wraps the selected block, or appends a valid non-empty container).
 - Blocks can be deleted from the canvas (per-block Delete button; keyboard `Delete` when a block is selected). Container deletes splice children up, and the editor keeps containers non-empty to avoid invalid scripts.
+- `IF` blocks are kept structurally valid in the editor: `ELSE` cannot persist outside an `IF`, and the then-branch remains non-empty.
 
 ## Key Backend APIs
 
@@ -171,8 +172,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T01:49:05Z
-- current: T028_pwa_insert_foreach_action_and_if_else / summary — PWA: insert FOREACH_ACTION + IF/ELSE blocks
+- updated_utc: 2026-02-16T01:49:58Z
+- current: T028_pwa_insert_foreach_action_and_if_else / update_readme — PWA: insert FOREACH_ACTION + IF/ELSE blocks
 - queue: total=32 done=27 pending=5
 - last_done: T027_pipeline_if_else_parse_render — Pipeline: IF/ELSE parse+render @ 2026-02-16T09:33:41+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3

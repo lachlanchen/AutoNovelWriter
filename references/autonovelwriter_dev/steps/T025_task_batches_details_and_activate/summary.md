@@ -25,3 +25,6 @@
 2. Add `GET /api/tasks/active` (or include active pointer in projects API) so the PWA can show the currently active batch and task list source more explicitly.
 3. Extend activation flow with an optional “force” flag and better runner coordination (e.g. allow activation while paused, but warn if cursor is mid-FOREACH_TASK).
 4. Add runner-side `FOREACH_ACTION` semantics to execute `task.actions` from batch tasks (ties task batches to Action Library + ActionResult pipeline).
+
+## README
+- Documented task batch details/activation endpoints and WS `tasks_batch_activated`.

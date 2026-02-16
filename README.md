@@ -95,13 +95,15 @@ Blocks UI notes:
 - Materials index (active project): `GET /api/materials/index`
 - Outputs index (active project): `GET /api/outputs/index`
 - Task batches index: `GET /api/tasks/batches/index` (optional: `?project=<project_id>`)
+- Task batch details: `GET /api/tasks/batches/<batch_id>`
+- Task batch activate: `POST /api/tasks/batches/<batch_id>/activate` (writes `runtime/tasks/tasks.json` and project `active_tasks.json`)
 - Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`
 - Pipeline (canonical script + derived JSON): `GET/POST /api/pipeline`
 - Pipeline validate (preview only): `POST /api/pipeline/validate`
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
 - Agent test (gated): `POST /api/agent/test` (runs `codex --version` only when enabled + env gate)
-- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `action_created`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`)
+- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`)
 
 ## Runner Outputs (Draft Stub)
 
@@ -124,6 +126,7 @@ The backend emits:
 - a `log` line `[tasks] created batch: ...`
 
 The PWA includes a minimal Task Batches panel which lists batches via `GET /api/tasks/batches/index` and refreshes on `tasks_batch_created`.
+It can also show batch details (`GET /api/tasks/batches/<batch_id>`) and activate a batch to become the current task list for `FOREACH_TASK` (`POST /api/tasks/batches/<batch_id>/activate`).
 
 ## Agent Settings / Codex Gate
 
@@ -161,8 +164,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T00:52:30Z
-- current: T025_task_batches_details_and_activate / summary — Task batches: details API + activate batch
+- updated_utc: 2026-02-16T00:53:08Z
+- current: T025_task_batches_details_and_activate / update_readme — Task batches: details API + activate batch
 - queue: total=26 done=24 pending=2
 - last_done: T024_runner_actionresult_state_and_var_passing_stub — Runner: ActionResult state + explicit var passing (stub) @ 2026-02-16T08:44:12+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_074635_b2

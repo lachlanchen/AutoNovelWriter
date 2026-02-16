@@ -1,0 +1,20 @@
+{
+  "id": "T026_project_settings_novel_language_separate",
+  "title": "Project settings: novel language (separate from UI)",
+  "notes": "Add persisted per-project novel-writing settings with at least `novel_language`, distinct from UI locale. Provide minimal backend endpoints and a small PWA settings UI. Store under standardized runtime project layout, not in git.",
+  "acceptance": [
+    "Backend exposes get/set project settings (includes novel_language).",
+    "PWA shows a novel language selector separate from UI language selector (no coupling).",
+    "Setting persists across reloads via runtime project state.",
+    "Default is sensible (e.g., inherit from UI only on first project creation, then independent).",
+    "All new user-facing strings localized across all required UI languages.",
+    "No TCP binds; JS syntax check and python compile/import checks pass."
+  ],
+  "tags": [
+    "pwa",
+    "backend",
+    "settings",
+    "i18n",
+    "novel-writing"
+  ]
+}

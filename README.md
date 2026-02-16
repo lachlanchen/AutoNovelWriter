@@ -164,10 +164,10 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T00:53:08Z
-- current: T025_task_batches_details_and_activate / update_readme — Task batches: details API + activate batch
-- queue: total=26 done=24 pending=2
-- last_done: T024_runner_actionresult_state_and_var_passing_stub — Runner: ActionResult state + explicit var passing (stub) @ 2026-02-16T08:44:12+0800
+- updated_utc: 2026-02-16T00:53:59Z
+- current: T026_project_settings_novel_language_separate / plan — Project settings: novel language (separate from UI)
+- queue: total=26 done=25 pending=1
+- last_done: T025_task_batches_details_and_activate — Task batches: details API + activate batch @ 2026-02-16T08:53:11+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_074635_b2
 - autoappdev_head: 8bc23a5
 <!-- AUTO_DEV_PROGRESS_END -->

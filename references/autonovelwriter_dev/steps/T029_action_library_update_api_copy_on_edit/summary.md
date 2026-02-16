@@ -14,3 +14,9 @@ Verification (no server start):
 
 ## I18N
 - No user-facing strings were introduced or changed by this task (backend API/WS change only).
+
+## Next
+1. PWA: build a minimal Action Editor UI that uses `PUT /api/actions/<action_id>` and handles the `new_action_id` copy-on-edit response by switching references in the pipeline AST/script.
+2. Backend: stabilize error responses for action updates (structured `{error_code, field}`) and add basic size limits for `prompt/script`.
+3. PWA: show toast/log entries for `action_created` and `action_updated` so updates are observable without opening devtools.
+4. Docs: document `PUT /api/actions/<action_id>` request/response shapes (including `{updates:{...}}` vs top-level fields) in `README.md`.

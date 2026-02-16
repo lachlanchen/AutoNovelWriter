@@ -11,7 +11,11 @@ Backend (Tornado):
 python3 autonovelwriter/backend/server.py --port 8787
 ```
 
-PWA (static dev server):
+The backend also serves the PWA static assets from `autonovelwriter/pwa/` by default, so you can open:
+- `http://127.0.0.1:8787/` (PWA)
+- WebSocket: `ws://127.0.0.1:8787/ws`
+
+Optional: PWA (separate static dev server):
 ```bash
 python3 -m http.server 5173 --directory autonovelwriter/pwa
 ```
@@ -90,6 +94,7 @@ Blocks UI notes:
 - The Blocks toolbar can insert `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, and `IF` containers without hand-editing the script (wraps the selected block, or appends a valid non-empty container).
 - Blocks can be deleted from the canvas (per-block Delete button; keyboard `Delete` when a block is selected). Container deletes splice children up, and the editor keeps containers non-empty to avoid invalid scripts.
 - `IF` blocks are kept structurally valid in the editor: `ELSE` cannot persist outside an `IF`, and the then-branch remains non-empty.
+- `STEP` blocks expose Action Library controls: action selector, `Customize` (copy a default action to a user action and switch), and `Edit` (Action Editor modal for `name/tool/prompt/script`).
 
 ## Key Backend APIs
 
@@ -102,7 +107,7 @@ Blocks UI notes:
 - Task batches index: `GET /api/tasks/batches/index` (optional: `?project=<project_id>`)
 - Task batch details: `GET /api/tasks/batches/<batch_id>`
 - Task batch activate: `POST /api/tasks/batches/<batch_id>/activate` (writes `runtime/tasks/tasks.json` and project `active_tasks.json`)
-- Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`, `PUT /api/actions/<action_id>` (copy-on-edit update)
+- Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`, `PUT /api/actions/<action_id>` (copy-on-edit update for defaults)
 - Pipeline (canonical script + derived JSON): `GET/POST /api/pipeline`
 - Pipeline validate (preview only): `POST /api/pipeline/validate`
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
@@ -172,8 +177,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T02:17:25Z
-- current: T030_pwa_action_editor_minimal / summary — PWA: Action Editor (prompt/script/tool)
+- updated_utc: 2026-02-16T02:18:36Z
+- current: T030_pwa_action_editor_minimal / update_readme — PWA: Action Editor (prompt/script/tool)
 - queue: total=32 done=29 pending=3
 - last_done: T029_action_library_update_api_copy_on_edit — Action Library: update API (copy-on-edit) @ 2026-02-16T09:58:03+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3

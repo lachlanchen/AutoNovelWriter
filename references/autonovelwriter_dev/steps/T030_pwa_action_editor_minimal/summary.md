@@ -22,3 +22,6 @@ Verification (no server start):
 2. Add a minimal ActionResult viewer panel (per-run/per-step) so users can inspect inputs/outputs without opening files.
 3. Add a pipeline-safe “Replace action id” operation that updates all STEP references when an action is renamed/superseded.
 4. Add keyboard focus trapping + ESC close for modals (Settings + Action Editor) for better accessibility and mobile UX.
+
+## README
+- Updated `README.md` to note the backend can serve the PWA directly, and documented the new STEP Action Editor entrypoint (`Edit`) and copy-on-edit behavior in the Blocks UI notes / Action Library API list.

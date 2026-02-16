@@ -1460,8 +1460,28 @@ def _read_jsonl_preview(p: Path, head_n: int = 20, tail_n: int = 20, max_bytes: 
 
     # Tail (bounded bytes)
     try:
-        tail_objs = _read_jsonl_tail(p, limit=max(0, int(tail_n or 0)), max_bytes=int(max_bytes or 2_000_000))
-        out["tail"] = tail_objs
+        want = max(0, int(tail_n or 0))
+        if want <= 0:
+            out["tail"] = []
+        else:
+            with p.open("rb") as f:
+                f.seek(0, os.SEEK_END)
+                size = f.tell()
+                start = max(0, size - int(max_bytes or 2_000_000))
+                f.seek(start, os.SEEK_SET)
+                chunk = f.read()
+            text = chunk.decode("utf-8", errors="replace")
+            items = []
+            for line in text.splitlines()[-max(1, want * 3) :]:
+                t = (line or "").strip()
+                if not t:
+                    continue
+                try:
+                    obj = json.loads(t)
+                    items.append(obj if isinstance(obj, dict) else {"_raw": t})
+                except Exception:
+                    items.append({"_raw": t})
+            out["tail"] = items[-want:]
     except Exception:
         out["tail"] = []
     return out
@@ -3249,7 +3269,7 @@ class TasksBatchActivateHandler(BaseHandler):
         if not _is_safe_batch_id(bid):
             return self.write_json({"ok": False, "error": "bad_batch_id"}, status=400)
         st = self._runner.status() if self._runner else {}
-        if isinstance(st, dict) and st.get("status") not in ("idle",):
+        if isinstance(st, dict) and st.get("status") not in ("idle", "paused"):
             return self.write_json({"ok": False, "error": "runner_not_idle", "status": st}, status=409)
 
         pid = load_active_project(self._paths)

@@ -13,3 +13,6 @@
   - Handles WS `tasks_batch_activated` by refreshing the batches panel.
 - Added unit-style backend test (no sockets): `autonovelwriter/backend/tests/tasks_batch_activate_unit_test.py`.
 
+## Fixes
+- Batch details now returns a more faithful bounded tail preview: tail lines are preserved as raw (`{\"_raw\": ...}`) when JSON decoding fails, instead of being silently skipped.
+- Batch activation is allowed while the runner is `paused` (in addition to `idle`) to support “prepare next batch during a pause” workflows.

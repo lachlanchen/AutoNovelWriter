@@ -464,6 +464,9 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
     # - STEP <type>
     # - DISABLED <type>
     # - LOOP <n> with 2-space indentation of children
+    # - ROUND <n> with 2-space indentation of children
+    # - FOREACH_TASK with 2-space indentation of children
+    # - FOREACH_ACTION with 2-space indentation of children
     #
     # Returns:
     # - pipeline (flat list, for backward compatibility)
@@ -582,6 +585,10 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
         if verb == "FOREACH_ACTION":
             if len(parts) != 1:
                 warnings.append({"line": ln, "code": "too_many_tokens", "text": raw})
+            # Intended nesting is under FOREACH_TASK, but keep parsing permissive.
+            parent_kind = stack[-1][2]
+            if parent_kind != "foreach_task":
+                warnings.append({"line": ln, "code": "foreach_action_outside_foreach_task", "text": raw})
             foreach_children = []
             foreach_node = _ast_foreach_action(children=foreach_children)
             stack[-1][1].append(foreach_node)

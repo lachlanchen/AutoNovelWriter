@@ -6,3 +6,5 @@
 - PWA fallback (`autonovelwriter/pwa/app.js`): added `FOREACH_ACTION` parse/render + AST normalization so offline/validate fallback stays consistent with backend.
 - Added a no-server round-trip test: `autonovelwriter/backend/tests/pipeline_foreach_action_roundtrip_test.py`.
 
+## Fixes
+- Parser clarity: updated backend comments to list all supported v2 verbs and added a non-fatal warning (`foreach_action_outside_foreach_task`) when `FOREACH_ACTION` appears outside `FOREACH_TASK` (backend + PWA fallback).

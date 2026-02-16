@@ -1828,6 +1828,9 @@
 
       if (verb === 'FOREACH_ACTION') {
         if (parts.length > 1) warnings.push({ line: ln, code: 'too_many_tokens', text: raw });
+        // Intended nesting is under FOREACH_TASK, but keep parsing permissive.
+        const parentKind = stack.length ? stack[stack.length - 1].containerKind : null;
+        if (parentKind !== 'foreach_task') warnings.push({ line: ln, code: 'foreach_action_outside_foreach_task', text: raw });
         const fa = { kind: 'foreach_action', children: [] };
         stack[stack.length - 1].children.push(fa);
         stack.push({ level: lvl + 1, children: fa.children, containerLine: ln, containerKind: 'foreach_action' });

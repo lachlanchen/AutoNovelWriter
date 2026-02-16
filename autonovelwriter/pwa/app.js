@@ -1893,7 +1893,7 @@
     };
   }
 
-  function normalizePipelineAst(ast) {
+	  function normalizePipelineAst(ast) {
     const cleanStep = (n) => {
       if (!n || typeof n !== 'object') return null;
       const type = typeof n.type === 'string' ? n.type : '';
@@ -1934,25 +1934,48 @@
       }
       return { kind: 'foreach_task', children };
     };
-    const cleanForeachAction = (n) => {
-      if (!n || typeof n !== 'object') return null;
-      const kids = Array.isArray(n.children) ? n.children : [];
-      const children = [];
-      for (const c of kids) {
-        const cc = cleanNode(c);
-        if (cc) children.push(cc);
-      }
-      return { kind: 'foreach_action', children };
-    };
-    const cleanNode = (n) => {
-      if (!n || typeof n !== 'object') return null;
-      if (n.kind === 'step') return cleanStep(n);
-      if (n.kind === 'loop') return cleanLoop(n);
-      if (n.kind === 'round') return cleanRound(n);
-      if (n.kind === 'foreach_task') return cleanForeachTask(n);
-      if (n.kind === 'foreach_action') return cleanForeachAction(n);
-      return null;
-    };
+	    const cleanForeachAction = (n) => {
+	      if (!n || typeof n !== 'object') return null;
+	      const kids = Array.isArray(n.children) ? n.children : [];
+	      const children = [];
+	      for (const c of kids) {
+	        const cc = cleanNode(c);
+	        if (cc) children.push(cc);
+	      }
+	      return { kind: 'foreach_action', children };
+	    };
+	    const cleanIf = (n) => {
+	      if (!n || typeof n !== 'object') return null;
+	      const expr = typeof n.expr === 'string' ? n.expr : '';
+	      const kids = Array.isArray(n.children) ? n.children : [];
+	      const children = [];
+	      for (const c of kids) {
+	        const cc = cleanNode(c);
+	        if (cc) children.push(cc);
+	      }
+	      return { kind: 'if', expr, children };
+	    };
+	    const cleanElse = (n) => {
+	      if (!n || typeof n !== 'object') return null;
+	      const kids = Array.isArray(n.children) ? n.children : [];
+	      const children = [];
+	      for (const c of kids) {
+	        const cc = cleanNode(c);
+	        if (cc) children.push(cc);
+	      }
+	      return { kind: 'else', children };
+	    };
+	    const cleanNode = (n) => {
+	      if (!n || typeof n !== 'object') return null;
+	      if (n.kind === 'step') return cleanStep(n);
+	      if (n.kind === 'loop') return cleanLoop(n);
+	      if (n.kind === 'round') return cleanRound(n);
+	      if (n.kind === 'foreach_task') return cleanForeachTask(n);
+	      if (n.kind === 'foreach_action') return cleanForeachAction(n);
+	      if (n.kind === 'if') return cleanIf(n);
+	      if (n.kind === 'else') return cleanElse(n);
+	      return null;
+	    };
 
     const kids = ast && typeof ast === 'object' && Array.isArray(ast.children) ? ast.children : null;
     if (!kids) return defaultPipelineAst();
@@ -1965,45 +1988,45 @@
     return { kind: 'root', version: 2, children };
   }
 
-  function flattenAstSteps(ast) {
-    const out = [];
-    const walk = (n) => {
-      if (!n || typeof n !== 'object') return;
-      if (n.kind === 'step') {
-        out.push({ id: n.type, type: n.type, enabled: n.enabled !== false });
-        return;
-      }
-      if ((n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task' || n.kind === 'foreach_action') && Array.isArray(n.children)) {
-        for (const c of n.children) walk(c);
-      }
-    };
+	  function flattenAstSteps(ast) {
+	    const out = [];
+	    const walk = (n) => {
+	      if (!n || typeof n !== 'object') return;
+	      if (n.kind === 'step') {
+	        out.push({ id: n.type, type: n.type, enabled: n.enabled !== false });
+	        return;
+	      }
+	      if ((n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task' || n.kind === 'foreach_action' || n.kind === 'if' || n.kind === 'else') && Array.isArray(n.children)) {
+	        for (const c of n.children) walk(c);
+	      }
+	    };
     if (ast && typeof ast === 'object' && Array.isArray(ast.children)) {
       for (const c of ast.children) walk(c);
     }
     return out;
   }
 
-  function astHasLoop(n) {
-    if (!n || typeof n !== 'object') return false;
-    if (n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task' || n.kind === 'foreach_action') return true;
-    const kids = Array.isArray(n.children) ? n.children : [];
-    for (const c of kids) {
-      if (astHasLoop(c)) return true;
-    }
-    return false;
-  }
+	  function astHasLoop(n) {
+	    if (!n || typeof n !== 'object') return false;
+	    if (n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task' || n.kind === 'foreach_action' || n.kind === 'if' || n.kind === 'else') return true;
+	    const kids = Array.isArray(n.children) ? n.children : [];
+	    for (const c of kids) {
+	      if (astHasLoop(c)) return true;
+	    }
+	    return false;
+	  }
 
-  function renderScriptFromAst(ast) {
-    const header = astHasLoop(ast) ? '# AutoNovelWriter pipeline script v2' : '# AutoNovelWriter pipeline script v1';
-    const lines = [header];
-    const emit = (n, level) => {
-      if (!n || typeof n !== 'object') return;
-      const indent = '  '.repeat(level);
-      if (n.kind === 'step') {
-        const verb = n.enabled === false ? 'DISABLED' : 'STEP';
-        lines.push(`${indent}${verb} ${n.type}`);
-        return;
-      }
+	  function renderScriptFromAst(ast) {
+	    const header = astHasLoop(ast) ? '# AutoNovelWriter pipeline script v2' : '# AutoNovelWriter pipeline script v1';
+	    const lines = [header];
+	    const emit = (n, level) => {
+	      if (!n || typeof n !== 'object') return;
+	      const indent = '  '.repeat(level);
+	      if (n.kind === 'step') {
+	        const verb = n.enabled === false ? 'DISABLED' : 'STEP';
+	        lines.push(`${indent}${verb} ${n.type}`);
+	        return;
+	      }
       if (n.kind === 'loop') {
         const repeat = Number.isFinite(n.repeat) ? n.repeat : parseInt(String(n.repeat || '1'), 10);
         lines.push(`${indent}LOOP ${repeat > 0 ? repeat : 1}`);
@@ -2024,18 +2047,47 @@
         for (const c of kids) emit(c, level + 1);
         return;
       }
-      if (n.kind === 'foreach_action') {
-        lines.push(`${indent}FOREACH_ACTION`);
-        const kids = Array.isArray(n.children) ? n.children : [];
-        for (const c of kids) emit(c, level + 1);
-      }
-    };
-    const kids = ast && typeof ast === 'object' && Array.isArray(ast.children) ? ast.children : [];
-    for (const c of kids) emit(c, 0);
-    return lines.join('\n') + '\n';
-  }
+	      if (n.kind === 'foreach_action') {
+	        lines.push(`${indent}FOREACH_ACTION`);
+	        const kids = Array.isArray(n.children) ? n.children : [];
+	        for (const c of kids) emit(c, level + 1);
+	        return;
+	      }
+	      if (n.kind === 'if') {
+	        const expr = typeof n.expr === 'string' ? n.expr.trim() : '';
+	        if (!expr) return;
+	        lines.push(`${indent}IF ${expr}`);
+	        const kids = Array.isArray(n.children) ? n.children : [];
+	        let elseNode = null;
+	        const thenKids = [];
+	        for (const c of kids) {
+	          if (c && typeof c === 'object' && c.kind === 'else') {
+	            elseNode = c;
+	            break;
+	          }
+	          thenKids.push(c);
+	        }
+	        for (const c of thenKids) emit(c, level + 1);
+	        if (elseNode && typeof elseNode === 'object') {
+	          lines.push(`${indent}ELSE`);
+	          const ek = Array.isArray(elseNode.children) ? elseNode.children : [];
+	          for (const c of ek) emit(c, level + 1);
+	        }
+	        return;
+	      }
+	      if (n.kind === 'else') {
+	        // Usually rendered as part of IF; keep for robustness.
+	        lines.push(`${indent}ELSE`);
+	        const kids = Array.isArray(n.children) ? n.children : [];
+	        for (const c of kids) emit(c, level + 1);
+	      }
+	    };
+	    const kids = ast && typeof ast === 'object' && Array.isArray(ast.children) ? ast.children : [];
+	    for (const c of kids) emit(c, 0);
+	    return lines.join('\n') + '\n';
+	  }
 
-  function parseScriptToAst(script) {
+	  function parseScriptToAst(script) {
     const warnings = [];
     const errors = [];
     const knownActions = new Set();
@@ -2052,19 +2104,32 @@
       return stack[stack.length - 1].level;
     }
 
-    function closeTo(level) {
-      while (stack.length && level < stack[stack.length - 1].level) {
-        const top = stack[stack.length - 1];
-        if (top.containerLine !== null && (!top.children || !top.children.length)) {
-          const kind = top.containerKind;
-          if (kind === 'loop') errors.push({ line: top.containerLine, code: 'loop_empty', text: 'LOOP' });
-          else if (kind === 'round') errors.push({ line: top.containerLine, code: 'round_empty', text: 'ROUND' });
-          else if (kind === 'foreach_task') errors.push({ line: top.containerLine, code: 'foreach_task_empty', text: 'FOREACH_TASK' });
-          else if (kind === 'foreach_action') errors.push({ line: top.containerLine, code: 'foreach_action_empty', text: 'FOREACH_ACTION' });
-        }
-        stack.pop();
-      }
-    }
+	    function closeTo(level) {
+	      while (stack.length && level < stack[stack.length - 1].level) {
+	        const top = stack[stack.length - 1];
+	        if (top.containerLine !== null && (!top.children || !top.children.length)) {
+	          const kind = top.containerKind;
+	          if (kind === 'loop') errors.push({ line: top.containerLine, code: 'loop_empty', text: 'LOOP' });
+	          else if (kind === 'round') errors.push({ line: top.containerLine, code: 'round_empty', text: 'ROUND' });
+	          else if (kind === 'foreach_task') errors.push({ line: top.containerLine, code: 'foreach_task_empty', text: 'FOREACH_TASK' });
+	          else if (kind === 'foreach_action') errors.push({ line: top.containerLine, code: 'foreach_action_empty', text: 'FOREACH_ACTION' });
+	          else if (kind === 'if') errors.push({ line: top.containerLine, code: 'if_empty', text: 'IF' });
+	          else if (kind === 'else') errors.push({ line: top.containerLine, code: 'else_empty', text: 'ELSE' });
+	        }
+	        if (top.containerLine !== null && top.containerKind === 'if' && Array.isArray(top.children) && top.children.length) {
+	          // IF must have a non-ELSE child in its then-branch.
+	          let hasThen = false;
+	          for (const c of top.children) {
+	            if (c && typeof c === 'object' && c.kind !== 'else') {
+	              hasThen = true;
+	              break;
+	            }
+	          }
+	          if (!hasThen) errors.push({ line: top.containerLine, code: 'if_empty', text: 'IF' });
+	        }
+	        stack.pop();
+	      }
+	    }
 
     function leadingSpaces(raw) {
       let n = 0;
@@ -2157,22 +2222,52 @@
         continue;
       }
 
-      if (verb === 'FOREACH_ACTION') {
-        if (parts.length > 1) warnings.push({ line: ln, code: 'too_many_tokens', text: raw });
-        // Intended nesting is under FOREACH_TASK, but keep parsing permissive.
-        const parentKind = stack.length ? stack[stack.length - 1].containerKind : null;
-        if (parentKind !== 'foreach_task') warnings.push({ line: ln, code: 'foreach_action_outside_foreach_task', text: raw });
-        const fa = { kind: 'foreach_action', children: [] };
-        stack[stack.length - 1].children.push(fa);
-        stack.push({ level: lvl + 1, children: fa.children, containerLine: ln, containerKind: 'foreach_action' });
-        continue;
-      }
+	      if (verb === 'FOREACH_ACTION') {
+	        if (parts.length > 1) warnings.push({ line: ln, code: 'too_many_tokens', text: raw });
+	        // Intended nesting is under FOREACH_TASK, but keep parsing permissive.
+	        const parentKind = stack.length ? stack[stack.length - 1].containerKind : null;
+	        if (parentKind !== 'foreach_task') warnings.push({ line: ln, code: 'foreach_action_outside_foreach_task', text: raw });
+	        const fa = { kind: 'foreach_action', children: [] };
+	        stack[stack.length - 1].children.push(fa);
+	        stack.push({ level: lvl + 1, children: fa.children, containerLine: ln, containerKind: 'foreach_action' });
+	        continue;
+	      }
 
-      if (verb === 'STEP' || verb === 'DISABLED') {
-        if (parts.length < 2) {
-          warnings.push({ line: ln, code: 'too_few_tokens', text: raw });
-          continue;
-        }
+	      if (verb === 'IF') {
+	        const expr = String(raw.trim().slice(2) || '').trim();
+	        if (!expr) {
+	          errors.push({ line: ln, code: 'if_missing_expr', text: raw });
+	          continue;
+	        }
+	        const ifn = { kind: 'if', expr, children: [] };
+	        stack[stack.length - 1].children.push(ifn);
+	        stack.push({ level: lvl + 1, children: ifn.children, containerLine: ln, containerKind: 'if' });
+	        continue;
+	      }
+
+	      if (verb === 'ELSE') {
+	        if (parts.length > 1) warnings.push({ line: ln, code: 'too_many_tokens', text: raw });
+	        const parentKids = stack[stack.length - 1].children;
+	        const prev = Array.isArray(parentKids) && parentKids.length ? parentKids[parentKids.length - 1] : null;
+	        if (!prev || typeof prev !== 'object' || prev.kind !== 'if' || !Array.isArray(prev.children)) {
+	          errors.push({ line: ln, code: 'else_without_if', text: raw });
+	          continue;
+	        }
+	        if (prev.children.some((c) => c && typeof c === 'object' && c.kind === 'else')) {
+	          errors.push({ line: ln, code: 'else_duplicate', text: raw });
+	          continue;
+	        }
+	        const en = { kind: 'else', children: [] };
+	        prev.children.push(en);
+	        stack.push({ level: lvl + 1, children: en.children, containerLine: ln, containerKind: 'else' });
+	        continue;
+	      }
+
+	      if (verb === 'STEP' || verb === 'DISABLED') {
+	        if (parts.length < 2) {
+	          warnings.push({ line: ln, code: 'too_few_tokens', text: raw });
+	          continue;
+	        }
         const type = parts[1];
         if (!/^[A-Za-z0-9_-]+$/.test(String(type || ''))) {
           warnings.push({ line: ln, code: 'invalid_step_token', text: raw });
@@ -2211,23 +2306,23 @@
     return out;
   }
 
-  function getContainerAndIndex(ast, path) {
-    if (!ast || typeof ast !== 'object') return null;
-    if (!Array.isArray(path) || !path.length) return null;
-    let parent = ast;
-    let container = Array.isArray(ast.children) ? ast.children : null;
-    if (!container) return null;
-    for (let d = 0; d < path.length - 1; d++) {
-      const idx = path[d];
-      const node = container[idx];
-      if (!node || typeof node !== 'object' || (node.kind !== 'loop' && node.kind !== 'round' && node.kind !== 'foreach_task' && node.kind !== 'foreach_action') || !Array.isArray(node.children)) return null;
-      parent = node;
-      container = node.children;
-    }
-    const index = path[path.length - 1];
-    if (index < 0 || index >= container.length) return null;
-    return { parent, container, index, node: container[index], parentPath: path.slice(0, -1) };
-  }
+	  function getContainerAndIndex(ast, path) {
+	    if (!ast || typeof ast !== 'object') return null;
+	    if (!Array.isArray(path) || !path.length) return null;
+	    let parent = ast;
+	    let container = Array.isArray(ast.children) ? ast.children : null;
+	    if (!container) return null;
+	    for (let d = 0; d < path.length - 1; d++) {
+	      const idx = path[d];
+	      const node = container[idx];
+	      if (!node || typeof node !== 'object' || (node.kind !== 'loop' && node.kind !== 'round' && node.kind !== 'foreach_task' && node.kind !== 'foreach_action' && node.kind !== 'if' && node.kind !== 'else') || !Array.isArray(node.children)) return null;
+	      parent = node;
+	      container = node.children;
+	    }
+	    const index = path[path.length - 1];
+	    if (index < 0 || index >= container.length) return null;
+	    return { parent, container, index, node: container[index], parentPath: path.slice(0, -1) };
+	  }
 
   function clearDropTargets() {
     const els = blocksEl.querySelectorAll('.drop-target');
@@ -2288,13 +2383,13 @@
     try { pipeOutdent.disabled = !on; } catch (_) {}
   }
 
-  function renderPipeline() {
-    blocksEl.innerHTML = '';
-    updateIndentButtons();
+	  function renderPipeline() {
+	    blocksEl.innerHTML = '';
+	    updateIndentButtons();
 
-    function isContainerKind(kind) {
-      return kind === 'loop' || kind === 'round' || kind === 'foreach_task' || kind === 'foreach_action';
-    }
+	    function isContainerKind(kind) {
+	      return kind === 'loop' || kind === 'round' || kind === 'foreach_task' || kind === 'foreach_action' || kind === 'if' || kind === 'else';
+	    }
 
     function attachContainerDrop(ol, parentPath) {
       const parentKey = pathKey(parentPath);
@@ -2346,12 +2441,14 @@
         const mid = document.createElement('div');
         const title = document.createElement('div');
         title.className = 'btitle';
-        title.textContent =
-          n.kind === 'loop' ? t('pipeline.verb_loop')
-            : n.kind === 'round' ? t('pipeline.verb_round')
-              : n.kind === 'foreach_task' ? t('pipeline.verb_foreach_task')
-                : n.kind === 'foreach_action' ? t('pipeline.verb_foreach_action')
-                : n.type;
+	        title.textContent =
+	          n.kind === 'loop' ? t('pipeline.verb_loop')
+	            : n.kind === 'round' ? t('pipeline.verb_round')
+	              : n.kind === 'foreach_task' ? t('pipeline.verb_foreach_task')
+	                : n.kind === 'foreach_action' ? t('pipeline.verb_foreach_action')
+	                : n.kind === 'if' ? ('IF' + (n.expr ? ` ${String(n.expr)}` : ''))
+	                  : n.kind === 'else' ? 'ELSE'
+	                : n.type;
         const meta = document.createElement('div');
         meta.className = 'btype';
         if (n.kind === 'loop' || n.kind === 'round') {
@@ -2447,14 +2544,16 @@
           row.appendChild(inp);
           meta.appendChild(row);
           meta.appendChild(err);
-        } else if (n.kind === 'foreach_task' || n.kind === 'foreach_action') {
-          const badge = document.createElement('span');
-          badge.className = 'badge';
-          badge.textContent = t('pipeline.badge_foreach');
-          meta.appendChild(badge);
-        } else {
-          meta.textContent = n.enabled === false ? t('pipeline.state_disabled') : t('pipeline.state_enabled');
-        }
+	        } else if (n.kind === 'foreach_task' || n.kind === 'foreach_action') {
+	          const badge = document.createElement('span');
+	          badge.className = 'badge';
+	          badge.textContent = t('pipeline.badge_foreach');
+	          meta.appendChild(badge);
+	        } else if (n.kind === 'if' || n.kind === 'else') {
+	          meta.textContent = '';
+	        } else {
+	          meta.textContent = n.enabled === false ? t('pipeline.state_disabled') : t('pipeline.state_enabled');
+	        }
         mid.appendChild(title);
         mid.appendChild(meta);
 
@@ -2691,27 +2790,30 @@
     renderPipeline();
   }
 
-  function removeEmptyContainers(ast) {
-    const prune = (n) => {
-      if (!n || typeof n !== 'object') return;
-      if (!Array.isArray(n.children)) return;
-      const next = [];
-      for (const c of n.children) {
-        if (!c || typeof c !== 'object') continue;
-        prune(c);
-        if ((c.kind === 'loop' || c.kind === 'round' || c.kind === 'foreach_task' || c.kind === 'foreach_action') && (!Array.isArray(c.children) || c.children.length === 0)) {
-          continue;
-        }
-        next.push(c);
-      }
-      n.children = next;
-    };
-    prune(ast);
-  }
+	  function removeEmptyContainers(ast) {
+	    const prune = (n) => {
+	      if (!n || typeof n !== 'object') return;
+	      if (!Array.isArray(n.children)) return;
+	      const next = [];
+	      for (const c of n.children) {
+	        if (!c || typeof c !== 'object') continue;
+	        prune(c);
+	        if ((c.kind === 'loop' || c.kind === 'round' || c.kind === 'foreach_task' || c.kind === 'foreach_action' || c.kind === 'else') && (!Array.isArray(c.children) || c.children.length === 0)) continue;
+	        if (c.kind === 'if') {
+	          const kids = Array.isArray(c.children) ? c.children : [];
+	          const hasThen = kids.some((x) => x && typeof x === 'object' && x.kind !== 'else');
+	          if (!hasThen) continue;
+	        }
+	        next.push(c);
+	      }
+	      n.children = next;
+	    };
+	    prune(ast);
+	  }
 
-  function isContainerNode(n) {
-    return !!(n && typeof n === 'object' && (n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task' || n.kind === 'foreach_action') && Array.isArray(n.children));
-  }
+	  function isContainerNode(n) {
+	    return !!(n && typeof n === 'object' && (n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task' || n.kind === 'foreach_action' || n.kind === 'if' || n.kind === 'else') && Array.isArray(n.children));
+	  }
 
   function ensureNonEmptyChildren(children) {
     if (!Array.isArray(children)) return false;
@@ -2767,11 +2869,11 @@
     const { container, index, parentPath } = info;
     if (index <= 0) return;
     const prev = container[index - 1];
-    const node = container.splice(index, 1)[0];
-    if (prev && typeof prev === 'object' && (prev.kind === 'loop' || prev.kind === 'round' || prev.kind === 'foreach_task' || prev.kind === 'foreach_action') && Array.isArray(prev.children)) {
-      prev.children.push(node);
-      setSelected(pathKey(parentPath.concat([index - 1, prev.children.length - 1])));
-    } else {
+	    const node = container.splice(index, 1)[0];
+	    if (prev && typeof prev === 'object' && (prev.kind === 'loop' || prev.kind === 'round' || prev.kind === 'foreach_task' || prev.kind === 'foreach_action' || prev.kind === 'if' || prev.kind === 'else') && Array.isArray(prev.children)) {
+	      prev.children.push(node);
+	      setSelected(pathKey(parentPath.concat([index - 1, prev.children.length - 1])));
+	    } else {
       // Minimal, semantics-preserving behavior: wrap in LOOP 1 so indentation is meaningful.
       const loop = { kind: 'loop', repeat: 1, children: [node] };
       container.splice(index, 0, loop);
@@ -2787,13 +2889,13 @@
     if (!selected) return;
     const path = parsePathKey(selected);
     if (path.length < 2) return;
-    const info = getContainerAndIndex(pipelineAst, path);
-    if (!info) return;
-    const { container, index, parentPath } = info;
-    // parentPath points to the parent container node.
-    const containerPath = parentPath;
-    const cInfo = getContainerAndIndex(pipelineAst, containerPath);
-    if (!cInfo || !cInfo.node || (cInfo.node.kind !== 'loop' && cInfo.node.kind !== 'round' && cInfo.node.kind !== 'foreach_task' && cInfo.node.kind !== 'foreach_action')) return;
+	    const info = getContainerAndIndex(pipelineAst, path);
+	    if (!info) return;
+	    const { container, index, parentPath } = info;
+	    // parentPath points to the parent container node.
+	    const containerPath = parentPath;
+	    const cInfo = getContainerAndIndex(pipelineAst, containerPath);
+	    if (!cInfo || !cInfo.node || (cInfo.node.kind !== 'loop' && cInfo.node.kind !== 'round' && cInfo.node.kind !== 'foreach_task' && cInfo.node.kind !== 'foreach_action' && cInfo.node.kind !== 'if' && cInfo.node.kind !== 'else')) return;
     const containerNode = cInfo.node;
     const outerParentPath = cInfo.parentPath;
     const outerInfo = outerParentPath.length ? getContainerAndIndex(pipelineAst, outerParentPath) : null;

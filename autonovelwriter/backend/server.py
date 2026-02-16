@@ -610,7 +610,7 @@ def _flatten_ast_steps(ast: dict) -> list:
             if isinstance(t, str) and t:
                 out.append({"id": t, "type": t, "enabled": bool(node.get("enabled", True))})
             return
-        if k in ("loop", "round", "foreach_task", "foreach_action"):
+        if k in ("loop", "round", "foreach_task", "foreach_action", "if", "else"):
             kids = node.get("children")
             if isinstance(kids, list):
                 for c in kids:
@@ -629,7 +629,7 @@ def _ast_has_loop(ast: dict) -> bool:
         if not isinstance(node, dict):
             return False
         k = node.get("kind")
-        if k in ("loop", "round", "foreach_task", "foreach_action"):
+        if k in ("loop", "round", "foreach_task", "foreach_action", "if", "else"):
             return True
         kids = node.get("children")
         if isinstance(kids, list):
@@ -713,6 +713,38 @@ def render_pipeline_script_from_ast(ast: dict) -> str:
                 for c in kids:
                     emit(c, level + 1)
             return
+        if k == "if":
+            expr = node.get("expr")
+            expr_s = str(expr).strip() if isinstance(expr, str) else ""
+            if not expr_s:
+                return
+            lines.append(indent + f"IF {expr_s}")
+            kids = node.get("children")
+            then_kids = []
+            else_node = None
+            if isinstance(kids, list):
+                for c in kids:
+                    if isinstance(c, dict) and c.get("kind") == "else":
+                        else_node = c
+                        break
+                    then_kids.append(c)
+            for c in then_kids:
+                emit(c, level + 1)
+            if isinstance(else_node, dict):
+                lines.append(indent + "ELSE")
+                ek = else_node.get("children")
+                if isinstance(ek, list):
+                    for c in ek:
+                        emit(c, level + 1)
+            return
+        if k == "else":
+            # ELSE is usually emitted as part of the parent IF; keep this for robustness.
+            lines.append(indent + "ELSE")
+            kids = node.get("children")
+            if isinstance(kids, list):
+                for c in kids:
+                    emit(c, level + 1)
+            return
 
     if isinstance(ast, dict) and ast.get("kind") == "root":
         kids = ast.get("children", [])
@@ -762,6 +794,7 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
     # - ROUND <n> with 2-space indentation of children
     # - FOREACH_TASK with 2-space indentation of children
     # - FOREACH_ACTION with 2-space indentation of children
+    # - IF <expr> with 2-space indentation of children, and optional ELSE with its own children
     #
     # Returns:
     # - pipeline (flat list, for backward compatibility)
@@ -774,6 +807,7 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
 
     root_children = []
     # stack frames: (expected_level, children_list, container_kind, container_line)
+    # container_kind values: loop, round, foreach_task, foreach_action, if, else
     stack = [(0, root_children, None, None)]
 
     def current_level() -> int:
@@ -792,6 +826,15 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
                     errors.append({"line": line_no, "code": "foreach_task_empty", "text": "FOREACH_TASK"})
                 elif kind == "foreach_action":
                     errors.append({"line": line_no, "code": "foreach_action_empty", "text": "FOREACH_ACTION"})
+                elif kind == "if":
+                    errors.append({"line": line_no, "code": "if_empty", "text": "IF"})
+                elif kind == "else":
+                    errors.append({"line": line_no, "code": "else_empty", "text": "ELSE"})
+            if line_no is not None and kind == "if" and kids:
+                # IF must have a non-ELSE child in its then-branch.
+                has_then = any(isinstance(c, dict) and c.get("kind") != "else" for c in kids)
+                if not has_then:
+                    errors.append({"line": line_no, "code": "if_empty", "text": "IF"})
             stack.pop()
 
     def leading_spaces(raw: str) -> tuple[int, bool]:
@@ -888,6 +931,40 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
             foreach_node = _ast_foreach_action(children=foreach_children)
             stack[-1][1].append(foreach_node)
             stack.append((lvl + 1, foreach_children, "foreach_action", ln))
+            continue
+
+        if verb == "IF":
+            # Store raw expression (no evaluation in this task).
+            expr = line[len(parts[0]) :].strip() if line.upper().startswith("IF") else ""
+            if not expr:
+                errors.append({"line": ln, "code": "if_missing_expr", "text": raw})
+                continue
+            if_children = []
+            if_node = {"kind": "if", "expr": expr, "children": if_children}
+            stack[-1][1].append(if_node)
+            stack.append((lvl + 1, if_children, "if", ln))
+            continue
+
+        if verb == "ELSE":
+            if len(parts) != 1:
+                warnings.append({"line": ln, "code": "too_many_tokens", "text": raw})
+            # ELSE attaches to the immediately preceding IF at this indentation level.
+            parent_kids = stack[-1][1]
+            prev = parent_kids[-1] if isinstance(parent_kids, list) and parent_kids else None
+            if not isinstance(prev, dict) or prev.get("kind") != "if":
+                errors.append({"line": ln, "code": "else_without_if", "text": raw})
+                continue
+            if_children = prev.get("children")
+            if not isinstance(if_children, list):
+                errors.append({"line": ln, "code": "else_without_if", "text": raw})
+                continue
+            if any(isinstance(c, dict) and c.get("kind") == "else" for c in if_children):
+                errors.append({"line": ln, "code": "else_duplicate", "text": raw})
+                continue
+            else_children = []
+            else_node = {"kind": "else", "children": else_children}
+            if_children.append(else_node)
+            stack.append((lvl + 1, else_children, "else", ln))
             continue
 
         if verb in ("STEP", "DISABLED"):
@@ -2479,7 +2556,15 @@ class Runner:
             node = ast
         else:
             node = self._node_by_path(ast, frame.get("path") or [])
-        kids = node.get("children") if isinstance(node, dict) else None
+        if not isinstance(node, dict):
+            return []
+        # IF executes only its then-branch for now (skip ELSE container if present).
+        if node.get("kind") == "if":
+            kids = node.get("children")
+            if not isinstance(kids, list):
+                return []
+            return [c for c in kids if not (isinstance(c, dict) and c.get("kind") == "else")]
+        kids = node.get("children")
         return kids if isinstance(kids, list) else []
 
     def _init_cursor(self, pipeline_hash: str) -> dict:
@@ -2740,6 +2825,12 @@ class Runner:
                 # A later task will implement iteration over task.actions with explicit dataflow.
                 frame["child_i"] = child_i + 1
                 stack.append({"kind": "foreach_action", "path": node_path, "child_i": 0})
+                continue
+
+            if k == "if":
+                # Placeholder semantics: execute then-branch only (ELSE is skipped by _frame_children()).
+                frame["child_i"] = child_i + 1
+                stack.append({"kind": "if", "path": node_path, "child_i": 0})
                 continue
 
             # Unknown nodes: skip but never silently.

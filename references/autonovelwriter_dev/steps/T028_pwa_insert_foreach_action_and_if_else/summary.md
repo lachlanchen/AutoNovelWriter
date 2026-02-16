@@ -7,3 +7,5 @@
 Verification (no server start):
 - `node --check autonovelwriter/pwa/app.js`
 
+## Fixes
+- Hardened IF/ELSE invariants after UI mutations (drag reorder, indent/outdent, delete) by normalizing the AST so `ELSE` cannot persist outside an `IF` and remains structurally valid for script render/validate: `autonovelwriter/pwa/app.js`.

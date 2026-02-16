@@ -2870,6 +2870,8 @@
     kids.splice(toIndex, 0, item);
     setSelected(pathKey(parentPath.concat([toIndex])));
     setPipeStatus('dirty');
+    normalizeIfElse(pipelineAst);
+    removeEmptyContainers(pipelineAst);
     updateDerivedFromAst({ writeScript: true });
     renderPipeline();
   }
@@ -2954,6 +2956,33 @@
     }
   }
 
+  function normalizeIfElse(ast) {
+    // Enforce IF/ELSE invariants after UI mutations:
+    // - ELSE is only valid as the last direct child of an IF.
+    // - Standalone ELSE nodes (e.g. after outdent/drag) are unwrapped to preserve their children.
+    // - IF must have a non-ELSE then-child; ELSE must be non-empty when present.
+    const walk = (parent, kids) => {
+      if (!Array.isArray(kids)) return;
+      for (let i = 0; i < kids.length; i++) {
+        const c = kids[i];
+        if (!c || typeof c !== 'object') continue;
+
+        if (c.kind === 'else' && (!parent || parent.kind !== 'if')) {
+          const ek = Array.isArray(c.children) ? c.children : [];
+          kids.splice(i, 1, ...ek);
+          i -= 1;
+          continue;
+        }
+
+        if (Array.isArray(c.children)) walk(c, c.children);
+        if (c.kind === 'if') fixIfNode(c);
+      }
+    };
+
+    if (!ast || typeof ast !== 'object' || !Array.isArray(ast.children)) return;
+    walk(null, ast.children);
+  }
+
   function deleteSelected() {
     if (!selected) return;
     const path = parsePathKey(selected);
@@ -2997,6 +3026,7 @@
     // Never allow a container (including root) to become empty; backend validate rejects empty containers.
     const insertedDefault = ensureNonEmptyChildren(container);
     if (touchedIfParent) fixIfNode(parentNode);
+    normalizeIfElse(pipelineAst);
 
     let nextIndex = index;
     if (!container.length) nextIndex = 0;
@@ -3031,6 +3061,7 @@
       setSelected(pathKey(parentPath.concat([index, 0])));
     }
     setPipeStatus('dirty');
+    normalizeIfElse(pipelineAst);
     removeEmptyContainers(pipelineAst);
     updateDerivedFromAst({ writeScript: true });
     renderPipeline();
@@ -3065,6 +3096,7 @@
       setSelected(pathKey(outerParentPath.concat([containerIndex + 1])));
     }
     setPipeStatus('dirty');
+    normalizeIfElse(pipelineAst);
     removeEmptyContainers(pipelineAst);
     updateDerivedFromAst({ writeScript: true });
     renderPipeline();
@@ -3507,6 +3539,7 @@
     if (!wrapSelected()) appendRoot();
 
     setPipeStatus('dirty');
+    normalizeIfElse(pipelineAst);
     removeEmptyContainers(pipelineAst);
     updateDerivedFromAst({ writeScript: true });
     renderPipeline();

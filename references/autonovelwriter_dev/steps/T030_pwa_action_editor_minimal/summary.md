@@ -16,3 +16,9 @@ Verification (no server start):
 
 ## I18N
 - Added i18n keys for new Action Editor strings introduced in fixes (tool placeholder + load/save/selection error messages) across: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`: `autonovelwriter/pwa/app.js`.
+
+## Next
+1. Add a per-action schema editor for declared inputs/outputs/artifacts (and show those on STEP blocks) to move toward explicit dataflow.
+2. Add a minimal ActionResult viewer panel (per-run/per-step) so users can inspect inputs/outputs without opening files.
+3. Add a pipeline-safe “Replace action id” operation that updates all STEP references when an action is renamed/superseded.
+4. Add keyboard focus trapping + ESC close for modals (Settings + Action Editor) for better accessibility and mobile UX.

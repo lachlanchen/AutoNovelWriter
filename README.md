@@ -80,6 +80,7 @@ If the backend validate endpoint is unreachable, the PWA falls back to a local p
 Blocks UI notes:
 - `LOOP` and `ROUND` repeat counts are editable inline in the blocks list; valid edits immediately update the canonical script textarea.
 - The Blocks toolbar can insert `LOOP`, `ROUND`, and `FOREACH_TASK` containers without hand-editing the script (wraps the selected block, or appends a valid non-empty container).
+- Blocks can be deleted from the canvas (per-block Delete button; keyboard `Delete` when a block is selected). Container deletes splice children up, and the editor keeps containers non-empty to avoid invalid scripts.
 
 ## Key Backend APIs
 
@@ -154,8 +155,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-15T23:59:40Z
-- current: T021_pwa_delete_blocks / summary — PWA: delete blocks (and containers)
+- updated_utc: 2026-02-16T00:01:23Z
+- current: T021_pwa_delete_blocks / update_readme — PWA: delete blocks (and containers)
 - queue: total=26 done=20 pending=6
 - last_done: T020_tasks_batches_index_and_pwa_panel — Task batches: index API + PWA panel @ 2026-02-16T07:46:35+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_074635_b2

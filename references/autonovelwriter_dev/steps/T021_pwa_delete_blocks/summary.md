@@ -20,3 +20,6 @@
 2. Add `FOREACH_ACTION` container support in script parse/render and the PWA insert toolbar.
 3. Add Action Library and make STEP blocks reference `action_id` (copy-on-edit semantics).
 4. Add a “batch details + activate” flow in Task Batches panel (view manifest, set active batch for FOREACH_TASK).
+
+## README
+- Documented block deletion in `README.md` under “Blocks UI notes” (Delete button + `Delete` key; container delete splices children and keeps containers non-empty).

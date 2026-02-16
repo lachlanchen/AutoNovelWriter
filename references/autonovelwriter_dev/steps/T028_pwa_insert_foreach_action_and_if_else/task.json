@@ -1,0 +1,19 @@
+{
+  "id": "T028_pwa_insert_foreach_action_and_if_else",
+  "title": "PWA: insert FOREACH_ACTION + IF/ELSE blocks",
+  "notes": "Add first-class UI actions to insert `FOREACH_ACTION` and `IF/ELSE` containers from the blocks toolbar (wrap selected or append). Ensure delete behavior remains correct (deleting a container splices children up; editor prevents empty containers by auto-inserting a STEP placeholder). Keep scope limited to block editing + script sync; no runner behavior changes.",
+  "acceptance": [
+    "Blocks toolbar has buttons to insert `FOREACH_ACTION` and `IF` (with optional default ELSE).",
+    "Insertion works for wrap-selected and append-root cases, updating the canonical script textarea immediately.",
+    "Deleting IF/ELSE and FOREACH_ACTION containers behaves predictably (children spliced up; no invalid empty containers).",
+    "Keyboard delete still works for selected blocks.",
+    "Any new UI strings are added to i18n for: en, zh-Hans, zh-Hant, ja, ko, vi, ar, fr, es, ru, de.",
+    "`node --check autonovelwriter/pwa/app.js` passes."
+  ],
+  "tags": [
+    "pwa",
+    "pipeline-ui",
+    "blocks",
+    "i18n"
+  ]
+}

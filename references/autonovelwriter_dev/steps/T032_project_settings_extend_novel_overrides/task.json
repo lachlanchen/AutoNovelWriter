@@ -1,0 +1,21 @@
+{
+  "id": "T032_project_settings_extend_novel_overrides",
+  "title": "Project settings: extend novel overrides (inherit)",
+  "notes": "Extend per-project settings beyond novel language to include a small set of novel-writing preferences (e.g., tone, target_length_words). Keep the inherit semantics consistent: empty/unset => inherit global `settings.novel.*`. Update backend validation and PWA Settings UI with explicit inherit options where needed.",
+  "acceptance": [
+    "Backend `/api/projects/settings` supports additional fields (e.g., `novel_tone`, `novel_target_length_words`) with empty/unset meaning inherit global.",
+    "Backend validates numeric ranges/types for added fields and rejects invalid inputs with clear errors.",
+    "PWA Settings modal exposes the new project override fields with an inherit option/state (does not accidentally persist overrides).",
+    "Any new UI strings are localized across required languages.",
+    "Unit test covers precedence: project override wins, else global fallback.",
+    "No TCP binds required; python/js syntax checks and unit test pass."
+  ],
+  "tags": [
+    "settings",
+    "projects",
+    "backend",
+    "pwa",
+    "i18n",
+    "tests"
+  ]
+}

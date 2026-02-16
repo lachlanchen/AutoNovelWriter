@@ -1158,10 +1158,14 @@ class ActionResultsStore:
         self._by_id: dict[str, dict] = {}
         self._ids: set[str] = set()
         self._lock = tornado.locks.Lock()
+        self._loaded_once = False
 
     async def load_tail(self, limit_bytes: int = 2_000_000) -> None:
+        if self._loaded_once:
+            return
         p = self._jsonl
         if not p.exists():
+            self._loaded_once = True
             return
         try:
             with p.open("rb") as f:
@@ -1192,6 +1196,7 @@ class ActionResultsStore:
         async with self._lock:
             self._ids = ids
             self._by_id = by_id
+            self._loaded_once = True
 
     async def has(self, result_id: str) -> bool:
         rid = str(result_id or "").strip()
@@ -1220,13 +1225,12 @@ class ActionResultsStore:
             _append_jsonl(self._jsonl, result)
             self._ids.add(rid)
             self._by_id[rid] = result
-            # Best-effort cap.
+            # Keep `has(exec_id)` correct by never dropping ids from `_ids` in-process.
+            # Dropping full objects only affects `get(exec_id)` for old entries.
             if len(self._by_id) > self._max_in_memory:
-                # Drop an arbitrary key; tail reload will refresh a coherent window later.
-                k = next(iter(self._by_id.keys()))
-                if k:
-                    self._by_id.pop(k, None)
-                    self._ids.discard(k)
+                drop_k = next(iter(self._by_id.keys()))
+                if drop_k:
+                    self._by_id.pop(drop_k, None)
 
 
 def _read_text_file(p: Path, max_bytes: int = 512_000) -> str:

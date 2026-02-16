@@ -10,3 +10,6 @@
   - emits WS event `action_result_committed` for observability
 - Added a unit-style test (no sockets): `autonovelwriter/backend/tests/runner_actionresult_vars_unit_test.py`.
 
+## Fixes
+- Reduced runner overhead by making `ActionResultsStore.load_tail()` a one-time load per process (no repeated disk tail scans every step).
+- Improved idempotency robustness within a long-running process by never evicting `exec_id`s from the in-memory `_ids` set; only full objects may be dropped from `_by_id` when capped.

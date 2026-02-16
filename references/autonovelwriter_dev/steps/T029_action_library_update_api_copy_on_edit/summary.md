@@ -11,3 +11,6 @@ Verification (no server start):
 
 ## Fixes
 - PWA: added WS handling for `action_updated` to refresh the Action Library index after in-place user action edits: `autonovelwriter/pwa/app.js`.
+
+## I18N
+- No user-facing strings were introduced or changed by this task (backend API/WS change only).

@@ -102,13 +102,13 @@ Blocks UI notes:
 - Task batches index: `GET /api/tasks/batches/index` (optional: `?project=<project_id>`)
 - Task batch details: `GET /api/tasks/batches/<batch_id>`
 - Task batch activate: `POST /api/tasks/batches/<batch_id>/activate` (writes `runtime/tasks/tasks.json` and project `active_tasks.json`)
-- Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`
+- Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`, `PUT /api/actions/<action_id>` (copy-on-edit update)
 - Pipeline (canonical script + derived JSON): `GET/POST /api/pipeline`
 - Pipeline validate (preview only): `POST /api/pipeline/validate`
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
 - Agent test (gated): `POST /api/agent/test` (runs `codex --version` only when enabled + env gate)
-- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`, `project_active_changed`, `project_settings_updated`)
+- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_updated`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`, `project_active_changed`, `project_settings_updated`)
 
 ## Runner Outputs (Draft Stub)
 
@@ -172,8 +172,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T01:57:15Z
-- current: T029_action_library_update_api_copy_on_edit / summary — Action Library: update API (copy-on-edit)
+- updated_utc: 2026-02-16T01:58:00Z
+- current: T029_action_library_update_api_copy_on_edit / update_readme — Action Library: update API (copy-on-edit)
 - queue: total=32 done=28 pending=4
 - last_done: T028_pwa_insert_foreach_action_and_if_else — PWA: insert FOREACH_ACTION + IF/ELSE blocks @ 2026-02-16T09:50:01+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3

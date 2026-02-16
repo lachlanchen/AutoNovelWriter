@@ -20,3 +20,6 @@ Verification (no server start):
 2. Backend: stabilize error responses for action updates (structured `{error_code, field}`) and add basic size limits for `prompt/script`.
 3. PWA: show toast/log entries for `action_created` and `action_updated` so updates are observable without opening devtools.
 4. Docs: document `PUT /api/actions/<action_id>` request/response shapes (including `{updates:{...}}` vs top-level fields) in `README.md`.
+
+## README
+- Documented `PUT /api/actions/<action_id>` and the WS event `action_updated` in the root README: `README.md`.

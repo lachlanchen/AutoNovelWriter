@@ -1,0 +1,20 @@
+{
+  "id": "T029_action_library_update_api_copy_on_edit",
+  "title": "Action Library: update API (copy-on-edit)",
+  "notes": "Add a minimal backend endpoint to update action templates. If the target action is a default, updates must create a new user action (copy-on-edit) and return the new id. If the target action is user-origin, update in-place. Keep validation shallow but ensure safe ids and persisted JSON under runtime/actions. This enables an Action Editor UI to safely edit defaults without mutating them.",
+  "acceptance": [
+    "Backend exposes `PUT /api/actions/<action_id>` (or `POST .../update`) accepting editable fields (name/tool/prompt/script/inputs_schema/outputs_schema).",
+    "Editing a default action creates a new user action file and returns `new_action_id` plus the created action; defaults remain unchanged on disk.",
+    "Editing a user action updates the user action file and returns the updated action.",
+    "WS broadcast emitted for updates/creation (e.g., `action_updated` or reuse `action_created` when copy-on-edit occurs).",
+    "Unit test covers: default copy-on-edit + user update-in-place + invalid id rejection.",
+    "No TCP binds required; `python3 -m py_compile` and unit tests pass."
+  ],
+  "tags": [
+    "backend",
+    "actions",
+    "api",
+    "copy-on-edit",
+    "tests"
+  ]
+}

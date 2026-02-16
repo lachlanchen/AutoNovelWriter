@@ -172,10 +172,10 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T01:49:58Z
-- current: T028_pwa_insert_foreach_action_and_if_else / update_readme — PWA: insert FOREACH_ACTION + IF/ELSE blocks
-- queue: total=32 done=27 pending=5
-- last_done: T027_pipeline_if_else_parse_render — Pipeline: IF/ELSE parse+render @ 2026-02-16T09:33:41+0800
+- updated_utc: 2026-02-16T01:51:57Z
+- current: T029_action_library_update_api_copy_on_edit / plan — Action Library: update API (copy-on-edit)
+- queue: total=32 done=28 pending=4
+- last_done: T028_pwa_insert_foreach_action_and_if_else — PWA: insert FOREACH_ACTION + IF/ELSE blocks @ 2026-02-16T09:50:01+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3
 - autoappdev_head: 8bc23a5
 <!-- AUTO_DEV_PROGRESS_END -->

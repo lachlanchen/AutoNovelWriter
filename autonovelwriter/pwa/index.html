@@ -52,6 +52,7 @@
 		                  <button id="pipeAddForeachTask" class="btn" type="button" data-i18n-title="pipeline.add_foreach_task_title" title="Add FOREACH_TASK (wrap selected, or append)" data-i18n="pipeline.add_foreach_task">Add FOREACH_TASK</button>
 		                  <button id="pipeAddForeachAction" class="btn" type="button" data-i18n-title="pipeline.add_foreach_action_title" title="Add FOREACH_ACTION (wrap selected, or append)" data-i18n="pipeline.add_foreach_action">Add FOREACH_ACTION</button>
 		                  <button id="pipeAddIf" class="btn" type="button" data-i18n-title="pipeline.add_if_title" title="Add IF (wrap selected, or append)" data-i18n="pipeline.add_if">Add IF</button>
+		                  <button id="pipeLoadWriterRef" class="btn" type="button" data-i18n-title="pipeline.load_writer_ref_title" title="Load blocks from reference writer script (read-only source)" data-i18n="pipeline.load_writer_ref">Load Writer Ref</button>
 		                  <button id="pipeSave" class="btn btn-primary" type="button" data-i18n="ui.save">Save</button>
 		                  <button id="pipeReset" class="btn" type="button" data-i18n="ui.reset">Reset</button>
 		                </div>
@@ -73,14 +74,27 @@
 	                <ol id="materialsList" class="materials-list" aria-label="Materials list"></ol>
 	              </div>
 
-	              <div class="materials">
-	                <div class="materials-head">
-	                  <div class="pipe-sub">
-	                    <span data-i18n="outputs.title">Outputs</span>
-	                  </div>
-	                </div>
-	                <ol id="outputsList" class="materials-list" aria-label="Outputs list"></ol>
-	              </div>
+		              <div class="materials">
+		                <div class="materials-head">
+		                  <div class="pipe-sub">
+		                    <span data-i18n="outputs.title">Outputs</span>
+		                  </div>
+		                </div>
+		                <ol id="outputsList" class="materials-list" aria-label="Outputs list"></ol>
+		                <div class="novel-viewer">
+		                  <div class="materials-head">
+		                    <div class="pipe-sub">
+		                      <span data-i18n="novel_pdf.title">Latest Novel PDF</span>
+		                    </div>
+		                    <div class="materials-controls">
+		                      <button id="novelPdfRefresh" class="mini" type="button" data-i18n="novel_pdf.refresh">Refresh</button>
+		                      <a id="novelPdfOpen" class="mini link-btn" href="#" target="_blank" rel="noopener noreferrer" data-i18n="novel_pdf.open">Open</a>
+		                    </div>
+		                  </div>
+		                  <div id="novelPdfMeta" class="viewer-meta" data-i18n="novel_pdf.empty">No novel PDF found yet.</div>
+		                  <iframe id="novelPdfFrame" class="novel-pdf-frame" title="Latest novel PDF"></iframe>
+		                </div>
+		              </div>
 
 	              <div class="materials">
 	                <div class="materials-head">

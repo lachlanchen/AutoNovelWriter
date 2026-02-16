@@ -32,6 +32,8 @@ Conda env helper:
 ```bash
 scripts/setup_conda_env.sh --name autonovelwriter
 scripts/run_autonovelwriter_tmux.sh --env autonovelwriter
+# one-shot:
+scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 ```
 
 The repo’s driver script (`scripts/auto-autonovelwriter-development.sh`) can also start a tmux session during auto-dev.
@@ -42,6 +44,7 @@ All mutable state and IO live under `autonovelwriter/runtime/` (ignored by git):
 - `autonovelwriter/runtime/io/inbox/` user -> system (drop `.txt`/`.md`)
 - `autonovelwriter/runtime/io/outbox/` system -> user (backend writes chat messages)
 - `autonovelwriter/runtime/state/` persisted JSON state (settings, pipeline, runner, chat)
+- `autonovelwriter/runtime/state/chat.sqlite3` sqlite chat mirror (in addition to chat.jsonl)
 - `autonovelwriter/runtime/state/active_project.json` persisted “active project” pointer
 - `autonovelwriter/runtime/tasks/` task queue files
 - `autonovelwriter/runtime/tasks/batches/<batch_id>/` generated task batches (e.g. from `meta_tasks_generate`)
@@ -51,6 +54,7 @@ All mutable state and IO live under `autonovelwriter/runtime/` (ignored by git):
 - `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json` per-project novel-writing settings overrides (e.g. novel language)
 - `autonovelwriter/runtime/actions/defaults/` seeded default Action Library templates (treated as immutable)
 - `autonovelwriter/runtime/actions/user/` user Action Library templates (created via copy-on-edit)
+- `/home/lachlan/Documents/VoidAbyss/references/xiyouzhiyuan/input/` mirrored chat inputs for writer pipeline ingestion
 
 ## Pipeline Script (Canonical Artifact)
 
@@ -111,7 +115,13 @@ Blocks UI notes:
 - Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`, `PUT /api/actions/<action_id>` (copy-on-edit update for defaults)
 - Pipeline (canonical script + derived JSON): `GET/POST /api/pipeline`
 - Pipeline validate (preview only): `POST /api/pipeline/validate`
+- Reference writer pipeline preview/load:
+  - `GET /api/pipeline/reference_writer` (reads and parses `../scripts/auto-xiyouzhiyuan-writer.sh` as reference)
+  - `POST /api/pipeline/reference_writer/load` (loads parsed result into runtime pipeline; never edits source script)
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
+- Latest novel PDF:
+  - `GET /api/novel/latest` (metadata)
+  - `GET /api/novel/latest/pdf` (inline PDF stream for viewer)
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
 - Agent test (gated): `POST /api/agent/test` (runs `codex --version` only when enabled + env gate)
 - WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_updated`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`, `project_active_changed`, `project_settings_updated`)

@@ -41,6 +41,11 @@
       'outputs.title': 'Outputs',
       'outputs.empty': '(no outputs yet)',
       'outputs.created': 'Output created:',
+      'novel_pdf.title': 'Latest Novel PDF',
+      'novel_pdf.refresh': 'Refresh',
+      'novel_pdf.open': 'Open',
+      'novel_pdf.empty': 'No novel PDF found yet.',
+      'novel_pdf.latest': 'Latest:',
       'tasks_batches.title': 'Task Batches',
       'tasks_batches.empty': '(no batches yet)',
       'tasks_batches.created': 'Batch created:',
@@ -64,6 +69,8 @@
       'pipeline.add_foreach_task_title': 'Add FOREACH_TASK (wrap selected, or append)',
       'pipeline.add_foreach_action_title': 'Add FOREACH_ACTION (wrap selected, or append)',
       'pipeline.add_if_title': 'Add IF (wrap selected, or append)',
+      'pipeline.load_writer_ref': 'Load Writer Ref',
+      'pipeline.load_writer_ref_title': 'Load blocks from reference writer script (read-only source)',
       'pipeline.delete': 'Delete',
       'pipeline.delete_title': 'Delete selected block (Del)',
       'pipeline.script_canonical': 'Pipeline script (canonical)',
@@ -1568,6 +1575,7 @@
   const pipeAddForeachTask = $('pipeAddForeachTask');
   const pipeAddForeachAction = $('pipeAddForeachAction');
   const pipeAddIf = $('pipeAddIf');
+  const pipeLoadWriterRef = $('pipeLoadWriterRef');
   const pipeSave = $('pipeSave');
   const pipeReset = $('pipeReset');
   const pipeStatus = $('pipeStatus');
@@ -1578,6 +1586,10 @@
   const projectSelect = $('projectSelect');
   const materialsList = $('materialsList');
   const outputsList = $('outputsList');
+  const novelPdfRefresh = $('novelPdfRefresh');
+  const novelPdfOpen = $('novelPdfOpen');
+  const novelPdfMeta = $('novelPdfMeta');
+  const novelPdfFrame = $('novelPdfFrame');
   const batchesList = $('batchesList');
 
   const runPill = $('runPill');
@@ -1835,9 +1847,60 @@
       const obj = await res.json();
       if (!obj || !obj.ok) return null;
       renderOutputsIndex(obj);
+      loadLatestNovelPdf({ refreshFrame: false });
       if (projectSelect && !opts?.skipSelectSync) {
         const pid = String(obj.project || obj.active_project || '');
         if (pid) projectSelect.value = pid;
+      }
+      return obj;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  let latestNovelMetaObj = null;
+  function renderLatestNovelMeta(obj) {
+    if (!novelPdfMeta) return;
+    const latest = obj && obj.latest && typeof obj.latest === 'object' ? obj.latest : null;
+    latestNovelMetaObj = latest;
+    if (!latest) {
+      novelPdfMeta.textContent = t('novel_pdf.empty');
+      if (novelPdfOpen) {
+        novelPdfOpen.setAttribute('href', '#');
+        novelPdfOpen.setAttribute('aria-disabled', 'true');
+      }
+      if (novelPdfFrame) {
+        try { novelPdfFrame.removeAttribute('src'); } catch (_) {}
+      }
+      return;
+    }
+    const rel = String(latest.path || '').trim();
+    const mtime = String(latest.mtime_utc || '').trim();
+    const size = fmtBytes(latest.size_bytes || 0);
+    novelPdfMeta.textContent = `${t('novel_pdf.latest')} ${rel}${mtime ? `  ${mtime}` : ''}${size ? `  ${size}` : ''}`;
+  }
+
+  async function loadLatestNovelPdf(opts) {
+    const url = backendApiUrl('/api/novel/latest');
+    if (!url) return null;
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const obj = await res.json();
+      if (!obj || !obj.ok) return null;
+      renderLatestNovelMeta(obj);
+
+      const hasLatest = !!(obj && obj.found && obj.latest && typeof obj.latest.path === 'string' && obj.latest.path.trim());
+      if (hasLatest) {
+        const pdfUrl = backendApiUrl('/api/novel/latest/pdf');
+        if (pdfUrl) {
+          const bust = `t=${Date.now()}`;
+          const src = `${pdfUrl}${pdfUrl.includes('?') ? '&' : '?'}${bust}`;
+          if (novelPdfFrame && opts?.refreshFrame !== false) novelPdfFrame.src = src;
+          if (novelPdfOpen) {
+            novelPdfOpen.setAttribute('href', src);
+            novelPdfOpen.removeAttribute('aria-disabled');
+          }
+        }
       }
       return obj;
     } catch (_) {
@@ -3650,6 +3713,45 @@
     updateIndentButtons();
   }
 
+  async function loadPipelineFromWriterReference() {
+    const url = backendApiUrl('/api/pipeline/reference_writer/load');
+    if (!url) {
+      addMsg('err', t('ui.pipeline'), t('errors.backend_api_url'));
+      return;
+    }
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+      const obj = await res.json();
+      if (!obj || !obj.ok) {
+        addMsg('err', t('ui.pipeline'), `reference load failed: ${JSON.stringify(obj || { ok: false })}`);
+        return;
+      }
+      if (typeof obj.script === 'string') pipelineScript.value = obj.script;
+      if (obj.pipeline_ast && typeof obj.pipeline_ast === 'object') pipelineAst = normalizePipelineAst(obj.pipeline_ast);
+      else if (obj.pipeline) pipelineAst = pipelineAstFromPipeline(obj.pipeline);
+      setSelected('');
+      updateDerivedFromAst({ writeScript: false });
+      await loadActionsIndex();
+      renderPipeline();
+      updateIndentButtons();
+      setPipeStatus('loaded');
+      const src = String(obj.source_path || '').trim();
+      const stats = obj && typeof obj.stats === 'object' ? obj.stats : {};
+      const detail = [
+        src ? `source=${src}` : null,
+        Number.isFinite(stats.actions) ? `actions=${stats.actions}` : null,
+        Number.isFinite(stats.containers) ? `containers=${stats.containers}` : null
+      ].filter(Boolean).join('  ');
+      addMsg('hello', t('ui.pipeline'), detail || 'loaded reference writer pipeline');
+    } catch (e) {
+      addMsg('err', t('ui.pipeline'), `reference load error: ${String(e)}`);
+    }
+  }
+
   async function savePipeline() {
     setPipeStatus('saving');
     window.localStorage.setItem(LS_PIPELINE, JSON.stringify(pipeline));
@@ -3831,6 +3933,8 @@
         addChatMessage(obj.message);
       } else if (obj && obj.type === 'outbox_written' && obj.outbox && obj.outbox.filename) {
         addMsg('hello', 'outbox', `wrote ${obj.outbox.filename}`);
+      } else if (obj && obj.type === 'input_mirror_written' && obj.input && obj.input.filename) {
+        addMsg('hello', 'input', `mirrored ${obj.input.filename}`);
       } else if (obj && obj.type === 'pipeline_updated' && typeof obj.script === 'string') {
         pipelineScript.value = obj.script;
         if (Array.isArray(obj.warnings) && obj.warnings.length) {
@@ -3853,6 +3957,7 @@
         const rel = String(obj.project_rel_path || obj.path || '').trim();
         if (rel) addMsg('hello', t('outputs.title'), `${t('outputs.created')} ${rel}`);
         scheduleOutputsRefresh(350);
+        loadLatestNovelPdf({ refreshFrame: true });
       } else if (obj && obj.type === 'tasks_batch_created') {
         const bid = String(obj.batch_id || '').trim();
         if (bid) addMsg('hello', t('tasks_batches.title'), `${t('tasks_batches.created')} ${bid}`);
@@ -4042,6 +4147,15 @@
   if (pipeAddForeachTask) pipeAddForeachTask.addEventListener('click', () => insertContainer('foreach_task'));
   if (pipeAddForeachAction) pipeAddForeachAction.addEventListener('click', () => insertContainer('foreach_action'));
   if (pipeAddIf) pipeAddIf.addEventListener('click', () => insertContainer('if'));
+  if (pipeLoadWriterRef) pipeLoadWriterRef.addEventListener('click', () => loadPipelineFromWriterReference());
+  if (novelPdfRefresh) novelPdfRefresh.addEventListener('click', () => loadLatestNovelPdf({ refreshFrame: true }));
+  if (novelPdfOpen) {
+    novelPdfOpen.addEventListener('click', (e) => {
+      if (!latestNovelMetaObj || !latestNovelMetaObj.path) {
+        e.preventDefault();
+      }
+    });
+  }
 
   pipelineScript.addEventListener('input', () => {
     setPipeStatus('dirty');
@@ -4136,6 +4250,7 @@
   loadChatHistory();
   loadRunStatus();
   loadSettings();
+  loadLatestNovelPdf({ refreshFrame: true });
   function applyProjectsToUi(pj) {
     if (!projectSelect) return;
     if (!pj || !pj.ok) return;
@@ -4157,6 +4272,7 @@
     applyProjectsToUi(pj);
     loadMaterialsIndex();
     loadOutputsIndex();
+    loadLatestNovelPdf({ refreshFrame: true });
     const pid = projectSelect ? String(projectSelect.value || '').trim() : '';
     loadTaskBatchesIndex({ project_id: pid });
   });

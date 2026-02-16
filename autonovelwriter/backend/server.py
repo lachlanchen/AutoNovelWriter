@@ -4,6 +4,8 @@ import argparse
 import hashlib
 import json
 import os
+import re
+import sqlite3
 import subprocess
 import time
 import uuid
@@ -29,15 +31,35 @@ def _safe_mkdir(p: Path) -> None:
 def resolve_paths() -> dict:
     backend_dir = Path(__file__).resolve().parent
     app_root = backend_dir.parent  # autonovelwriter/
+    repo_root = app_root.parent  # AutoNovelWriter/
+    workspace_root = Path(os.environ.get("AUTONOVELWRITER_WORKSPACE_ROOT", str(repo_root.parent)))
 
     runtime_root = Path(os.environ.get("AUTONOVELWRITER_RUNTIME_ROOT", str(app_root / "runtime")))
     pwa_root = Path(os.environ.get("AUTONOVELWRITER_PWA_ROOT", str(app_root / "pwa")))
+    writer_reference_script = Path(
+        os.environ.get(
+            "AUTONOVELWRITER_WRITER_SCRIPT",
+            str(workspace_root / "scripts" / "auto-xiyouzhiyuan-writer.sh"),
+        )
+    )
+    xiyou_input_dir = Path(
+        os.environ.get(
+            "AUTONOVELWRITER_XIYOU_INPUT_DIR",
+            str(workspace_root / "references" / "xiyouzhiyuan" / "input"),
+        )
+    )
+    novels_root = Path(os.environ.get("AUTONOVELWRITER_NOVELS_ROOT", str(workspace_root / "auto-novels")))
 
     # Defaults required by spec.
     paths = {
         "app_root": app_root,
+        "repo_root": repo_root,
+        "workspace_root": workspace_root,
         "runtime_root": runtime_root,
         "pwa_root": pwa_root,
+        "writer_reference_script": writer_reference_script,
+        "xiyou_input_dir": xiyou_input_dir,
+        "novels_root": novels_root,
         "io_inbox": runtime_root / "io" / "inbox",
         "io_outbox": runtime_root / "io" / "outbox",
         "tasks": runtime_root / "tasks",
@@ -48,6 +70,7 @@ def resolve_paths() -> dict:
         "pipeline_script": runtime_root / "state" / "pipeline.script",
         "pipeline_ast_json": runtime_root / "state" / "pipeline_ast.json",
         "chat_jsonl": runtime_root / "state" / "chat.jsonl",
+        "chat_sqlite": runtime_root / "state" / "chat.sqlite3",
         "inbox_state_json": runtime_root / "state" / "inbox_state.json",
         "runner_state_json": runtime_root / "state" / "runner_state.json",
         "action_results_jsonl": runtime_root / "state" / "action_results.jsonl",
@@ -74,6 +97,7 @@ def ensure_runtime_dirs(paths: dict) -> None:
     _safe_mkdir(Path(paths["actions_root"]))
     _safe_mkdir(Path(paths["actions_defaults"]))
     _safe_mkdir(Path(paths["actions_user"]))
+    _safe_mkdir(Path(paths["xiyou_input_dir"]))
 
     # `runtime/state/settings.json` is gitignored; create minimal defaults so a fresh runtime
     # has a concrete "novel language" even before the settings API is used.
@@ -1208,6 +1232,222 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
     return pipeline, ast, warnings, errors
 
 
+def _safe_ref_step_token(raw: str, fallback_index: int, used: set[str]) -> str:
+    s = str(raw or "").strip()
+    if not s:
+        s = f"ref_step_{fallback_index}"
+    s = s.lower()
+    s = re.sub(r"\$\([^)]*\)", "_var_", s)
+    s = re.sub(r"\$\{[^}]*\}", "_var_", s)
+    s = s.replace("$", "_var_")
+    s = s.replace("%", "_pct_")
+    s = re.sub(r"[^a-z0-9_-]+", "_", s)
+    s = re.sub(r"_+", "_", s).strip("_-")
+    if not s:
+        s = f"ref_step_{fallback_index}"
+    if len(s) > 80:
+        s = s[:80].rstrip("_-")
+    if not _is_safe_action_id(s):
+        s = f"ref_step_{fallback_index}"
+
+    base = s
+    n = 2
+    while s in used or not _is_safe_action_id(s):
+        suffix = f"_{n}"
+        keep = max(1, 96 - len(suffix))
+        s = (base[:keep] + suffix).rstrip("_-")
+        n += 1
+    used.add(s)
+    return s
+
+
+def _reference_container_from_header(header: str, last_assignment_var: str) -> dict | None:
+    h = str(header or "").strip()
+    if not h:
+        return None
+
+    if re.match(r"for\s+v\s+in\s+1\s+2\s+3;\s*do$", h):
+        return _ast_round(3, [])
+
+    if re.match(r'for\s+idx\s+in\s+"\$\{!aspect_keys\[@\]\}";\s*do$', h):
+        return _ast_foreach_action([])
+
+    m_for = re.match(r"for\s+[A-Za-z_][A-Za-z0-9_]*\s+in\s+(.+?);\s*do$", h)
+    if m_for:
+        seq = m_for.group(1).strip()
+        ints = [x for x in seq.split() if re.fullmatch(r"\d+", x)]
+        if ints:
+            return _ast_loop(max(1, len(ints)), [])
+        return _ast_foreach_task([])
+
+    if re.match(r"while\s+true;\s*do$", h):
+        if last_assignment_var in ("c", "p"):
+            return _ast_foreach_task([])
+        return _ast_loop(1, [])
+
+    return None
+
+
+def _fill_empty_reference_containers(node: dict) -> None:
+    if not isinstance(node, dict):
+        return
+    kind = node.get("kind")
+    if kind in ("loop", "round", "foreach_task", "foreach_action", "if", "else"):
+        kids = node.get("children")
+        if not isinstance(kids, list):
+            kids = []
+            node["children"] = kids
+        for c in kids:
+            if isinstance(c, dict):
+                _fill_empty_reference_containers(c)
+        if not kids:
+            kids.append(_ast_step("plan", True))
+    elif kind == "root":
+        kids = node.get("children")
+        if not isinstance(kids, list):
+            kids = []
+            node["children"] = kids
+        for c in kids:
+            if isinstance(c, dict):
+                _fill_empty_reference_containers(c)
+
+
+def _extract_reference_calls(script_text: str) -> list[dict]:
+    call_re = re.compile(
+        r"(run_action_with_prompt_file|run_local_action)\s*(?:\\\s*\n\s*)*\"([^\"]+)\"",
+        flags=re.MULTILINE,
+    )
+    out = []
+    for m in call_re.finditer(script_text or ""):
+        line_no = int((script_text or "").count("\n", 0, m.start()) + 1)
+        out.append({"line_no": line_no, "call": m.group(1), "raw_action_id": m.group(2)})
+    out.sort(key=lambda x: int(x.get("line_no") or 0))
+    return out
+
+
+def build_reference_writer_pipeline_from_text(script_text: str) -> dict:
+    text = script_text or ""
+    lines = text.splitlines()
+    calls = _extract_reference_calls(text)
+    root = _ast_root([])
+    stack = [root["children"]]
+    last_assignment_var = ""
+    used_tokens: set[str] = set()
+    action_map = []
+    call_idx = 0
+
+    def add_call(call_obj: dict) -> None:
+        raw_action_id = str(call_obj.get("raw_action_id") or "").strip()
+        token = _safe_ref_step_token(raw_action_id, len(action_map) + 1, used_tokens)
+        stack[-1].append(_ast_step(token, True))
+        action_map.append(
+            {
+                "line_no": int(call_obj.get("line_no") or 0),
+                "call": str(call_obj.get("call") or ""),
+                "raw_action_id": raw_action_id,
+                "step_id": token,
+            }
+        )
+
+    for ln, raw in enumerate(lines, start=1):
+        while call_idx < len(calls) and int(calls[call_idx]["line_no"]) == ln:
+            add_call(calls[call_idx])
+            call_idx += 1
+
+        stripped = raw.strip()
+        if not stripped:
+            continue
+
+        m_assign = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)=", stripped)
+        if m_assign:
+            last_assignment_var = m_assign.group(1)
+
+        container = _reference_container_from_header(stripped, last_assignment_var)
+        if container is not None:
+            stack[-1].append(container)
+            kids = container.get("children")
+            if isinstance(kids, list):
+                stack.append(kids)
+            continue
+
+        if stripped == "done" and len(stack) > 1:
+            stack.pop()
+            continue
+
+    while call_idx < len(calls):
+        add_call(calls[call_idx])
+        call_idx += 1
+
+    if not root["children"]:
+        root = _ast_root([_ast_step("meta_tasks_generate", True), _ast_step("write", True), _ast_step("commit_push", True)])
+
+    _fill_empty_reference_containers(root)
+
+    pipeline = {"blocks": _flatten_ast_steps(root)}
+    script = render_pipeline_script_from_ast(root)
+    container_count = sum(
+        1
+        for n in _walk_ast_nodes(root)
+        if isinstance(n, dict) and n.get("kind") in ("loop", "round", "foreach_task", "foreach_action", "if", "else")
+    )
+    return {
+        "pipeline": pipeline,
+        "pipeline_ast": root,
+        "script": script,
+        "action_map": action_map,
+        "stats": {"actions": len(action_map), "containers": int(container_count), "steps": len(pipeline.get("blocks") or [])},
+        "warnings": [],
+        "errors": [],
+    }
+
+
+def _walk_ast_nodes(root: dict) -> list[dict]:
+    out = []
+
+    def walk(n: dict) -> None:
+        if not isinstance(n, dict):
+            return
+        out.append(n)
+        kids = n.get("children")
+        if isinstance(kids, list):
+            for c in kids:
+                walk(c)
+
+    walk(root)
+    return out
+
+
+def build_reference_writer_pipeline(paths: dict, source_path: str | None = None) -> dict:
+    src = Path(source_path) if source_path else Path(paths["writer_reference_script"])
+    if not src.exists() or not src.is_file():
+        return {
+            "ok": False,
+            "error": "reference_script_not_found",
+            "source_path": str(src),
+        }
+    try:
+        st = src.stat()
+        text = src.read_text(encoding="utf-8", errors="replace")
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": "reference_script_read_failed",
+            "detail": str(e),
+            "source_path": str(src),
+        }
+
+    built = build_reference_writer_pipeline_from_text(text)
+    built.update(
+        {
+            "ok": True,
+            "source_path": str(src),
+            "source_size_bytes": int(st.st_size),
+            "source_mtime_ms": int(st.st_mtime * 1000),
+        }
+    )
+    return built
+
+
 def load_pipeline_script(paths: dict) -> str:
     p = Path(paths["pipeline_script"])
     if not p.exists():
@@ -1468,12 +1708,171 @@ class PipelineValidateHandler(BaseHandler):
         )
 
 
+class PipelineReferenceWriterHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    def get(self):
+        out = build_reference_writer_pipeline(self._paths)
+        if not out.get("ok"):
+            status = 404 if out.get("error") == "reference_script_not_found" else 500
+            return self.write_json(out, status=status)
+        self.write_json(out)
+
+
+class PipelineReferenceWriterLoadHandler(BaseHandler):
+    def initialize(self, paths: dict, hub: "WebSocketHub"):
+        self._paths = paths
+        self._hub = hub
+
+    def post(self):
+        out = build_reference_writer_pipeline(self._paths)
+        if not out.get("ok"):
+            status = 404 if out.get("error") == "reference_script_not_found" else 500
+            return self.write_json(out, status=status)
+
+        canonical = out.get("script") if isinstance(out.get("script"), str) else ""
+        pipeline = out.get("pipeline") if isinstance(out.get("pipeline"), dict) else {"blocks": []}
+        pipeline_ast = out.get("pipeline_ast") if isinstance(out.get("pipeline_ast"), dict) else _ast_root([])
+        save_pipeline_script(self._paths, canonical)
+        save_pipeline(self._paths, pipeline)
+        save_pipeline_ast(self._paths, pipeline_ast)
+        script_hash = _sha256_hex(canonical)
+        self._hub.broadcast(
+            {
+                "type": "pipeline_updated",
+                "ts_ms": _now_ms(),
+                "script": canonical,
+                "script_hash": script_hash,
+                "warnings": out.get("warnings") if isinstance(out.get("warnings"), list) else [],
+            }
+        )
+        self.write_json(
+            {
+                "ok": True,
+                "loaded_from_reference": True,
+                "source_path": out.get("source_path"),
+                "source_mtime_ms": out.get("source_mtime_ms"),
+                "script": canonical,
+                "script_hash": script_hash,
+                "pipeline": pipeline,
+                "pipeline_ast": pipeline_ast,
+                "warnings": out.get("warnings") if isinstance(out.get("warnings"), list) else [],
+                "errors": out.get("errors") if isinstance(out.get("errors"), list) else [],
+                "action_map": out.get("action_map") if isinstance(out.get("action_map"), list) else [],
+                "stats": out.get("stats") if isinstance(out.get("stats"), dict) else {},
+            }
+        )
+
+
+class NovelLatestHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    def get(self):
+        latest = find_latest_novel_pdf(self._paths)
+        self.write_json(
+            {
+                "ok": True,
+                "found": latest is not None,
+                "novels_root": str(Path(self._paths["novels_root"])),
+                "latest": latest,
+            }
+        )
+
+
+class NovelLatestPdfHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    async def get(self):
+        latest = find_latest_novel_pdf(self._paths)
+        if not latest or not isinstance(latest.get("abs_path"), str):
+            return self.write_json({"ok": False, "error": "latest_pdf_not_found"}, status=404)
+
+        p = Path(str(latest.get("abs_path")))
+        if not p.exists() or not p.is_file():
+            return self.write_json({"ok": False, "error": "latest_pdf_not_found"}, status=404)
+
+        self.set_header("Content-Type", "application/pdf")
+        self.set_header("Content-Disposition", f'inline; filename="{p.name}"')
+        self.set_header("Cache-Control", "no-store, max-age=0")
+        self.set_header("X-Novel-Path", str(latest.get("path") or ""))
+
+        with p.open("rb") as f:
+            while True:
+                chunk = f.read(64 * 1024)
+                if not chunk:
+                    break
+                self.write(chunk)
+                await self.flush()
+        self.finish()
+
+
 class ChatStore:
-    def __init__(self, chat_jsonl: Path, max_in_memory: int = 500):
+    def __init__(self, chat_jsonl: Path, chat_sqlite: Path | None = None, max_in_memory: int = 500):
         self._chat_jsonl = Path(chat_jsonl)
+        self._chat_sqlite = Path(chat_sqlite) if chat_sqlite else None
         self._max_in_memory = max_in_memory
         self._messages = []
         self._lock = tornado.locks.Lock()
+        self._ensure_db()
+
+    def _ensure_db(self) -> None:
+        if not self._chat_sqlite:
+            return
+        try:
+            _safe_mkdir(self._chat_sqlite.parent)
+            with sqlite3.connect(str(self._chat_sqlite)) as conn:
+                conn.execute("PRAGMA journal_mode=WAL;")
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS chat_messages (
+                      id TEXT PRIMARY KEY,
+                      ts_ms INTEGER NOT NULL,
+                      role TEXT NOT NULL,
+                      source TEXT NOT NULL,
+                      text TEXT NOT NULL,
+                      payload_json TEXT NOT NULL
+                    )
+                    """
+                )
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_chat_messages_ts ON chat_messages(ts_ms)")
+                conn.commit()
+        except Exception:
+            # Best-effort only; JSONL remains canonical for chat history.
+            pass
+
+    def _upsert_db_message(self, msg: dict) -> None:
+        if not self._chat_sqlite:
+            return
+        try:
+            mid = str(msg.get("id") or "")
+            if not mid:
+                return
+            ts_ms = int(msg.get("ts_ms") or 0)
+            role = str(msg.get("role") or "user")
+            source = str(msg.get("source") or "unknown")
+            text = str(msg.get("text") or "")
+            payload = json.dumps(msg, ensure_ascii=False, sort_keys=True)
+            with sqlite3.connect(str(self._chat_sqlite)) as conn:
+                conn.execute(
+                    """
+                    INSERT INTO chat_messages (id, ts_ms, role, source, text, payload_json)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                      ts_ms=excluded.ts_ms,
+                      role=excluded.role,
+                      source=excluded.source,
+                      text=excluded.text,
+                      payload_json=excluded.payload_json
+                    """,
+                    (mid, ts_ms, role, source, text, payload),
+                )
+                conn.commit()
+        except Exception:
+            # Best-effort only; do not fail chat flow on sqlite issues.
+            pass
 
     async def load_tail(self, limit: int = 200) -> None:
         # Best-effort: load existing jsonl history tail into memory (bounded).
@@ -1501,12 +1900,16 @@ class ChatStore:
             if isinstance(obj, dict):
                 msgs.append(obj)
         self._messages = msgs[-self._max_in_memory :]
+        # Best-effort backfill sqlite cache from loaded tail.
+        for m in self._messages:
+            self._upsert_db_message(m)
 
     async def append(self, msg: dict) -> None:
         async with self._lock:
             _safe_mkdir(self._chat_jsonl.parent)
             with self._chat_jsonl.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(msg, sort_keys=True) + "\n")
+            self._upsert_db_message(msg)
             self._messages.append(msg)
             if len(self._messages) > self._max_in_memory:
                 self._messages = self._messages[-self._max_in_memory :]
@@ -2059,6 +2462,90 @@ def write_outbox_message(paths: dict, text: str) -> dict:
     return {"filename": fname, "path": str(p)}
 
 
+def write_input_message(paths: dict, msg: dict) -> dict:
+    input_dir = Path(paths["xiyou_input_dir"])
+    _safe_mkdir(input_dir)
+    ts = time.strftime("%Y%m%d_%H%M%S")
+    mid = str(msg.get("id") or uuid.uuid4().hex)
+    fname = f"chat_input_{ts}_{mid[:8]}.md"
+    p = input_dir / fname
+    text = str(msg.get("text") or "").rstrip()
+    body = "\n".join(
+        [
+            "# AutoNovelWriter Chat Input",
+            "",
+            f"- id: {mid}",
+            f"- ts_ms: {int(msg.get('ts_ms') or _now_ms())}",
+            f"- role: {str(msg.get('role') or 'user')}",
+            f"- source: {str(msg.get('source') or 'ui')}",
+            "",
+            "```text",
+            text,
+            "```",
+            "",
+        ]
+    )
+    p.write_text(body, encoding="utf-8", errors="replace")
+    return {"filename": fname, "path": str(p)}
+
+
+def _ms_to_utc(ms: int) -> str:
+    try:
+        return datetime.utcfromtimestamp(max(0, int(ms)) / 1000.0).isoformat(timespec="seconds") + "Z"
+    except Exception:
+        return ""
+
+
+def find_latest_novel_pdf(paths: dict) -> dict | None:
+    root = Path(paths["novels_root"])
+    if not root.exists() or not root.is_dir():
+        return None
+
+    candidates = []
+    try:
+        for p in root.rglob("*.pdf"):
+            if not p.is_file():
+                continue
+            try:
+                rel = p.relative_to(root).as_posix()
+            except Exception:
+                continue
+            if not rel:
+                continue
+            segs = rel.split("/")
+            if any(seg.startswith(".") for seg in segs):
+                continue
+            try:
+                st = p.stat()
+                mtime_ms = int(st.st_mtime * 1000)
+                size = int(st.st_size)
+            except Exception:
+                mtime_ms = 0
+                size = 0
+            is_backup = ("backups/" in rel) or ("/backup_" in rel) or rel.startswith("backups/")
+            # Prefer non-backup outputs, then newest mtime.
+            rank = (0 if is_backup else 1, mtime_ms)
+            candidates.append((rank, p, rel, size, mtime_ms, is_backup))
+            if len(candidates) > 20000:
+                break
+    except Exception:
+        return None
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda x: (x[0][0], x[0][1]), reverse=True)
+    _, p, rel, size, mtime_ms, is_backup = candidates[0]
+    return {
+        "abs_path": str(p),
+        "path": rel,
+        "size_bytes": int(size),
+        "mtime_ms": int(mtime_ms),
+        "mtime_utc": _ms_to_utc(int(mtime_ms)),
+        "is_backup": bool(is_backup),
+    }
+
+
 class ChatHistoryHandler(BaseHandler):
     def initialize(self, chat_store: ChatStore):
         self._chat_store = chat_store
@@ -2100,11 +2587,14 @@ class ChatSendHandler(BaseHandler):
             "text": text.strip(),
             "outbox": out,
         }
+        input_mirror = write_input_message(self._paths, msg)
+        msg["input_mirror"] = input_mirror
         await self._chat_store.append(msg)
         self._hub.broadcast({"type": "chat", "ts_ms": _now_ms(), "message": msg})
         self._hub.broadcast({"type": "outbox_written", "ts_ms": _now_ms(), "outbox": out})
+        self._hub.broadcast({"type": "input_mirror_written", "ts_ms": _now_ms(), "input": input_mirror})
 
-        self.write_json({"ok": True, "message": msg, "outbox": out})
+        self.write_json({"ok": True, "message": msg, "outbox": out, "input_mirror": input_mirror})
 
 
 class EventsWebSocket(tornado.websocket.WebSocketHandler):
@@ -2153,10 +2643,13 @@ class EventsWebSocket(tornado.websocket.WebSocketHandler):
                     "text": text,
                     "outbox": out,
                 }
+                input_mirror = write_input_message(self._paths, msg)
+                msg["input_mirror"] = input_mirror
                 # Fire-and-forget append; WS handler is sync in signature.
                 tornado.ioloop.IOLoop.current().spawn_callback(self._chat_store.append, msg)
                 self._hub.broadcast({"type": "chat", "ts_ms": _now_ms(), "message": msg})
                 self._hub.broadcast({"type": "outbox_written", "ts_ms": _now_ms(), "outbox": out})
+                self._hub.broadcast({"type": "input_mirror_written", "ts_ms": _now_ms(), "input": input_mirror})
                 return
 
         self._hub.broadcast({"type": "echo", "ts_ms": _now_ms(), "from": self._client_id, "data": obj})
@@ -4001,7 +4494,7 @@ class ActionCopyHandler(BaseHandler):
 
 def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Application:
     hub = WebSocketHub()
-    chat_store = ChatStore(Path(paths["chat_jsonl"]))
+    chat_store = ChatStore(Path(paths["chat_jsonl"]), chat_sqlite=Path(paths["chat_sqlite"]))
     runner = Runner(paths, hub=hub)
 
     # Ensure action defaults exist early so the PWA can list them immediately.
@@ -4015,6 +4508,8 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
         (r"/api/projects/settings", ProjectSettingsHandler, {"paths": paths, "hub": hub}),
         (r"/api/materials/index", MaterialsIndexHandler, {"paths": paths}),
         (r"/api/outputs/index", OutputsIndexHandler, {"paths": paths}),
+        (r"/api/novel/latest", NovelLatestHandler, {"paths": paths}),
+        (r"/api/novel/latest/pdf", NovelLatestPdfHandler, {"paths": paths}),
         (r"/api/tasks/batches/index", TasksBatchesIndexHandler, {"paths": paths}),
         (r"/api/tasks/batches/([A-Za-z0-9_-]+)", TasksBatchDetailsHandler, {"paths": paths}),
         (r"/api/tasks/batches/([A-Za-z0-9_-]+)/activate", TasksBatchActivateHandler, {"paths": paths, "hub": hub, "runner": runner}),
@@ -4023,6 +4518,8 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
         (r"/api/actions/([A-Za-z0-9_-]+)/copy", ActionCopyHandler, {"paths": paths, "hub": hub}),
         (r"/api/pipeline", PipelineHandler, {"paths": paths, "hub": hub}),
         (r"/api/pipeline/validate", PipelineValidateHandler, {"paths": paths}),
+        (r"/api/pipeline/reference_writer", PipelineReferenceWriterHandler, {"paths": paths}),
+        (r"/api/pipeline/reference_writer/load", PipelineReferenceWriterLoadHandler, {"paths": paths, "hub": hub}),
         (r"/api/chat/history", ChatHistoryHandler, {"chat_store": chat_store}),
         (r"/api/chat/send", ChatSendHandler, {"paths": paths, "chat_store": chat_store, "hub": hub}),
         (r"/api/run/start", RunStartHandler, {"runner": runner}),

@@ -100,6 +100,11 @@ def _is_safe_action_id(s: str) -> bool:
     return all(ch in allowed for ch in s)
 
 
+def is_safe_step_token(s: str) -> bool:
+    # Pipeline STEP tokens are action ids; keep the validation identical.
+    return _is_safe_action_id(s)
+
+
 def _ensure_project_dirs(paths: dict, project_id: str) -> dict:
     pid = project_id.strip()
     root = Path(paths["projects_root"]) / pid
@@ -421,6 +426,35 @@ def copy_default_action(paths: dict, action_id: str, overrides: dict | None = No
         p.write_text(json.dumps(out, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     except Exception:
         return None
+    return out
+
+
+def _filter_unknown_action_warnings(paths: dict, warnings: list) -> list:
+    """
+    `parse_pipeline_script_v2()` is intentionally path-agnostic, so it cannot resolve
+    whether a STEP token is a known action id from the Action Library.
+    Filter `unknown_action_id` warnings here when the action exists on disk.
+    """
+    if not isinstance(warnings, list) or not warnings:
+        return warnings if isinstance(warnings, list) else []
+
+    out = []
+    for w in warnings:
+        if not isinstance(w, dict):
+            continue
+        if w.get("code") != "unknown_action_id":
+            out.append(w)
+            continue
+        raw = w.get("text")
+        if not isinstance(raw, str):
+            out.append(w)
+            continue
+        parts = raw.strip().split()
+        aid = parts[1].strip() if len(parts) >= 2 else ""
+        if aid and _is_safe_action_id(aid) and get_action(paths, aid):
+            # Known action id (default or user) => suppress warning.
+            continue
+        out.append(w)
     return out
 
 
@@ -921,6 +955,7 @@ class PipelineHandler(BaseHandler):
         # Canonical artifact is the script; JSON is derived.
         script = load_pipeline_script(self._paths)
         pipeline, pipeline_ast, warnings, errors = parse_pipeline_script_v2(script)
+        warnings = _filter_unknown_action_warnings(self._paths, warnings)
         save_pipeline(self._paths, pipeline)
         save_pipeline_ast(self._paths, pipeline_ast)
         self.write_json(
@@ -946,6 +981,7 @@ class PipelineHandler(BaseHandler):
         if isinstance(body.get("script"), str):
             incoming = body.get("script", "")
             pipeline, pipeline_ast, warnings, errors = parse_pipeline_script_v2(incoming)
+            warnings = _filter_unknown_action_warnings(self._paths, warnings)
             if errors:
                 return self.write_json({"ok": False, "warnings": warnings, "errors": errors}, status=400)
 
@@ -1037,6 +1073,7 @@ class PipelineValidateHandler(BaseHandler):
 
         script = body.get("script", "")
         pipeline, pipeline_ast, warnings, errors = parse_pipeline_script_v2(script)
+        warnings = _filter_unknown_action_warnings(self._paths, warnings)
         canonical = render_pipeline_script_from_ast(pipeline_ast) if not errors else ""
         canonical_hash = _sha256_hex(canonical) if canonical else ""
         return self.write_json(
@@ -2370,7 +2407,9 @@ class Runner:
                         self._emit_status()
                     return
                 if warnings:
-                    self._log(f"[runner] pipeline parse warnings: {json.dumps(warnings)}")
+                    fw = _filter_unknown_action_warnings(self._paths, warnings)
+                    if fw:
+                        self._log(f"[runner] pipeline parse warnings: {json.dumps(fw)}")
 
                 pipeline_hash = self._pipeline_hash(script)
                 if not isinstance(self._cursor, dict):
@@ -2856,5 +2895,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-    def is_safe_step_token(s: str) -> bool:
-        return _is_safe_action_id(s)

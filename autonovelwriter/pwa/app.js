@@ -1768,6 +1768,12 @@
   function parseScriptToAst(script) {
     const warnings = [];
     const errors = [];
+    const knownActions = new Set();
+    try {
+      for (const a of actionsIndex) {
+        if (a && typeof a.id === 'string' && a.id.trim()) knownActions.add(String(a.id).trim());
+      }
+    } catch (_) {}
 
     const root = { kind: 'root', version: 2, children: [] };
     const stack = [{ level: 0, children: root.children, containerLine: null, containerKind: null }];
@@ -1902,7 +1908,7 @@
           warnings.push({ line: ln, code: 'invalid_step_token', text: raw });
           continue;
         }
-        if (!ALLOWED_TYPES.has(type)) warnings.push({ line: ln, code: 'unknown_action_id', text: raw });
+        if (!ALLOWED_TYPES.has(type) && !knownActions.has(type)) warnings.push({ line: ln, code: 'unknown_action_id', text: raw });
         stack[stack.length - 1].children.push({ kind: 'step', type, enabled: verb === 'STEP' });
         continue;
       }

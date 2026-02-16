@@ -14,5 +14,10 @@
 - Repo hygiene:
   - `autonovelwriter/runtime/actions/*` gitignored.
   - Spec updated to document the Action Library runtime layout.
-  - Added a non-socket backend unit-style test: `autonovelwriter/backend/tests/actions_library_unit_test.py`.
+- Added a non-socket backend unit-style test: `autonovelwriter/backend/tests/actions_library_unit_test.py`.
 
+## Fixes
+- Fixed a backend `NameError` where `parse_pipeline_script_v2()` referenced `is_safe_step_token` that was accidentally defined under the `__main__` block. Moved `is_safe_step_token()` to module scope in `autonovelwriter/backend/server.py`.
+- Reduced noisy `unknown_action_id` warnings for valid Action Library entries:
+  - Backend now filters `unknown_action_id` warnings if the `action_id` exists in `runtime/actions/{defaults,user}` before returning/logging warnings.
+  - PWA script parser treats action ids present in the loaded `/api/actions` index as known (so copied user action ids don’t trigger `unknown_action_id` warnings locally).

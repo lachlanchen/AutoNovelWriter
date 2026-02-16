@@ -16,3 +16,6 @@
 ## Fixes
 - Batch details now returns a more faithful bounded tail preview: tail lines are preserved as raw (`{\"_raw\": ...}`) when JSON decoding fails, instead of being silently skipped.
 - Batch activation is allowed while the runner is `paused` (in addition to `idle`) to support “prepare next batch during a pause” workflows.
+
+## I18N
+- Added new Task Batches panel strings for “Details”, “Activate”, and the “Active” badge in `autonovelwriter/pwa/app.js`, localized across all required UI languages: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`.

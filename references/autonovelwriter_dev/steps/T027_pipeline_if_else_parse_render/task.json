@@ -1,0 +1,19 @@
+{
+  "id": "T027_pipeline_if_else_parse_render",
+  "title": "Pipeline: IF/ELSE parse+render",
+  "notes": "Extend the canonical pipeline script v2 grammar to support Scratch-like conditional containers: `IF <expr>` and optional `ELSE`. Persist as nested `pipeline_ast` nodes (e.g., `{kind:'if', expr, then_children, else_children}`) and ensure render -> parse roundtrips. Keep runner semantics as a stub (treat IF as executing `then_children` only) but ensure script<->AST translation is correct and errors/warnings are clear.",
+  "acceptance": [
+    "Backend parser accepts `IF <expr>` with indented children and optional `ELSE` at same indent, and returns `pipeline_ast` with an if-node.",
+    "Renderer emits canonical formatting for IF/ELSE with 2-space indentation per level.",
+    "Roundtrip unit test added: script -> ast -> script preserves structure for IF/ELSE nesting under ROUND/FOREACH_TASK/FOREACH_ACTION.",
+    "Validation endpoint `/api/pipeline/validate` reports helpful errors for malformed IF/ELSE (missing expr, ELSE without IF, empty blocks).",
+    "No TCP binds required; `python3 -m py_compile` and the new unit test pass."
+  ],
+  "tags": [
+    "pipeline",
+    "parse-render",
+    "backend",
+    "ast",
+    "tests"
+  ]
+}

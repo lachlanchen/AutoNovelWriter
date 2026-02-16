@@ -8,3 +8,8 @@
 Verification (no server start):
 - `node --check autonovelwriter/pwa/app.js`
 
+## Fixes
+- Disabled Action Editor saving until the action template is successfully loaded; on load failure the modal closes and a localized error is shown: `autonovelwriter/pwa/app.js`.
+- Hardened copy-on-edit switching: only applies `new_action_id` if the saved `pathKey` still points to the same STEP (its current `action_id` matches): `autonovelwriter/pwa/app.js`.
+- Ensured pipeline UI refreshes after in-place action updates by re-rendering after action index reload: `autonovelwriter/pwa/app.js`.
+- Localized remaining Action Editor strings (error messages, tool placeholder, modal aria-label): `autonovelwriter/pwa/app.js`, `autonovelwriter/pwa/index.html`.

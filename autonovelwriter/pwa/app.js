@@ -113,11 +113,15 @@
       'actions.editor_origin_user': 'user',
       'actions.editor_name': 'Name',
       'actions.editor_tool': 'Tool',
+      'actions.editor_tool_ph': 'builtin',
       'actions.editor_prompt': 'Prompt',
       'actions.editor_script': 'Script',
       'actions.editor_save': 'Save',
       'actions.editor_cancel': 'Cancel',
       'actions.editor_copy_on_edit_hint': 'Editing a default action creates a user copy (copy-on-edit).',
+      'actions.editor_load_failed': 'Failed to load action',
+      'actions.editor_not_loaded': 'Action not loaded; cannot save.',
+      'actions.editor_selection_changed': 'Selection changed; cannot switch STEP to new action id.',
       'novel.section': 'Novel',
       'novel.language': 'Novel language',
       'novel.tone': 'Tone',
@@ -233,11 +237,15 @@
       'actions.editor_origin_user': '用户',
       'actions.editor_name': '名称',
       'actions.editor_tool': '工具',
+      'actions.editor_tool_ph': 'builtin',
       'actions.editor_prompt': '提示词',
       'actions.editor_script': '脚本',
       'actions.editor_save': '保存',
       'actions.editor_cancel': '取消',
       'actions.editor_copy_on_edit_hint': '编辑默认动作会创建用户副本（复制后编辑）。',
+      'actions.editor_load_failed': '加载动作失败',
+      'actions.editor_not_loaded': '动作未加载，无法保存。',
+      'actions.editor_selection_changed': '选择已改变，无法切换 STEP 的动作ID。',
       'novel.section': '小说',
       'novel.language': '小说语言',
       'novel.tone': '风格',
@@ -353,11 +361,15 @@
       'actions.editor_origin_user': '使用者',
       'actions.editor_name': '名稱',
       'actions.editor_tool': '工具',
+      'actions.editor_tool_ph': 'builtin',
       'actions.editor_prompt': '提示詞',
       'actions.editor_script': '腳本',
       'actions.editor_save': '儲存',
       'actions.editor_cancel': '取消',
       'actions.editor_copy_on_edit_hint': '編輯預設動作會建立使用者副本（複製後編輯）。',
+      'actions.editor_load_failed': '載入動作失敗',
+      'actions.editor_not_loaded': '動作未載入，無法儲存。',
+      'actions.editor_selection_changed': '選取已變更，無法切換 STEP 的動作ID。',
       'novel.section': '小說',
       'novel.language': '小說語言',
       'novel.tone': '風格',
@@ -473,11 +485,15 @@
       'actions.editor_origin_user': 'ユーザー',
       'actions.editor_name': '名前',
       'actions.editor_tool': 'ツール',
+      'actions.editor_tool_ph': 'builtin',
       'actions.editor_prompt': 'プロンプト',
       'actions.editor_script': 'スクリプト',
       'actions.editor_save': '保存',
       'actions.editor_cancel': 'キャンセル',
       'actions.editor_copy_on_edit_hint': '既定アクションの編集はユーザーコピーを作成します（コピーオン編集）。',
+      'actions.editor_load_failed': 'アクションの読み込みに失敗しました',
+      'actions.editor_not_loaded': 'アクション未読み込みのため保存できません。',
+      'actions.editor_selection_changed': '選択が変更されたため、STEP のアクションIDを切り替えできません。',
       'novel.section': '小説',
       'novel.language': '小説の言語',
       'novel.tone': 'トーン',
@@ -593,11 +609,15 @@
       'actions.editor_origin_user': '사용자',
       'actions.editor_name': '이름',
       'actions.editor_tool': '도구',
+      'actions.editor_tool_ph': 'builtin',
       'actions.editor_prompt': '프롬프트',
       'actions.editor_script': '스크립트',
       'actions.editor_save': '저장',
       'actions.editor_cancel': '취소',
       'actions.editor_copy_on_edit_hint': '기본 액션을 편집하면 사용자 복사본이 생성됩니다(복사 후 편집).',
+      'actions.editor_load_failed': '액션을 불러오지 못했습니다',
+      'actions.editor_not_loaded': '액션이 로드되지 않아 저장할 수 없습니다.',
+      'actions.editor_selection_changed': '선택이 변경되어 STEP의 액션 ID를 바꿀 수 없습니다.',
       'novel.section': '소설',
       'novel.language': '소설 언어',
       'novel.tone': '톤',
@@ -713,11 +733,15 @@
       'actions.editor_origin_user': 'nguoi dung',
       'actions.editor_name': 'Ten',
       'actions.editor_tool': 'Cong cu',
+      'actions.editor_tool_ph': 'builtin',
       'actions.editor_prompt': 'Prompt',
       'actions.editor_script': 'Script',
       'actions.editor_save': 'Luu',
       'actions.editor_cancel': 'Huy',
       'actions.editor_copy_on_edit_hint': 'Sua mau mac dinh se tao ban sao nguoi dung (copy-on-edit).',
+      'actions.editor_load_failed': 'Tai action that bai',
+      'actions.editor_not_loaded': 'Action chua tai, khong the luu.',
+      'actions.editor_selection_changed': 'Da thay doi lua chon, khong the chuyen STEP sang action moi.',
       'novel.section': 'Tieu thuyet',
       'novel.language': 'Ngon ngu tieu thuyet',
       'novel.tone': 'Giong dieu',
@@ -833,11 +857,15 @@
       'actions.editor_origin_user': 'مستخدم',
       'actions.editor_name': 'الاسم',
       'actions.editor_tool': 'الأداة',
+      'actions.editor_tool_ph': 'builtin',
       'actions.editor_prompt': 'الموجّه',
       'actions.editor_script': 'السكربت',
       'actions.editor_save': 'حفظ',
       'actions.editor_cancel': 'إلغاء',
       'actions.editor_copy_on_edit_hint': 'تعديل الإجراء الافتراضي ينشئ نسخة مستخدم (نسخ عند التعديل).',
+      'actions.editor_load_failed': 'تعذر تحميل الإجراء',
+      'actions.editor_not_loaded': 'لم يتم تحميل الإجراء، لا يمكن الحفظ.',
+      'actions.editor_selection_changed': 'تم تغيير التحديد، لا يمكن تبديل STEP إلى معرف إجراء جديد.',
       'novel.section': 'الرواية',
       'novel.language': 'لغة الرواية',
       'novel.tone': 'النبرة',
@@ -953,11 +981,15 @@
       'actions.editor_origin_user': 'utilisateur',
       'actions.editor_name': 'Nom',
       'actions.editor_tool': 'Outil',
+      'actions.editor_tool_ph': 'builtin',
       'actions.editor_prompt': 'Prompt',
       'actions.editor_script': 'Script',
       'actions.editor_save': 'Enregistrer',
       'actions.editor_cancel': 'Annuler',
       'actions.editor_copy_on_edit_hint': 'Modifier une action par defaut cree une copie utilisateur (copy-on-edit).',
+      'actions.editor_load_failed': "Echec du chargement de l'action",
+      'actions.editor_not_loaded': "Action non chargee, impossible d'enregistrer.",
+      'actions.editor_selection_changed': "Selection modifiee, impossible de basculer STEP vers un nouvel ID d'action.",
       'novel.section': 'Roman',
       'novel.language': 'Langue du roman',
       'novel.tone': 'Ton',
@@ -1073,11 +1105,15 @@
       'actions.editor_origin_user': 'usuario',
       'actions.editor_name': 'Nombre',
       'actions.editor_tool': 'Herramienta',
+      'actions.editor_tool_ph': 'builtin',
       'actions.editor_prompt': 'Prompt',
       'actions.editor_script': 'Script',
       'actions.editor_save': 'Guardar',
       'actions.editor_cancel': 'Cancelar',
       'actions.editor_copy_on_edit_hint': 'Editar una accion predeterminada crea una copia de usuario (copy-on-edit).',
+      'actions.editor_load_failed': 'No se pudo cargar la accion',
+      'actions.editor_not_loaded': 'La accion no esta cargada; no se puede guardar.',
+      'actions.editor_selection_changed': 'La seleccion cambio; no se puede cambiar STEP al nuevo ID de accion.',
       'novel.section': 'Novela',
       'novel.language': 'Idioma de la novela',
       'novel.tone': 'Tono',
@@ -1193,11 +1229,15 @@
       'actions.editor_origin_user': 'пользователь',
       'actions.editor_name': 'Имя',
       'actions.editor_tool': 'Инструмент',
+      'actions.editor_tool_ph': 'builtin',
       'actions.editor_prompt': 'Промпт',
       'actions.editor_script': 'Скрипт',
       'actions.editor_save': 'Сохранить',
       'actions.editor_cancel': 'Отмена',
       'actions.editor_copy_on_edit_hint': 'Редактирование действия по умолчанию создаёт пользовательскую копию (copy-on-edit).',
+      'actions.editor_load_failed': 'Не удалось загрузить действие',
+      'actions.editor_not_loaded': 'Действие не загружено; сохранить нельзя.',
+      'actions.editor_selection_changed': 'Выбор изменился; нельзя переключить STEP на новый ID действия.',
       'novel.section': 'Роман',
       'novel.language': 'Язык романа',
       'novel.tone': 'Тон',
@@ -1313,11 +1353,15 @@
       'actions.editor_origin_user': 'Benutzer',
       'actions.editor_name': 'Name',
       'actions.editor_tool': 'Tool',
+      'actions.editor_tool_ph': 'builtin',
       'actions.editor_prompt': 'Prompt',
       'actions.editor_script': 'Script',
       'actions.editor_save': 'Speichern',
       'actions.editor_cancel': 'Abbrechen',
       'actions.editor_copy_on_edit_hint': 'Bearbeiten einer Standardaktion erstellt eine Benutzerkopie (copy-on-edit).',
+      'actions.editor_load_failed': 'Aktion konnte nicht geladen werden',
+      'actions.editor_not_loaded': 'Aktion nicht geladen; Speichern nicht möglich.',
+      'actions.editor_selection_changed': 'Auswahl hat sich geändert; STEP kann nicht auf neue Aktions-ID umgestellt werden.',
       'novel.section': 'Roman',
       'novel.language': 'Romansprache',
       'novel.tone': 'Ton',
@@ -1894,7 +1938,18 @@
 
   let settingsCache = null;
   let projectSettingsCache = null;
-  let actionEditorState = { pathKey: '', action_id: '' };
+  let actionEditorState = { pathKey: '', action_id: '', loaded: false, loading: false };
+
+  const saveActionEditsBtn = $('saveActionEdits');
+
+  function setActionEditorEnabled(on) {
+    const ok = !!on;
+    try { if (actionEditName) actionEditName.disabled = !ok; } catch (_) {}
+    try { if (actionEditTool) actionEditTool.disabled = !ok; } catch (_) {}
+    try { if (actionEditPrompt) actionEditPrompt.disabled = !ok; } catch (_) {}
+    try { if (actionEditScript) actionEditScript.disabled = !ok; } catch (_) {}
+    try { if (saveActionEditsBtn) saveActionEditsBtn.disabled = !ok; } catch (_) {}
+  }
 
   function openModal() {
     settingsModal.classList.add('open');
@@ -1957,23 +2012,32 @@
   }
 
   async function openActionEditorForStep(stepPathKey, actionId) {
-    actionEditorState = { pathKey: String(stepPathKey || ''), action_id: String(actionId || '').trim() };
+    actionEditorState = { pathKey: String(stepPathKey || ''), action_id: String(actionId || '').trim(), loaded: false, loading: true };
     fillActionEditorForm({ id: actionEditorState.action_id, origin: '', name: '', tool: '', prompt: '', script: '' });
+    setActionEditorEnabled(false);
     openActionEditorModal();
     const act = await loadActionForEdit(actionEditorState.action_id);
+    actionEditorState.loading = false;
     if (!act) {
-      addMsg('err', 'actions', `load failed: ${actionEditorState.action_id}`);
+      addMsg('err', t('actions.editor_title'), `${t('actions.editor_load_failed')}: ${actionEditorState.action_id}`);
+      closeActionEditorModal();
       return;
     }
+    actionEditorState.loaded = true;
     fillActionEditorForm(act);
+    setActionEditorEnabled(true);
   }
 
   async function saveActionEdits() {
     const aid = String(actionEditorState.action_id || '').trim();
     if (!aid) return false;
+    if (!actionEditorState.loaded || actionEditorState.loading) {
+      addMsg('err', t('actions.editor_title'), t('actions.editor_not_loaded'));
+      return false;
+    }
     const url = backendApiUrl(`/api/actions/${encodeURIComponent(aid)}`);
     if (!url) {
-      addMsg('err', 'actions', t('errors.backend_api_url'));
+      addMsg('err', t('actions.editor_title'), t('errors.backend_api_url'));
       return false;
     }
 
@@ -1992,33 +2056,35 @@
       });
       const obj = await res.json();
       if (!obj || !obj.ok) {
-        addMsg('err', 'actions', JSON.stringify(obj || { ok: false }));
+        addMsg('err', t('actions.editor_title'), JSON.stringify(obj || { ok: false }));
         return false;
       }
 
       // Always refresh index so new user actions are selectable immediately.
       await loadActionsIndex();
+      // Ensure the pipeline UI reflects any updated action names/origins.
+      renderPipeline();
 
       const newId = typeof obj.new_action_id === 'string' ? String(obj.new_action_id || '').trim() : '';
       if (newId) {
         const path = parsePathKey(actionEditorState.pathKey);
         const info = getContainerAndIndex(pipelineAst, path);
         const node = info && info.node;
-        if (node && typeof node === 'object' && node.kind === 'step') {
+        if (node && typeof node === 'object' && node.kind === 'step' && String(node.type || '').trim() === aid) {
           node.type = newId;
           setSelected(actionEditorState.pathKey);
           setPipeStatus('dirty');
           updateDerivedFromAst({ writeScript: true });
           renderPipeline();
         } else {
-          addMsg('err', 'actions', 'cannot switch step to new_action_id (selection invalid)');
+          addMsg('err', t('actions.editor_title'), t('actions.editor_selection_changed'));
         }
       }
 
       closeActionEditorModal();
       return true;
     } catch (e) {
-      addMsg('err', 'actions', String(e));
+      addMsg('err', t('actions.editor_title'), String(e));
       return false;
     }
   }

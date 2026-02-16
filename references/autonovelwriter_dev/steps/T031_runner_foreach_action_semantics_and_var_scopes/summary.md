@@ -23,3 +23,6 @@ Verification (no server start):
 2. Add a PWA inspector for recent `ActionResult` entries (show `vars.prev`, `vars.task.prev`, `vars.action.prev`, artifacts) driven by `action_result_committed`.
 3. Implement minimal IF evaluation + ELSE execution using explicit vars (so `IF` becomes runnable, not parse-only).
 4. Cap/evict persisted `vars_by_task_action` (store only `prev` and bound map sizes) to keep `runner_state.json` small in long runs.
+
+## README
+- Updated `README.md` to reflect that `FOREACH_ACTION` runner semantics are now implemented (iterates `task.payload.actions`) and documented the additional ActionResult/vars metadata available inside `FOREACH_ACTION`.

@@ -66,19 +66,20 @@ The runner executes steps derived from the same v2 parser/AST so what the PWA di
 Runner control flow supports v2 containers:
 - `ROUND <n>` repeats its children `n` times.
 - `FOREACH_TASK` runs its children once per task in the active task list (`autonovelwriter/runtime/tasks/tasks.json`).
-- `FOREACH_ACTION` is parsed/rendered as a container (intended to be nested under `FOREACH_TASK`); runner semantics are currently a placeholder (runs children once).
+- `FOREACH_ACTION` runs its children once per entry in the current task’s `payload.actions` list (intended to be nested under `FOREACH_TASK`).
 
 Resumability:
 - The runner persists a resumable execution cursor to `autonovelwriter/runtime/state/runner_state.json`.
 - The cursor only advances after a block completes successfully (so restarts do not skip unfinished work).
 - If the canonical pipeline script changes (hash mismatch), the runner stops and requires a restart (cursor invalidated).
 - The runner persists per-step `ActionResult` records to `autonovelwriter/runtime/state/action_results.jsonl` and uses a deterministic per-step `exec_id` to avoid duplicating already-committed results on restart.
+  - When running inside `FOREACH_ACTION`, ActionResults include `action_index`, `action_id_ref`, and `action_key`, and vars include `prev` plus explicit `task.prev` vs `action.prev` scopes.
 
 Pipeline script v2 supports nesting:
 - `LOOP <n>` introduces a loop block
 - `ROUND <n>` introduces a “rounds” container block
 - `FOREACH_TASK` introduces a per-task container block
-- `FOREACH_ACTION` introduces a per-action container block (parse/render only for now)
+- `FOREACH_ACTION` introduces a per-action container block (runner iterates `task.payload.actions`)
 - `IF <expr>` introduces a conditional container block (parse/render; runner executes then-branch only for now)
 - `ELSE` introduces an optional alternate branch under an `IF` block
 - children are indented by 2 spaces per level
@@ -177,8 +178,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T02:34:30Z
-- current: T031_runner_foreach_action_semantics_and_var_scopes / summary — Runner: FOREACH_ACTION semantics + var scopes
+- updated_utc: 2026-02-16T02:35:33Z
+- current: T031_runner_foreach_action_semantics_and_var_scopes / update_readme — Runner: FOREACH_ACTION semantics + var scopes
 - queue: total=32 done=30 pending=2
 - last_done: T030_pwa_action_editor_minimal — PWA: Action Editor (prompt/script/tool) @ 2026-02-16T10:18:39+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3

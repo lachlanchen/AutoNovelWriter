@@ -519,6 +519,88 @@ def copy_default_action(paths: dict, action_id: str, overrides: dict | None = No
     return out
 
 
+def update_action_template(paths: dict, action_id: str, updates: dict) -> dict:
+    """
+    Update an action template.
+
+    Copy-on-edit semantics:
+    - If the target action is a default, create a new user action and return it with `new_action_id`.
+    - If the target action is user-origin, update the user action in-place.
+
+    Returns:
+      - {"action": <dict>, "new_action_id": <str>, "base_action_id": <str>} when copy-on-edit occurs
+      - {"action": <dict>} when updated in-place
+    """
+    seed_default_actions(paths)
+    aid = str(action_id or "").strip()
+    if not _is_safe_action_id(aid):
+        raise ValueError("bad_action_id")
+    if not isinstance(updates, dict):
+        raise ValueError("expected_updates_object")
+
+    allowed_keys = {"name", "tool", "prompt", "script", "inputs_schema", "outputs_schema"}
+    clean = {}
+    for k, v in updates.items():
+        if k not in allowed_keys:
+            continue
+        clean[k] = v
+
+    # Shallow validation.
+    for k in ("name", "tool", "prompt", "script"):
+        if k in clean and not isinstance(clean.get(k), str):
+            raise ValueError(f"bad_{k}")
+    for k in ("inputs_schema", "outputs_schema"):
+        if k in clean and not isinstance(clean.get(k), dict):
+            raise ValueError(f"bad_{k}")
+
+    existing = get_action(paths, aid)
+    if not existing:
+        raise FileNotFoundError("not_found")
+    origin = existing.get("origin")
+
+    if origin == "default":
+        created = copy_default_action(paths, aid, overrides=clean)
+        if not created:
+            raise RuntimeError("copy_failed")
+        return {"action": created, "new_action_id": created.get("id"), "base_action_id": aid}
+
+    if origin != "user":
+        raise RuntimeError("unknown_origin")
+
+    user_path = Path(paths["actions_user"]) / f"{aid}.json"
+    if not user_path.exists():
+        raise FileNotFoundError("not_found")
+    cur = _load_action_file(user_path)
+    if not isinstance(cur, dict):
+        cur = {}
+
+    out = dict(cur)
+    # Do not allow body to override id/base_action_id semantics.
+    out["id"] = aid
+    out["origin"] = "user"
+    if "base_action_id" in cur and isinstance(cur.get("base_action_id"), str):
+        out["base_action_id"] = cur.get("base_action_id")
+
+    for k, v in clean.items():
+        out[k] = v
+
+    if not isinstance(out.get("name"), str) or not out.get("name"):
+        out["name"] = aid
+    if not isinstance(out.get("tool"), str) or not out.get("tool"):
+        out["tool"] = "stub"
+    if not isinstance(out.get("prompt"), str):
+        out["prompt"] = ""
+    if not isinstance(out.get("script"), str):
+        out["script"] = ""
+    if not isinstance(out.get("inputs_schema"), dict):
+        out["inputs_schema"] = {}
+    if not isinstance(out.get("outputs_schema"), dict):
+        out["outputs_schema"] = {}
+
+    user_path.write_text(json.dumps(out, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return {"action": out}
+
+
 def _filter_unknown_action_warnings(paths: dict, warnings: list) -> list:
     """
     `parse_pipeline_script_v2()` is intentionally path-agnostic, so it cannot resolve
@@ -3543,9 +3625,10 @@ class ActionsIndexHandler(BaseHandler):
         self.write_json({"ok": True, "actions": actions})
 
 
-class ActionGetHandler(BaseHandler):
-    def initialize(self, paths: dict):
+class ActionHandler(BaseHandler):
+    def initialize(self, paths: dict, hub: "WebSocketHub"):
         self._paths = paths
+        self._hub = hub
 
     def get(self, action_id: str):
         seed_default_actions(self._paths)
@@ -3555,6 +3638,44 @@ class ActionGetHandler(BaseHandler):
         act = get_action(self._paths, aid)
         if not act:
             return self.write_json({"ok": False, "error": "not_found"}, status=404)
+        self.write_json({"ok": True, "action": act})
+
+    def put(self, action_id: str):
+        seed_default_actions(self._paths)
+        aid = str(action_id or "").strip()
+        if not _is_safe_action_id(aid):
+            return self.write_json({"ok": False, "error": "bad_action_id"}, status=400)
+        try:
+            body = tornado.escape.json_decode(self.request.body or b"{}")
+        except Exception:
+            return self.write_json({"ok": False, "error": "invalid_json"}, status=400)
+        if not isinstance(body, dict):
+            return self.write_json({"ok": False, "error": "expected_object"}, status=400)
+
+        updates = body.get("updates") if isinstance(body.get("updates"), dict) else body
+        if not isinstance(updates, dict):
+            return self.write_json({"ok": False, "error": "expected_object"}, status=400)
+
+        try:
+            res = update_action_template(self._paths, aid, updates)
+        except ValueError as e:
+            # Includes bad field types.
+            return self.write_json({"ok": False, "error": str(e)}, status=400)
+        except FileNotFoundError:
+            return self.write_json({"ok": False, "error": "not_found"}, status=404)
+        except Exception:
+            return self.write_json({"ok": False, "error": "update_failed"}, status=500)
+
+        act = res.get("action") if isinstance(res, dict) else None
+        new_id = res.get("new_action_id") if isinstance(res, dict) else None
+        base_id = res.get("base_action_id") if isinstance(res, dict) else None
+
+        if isinstance(new_id, str) and new_id:
+            # Copy-on-edit => treat as creation.
+            self._hub.broadcast({"type": "action_created", "ts_ms": _now_ms(), "action_id": new_id, "base_action_id": base_id or aid})
+            return self.write_json({"ok": True, "new_action_id": new_id, "action": act})
+
+        self._hub.broadcast({"type": "action_updated", "ts_ms": _now_ms(), "action_id": aid})
         self.write_json({"ok": True, "action": act})
 
 
@@ -3600,7 +3721,7 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
         (r"/api/tasks/batches/([A-Za-z0-9_-]+)", TasksBatchDetailsHandler, {"paths": paths}),
         (r"/api/tasks/batches/([A-Za-z0-9_-]+)/activate", TasksBatchActivateHandler, {"paths": paths, "hub": hub, "runner": runner}),
         (r"/api/actions", ActionsIndexHandler, {"paths": paths}),
-        (r"/api/actions/([A-Za-z0-9_-]+)", ActionGetHandler, {"paths": paths}),
+        (r"/api/actions/([A-Za-z0-9_-]+)", ActionHandler, {"paths": paths, "hub": hub}),
         (r"/api/actions/([A-Za-z0-9_-]+)/copy", ActionCopyHandler, {"paths": paths, "hub": hub}),
         (r"/api/pipeline", PipelineHandler, {"paths": paths, "hub": hub}),
         (r"/api/pipeline/validate", PipelineValidateHandler, {"paths": paths}),

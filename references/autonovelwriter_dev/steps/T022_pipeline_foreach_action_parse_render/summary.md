@@ -8,3 +8,6 @@
 
 ## Fixes
 - Parser clarity: updated backend comments to list all supported v2 verbs and added a non-fatal warning (`foreach_action_outside_foreach_task`) when `FOREACH_ACTION` appears outside `FOREACH_TASK` (backend + PWA fallback).
+
+## I18N
+- Added `pipeline.verb_foreach_action` label (shown in blocks UI) for all required UI languages. The label stays `FOREACH_ACTION` (pipeline verb) in every locale for consistency with the script language.

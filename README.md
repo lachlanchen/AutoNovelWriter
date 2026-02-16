@@ -155,8 +155,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T00:09:55Z
-- current: T022_pipeline_foreach_action_parse_render / fix — Pipeline: FOREACH_ACTION parse+render
+- updated_utc: 2026-02-16T00:10:23Z
+- current: T022_pipeline_foreach_action_parse_render / i18n — Pipeline: FOREACH_ACTION parse+render
 - queue: total=26 done=21 pending=5
 - last_done: T021_pwa_delete_blocks — PWA: delete blocks (and containers) @ 2026-02-16T08:01:26+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_074635_b2

@@ -59,6 +59,7 @@ The runner executes steps derived from the same v2 parser/AST so what the PWA di
 Runner control flow supports v2 containers:
 - `ROUND <n>` repeats its children `n` times.
 - `FOREACH_TASK` runs its children once per task in the active task list (`autonovelwriter/runtime/tasks/tasks.json`).
+- `FOREACH_ACTION` is parsed/rendered as a container (intended to be nested under `FOREACH_TASK`); runner semantics are currently a placeholder (runs children once).
 
 Resumability:
 - The runner persists a resumable execution cursor to `autonovelwriter/runtime/state/runner_state.json`.
@@ -69,13 +70,14 @@ Pipeline script v2 supports nesting:
 - `LOOP <n>` introduces a loop block
 - `ROUND <n>` introduces a “rounds” container block
 - `FOREACH_TASK` introduces a per-task container block
+- `FOREACH_ACTION` introduces a per-action container block (parse/render only for now)
 - children are indented by 2 spaces per level
 
 Validation (no persistence):
 - `POST /api/pipeline/validate` returns a canonical preview plus `pipeline_ast`, warnings, and errors.
 
 The PWA shows the script in a textarea (source of truth) and renders nested blocks from `pipeline_ast`.
-If the backend validate endpoint is unreachable, the PWA falls back to a local parser that supports the same v2 verbs (`LOOP`, `ROUND`, `FOREACH_TASK`, `STEP`, `DISABLED`).
+If the backend validate endpoint is unreachable, the PWA falls back to a local parser that supports the same v2 verbs (`LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `STEP`, `DISABLED`).
 
 Blocks UI notes:
 - `LOOP` and `ROUND` repeat counts are editable inline in the blocks list; valid edits immediately update the canonical script textarea.
@@ -155,8 +157,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T00:10:46Z
-- current: T022_pipeline_foreach_action_parse_render / summary — Pipeline: FOREACH_ACTION parse+render
+- updated_utc: 2026-02-16T00:11:37Z
+- current: T022_pipeline_foreach_action_parse_render / update_readme — Pipeline: FOREACH_ACTION parse+render
 - queue: total=26 done=21 pending=5
 - last_done: T021_pwa_delete_blocks — PWA: delete blocks (and containers) @ 2026-02-16T08:01:26+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_074635_b2

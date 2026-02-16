@@ -17,3 +17,6 @@
 2. Add PWA toolbar insertion for `FOREACH_ACTION` (wrap selected or append a valid container).
 3. Add UI affordances to surface parser warnings (e.g., show `foreach_action_outside_foreach_task` in the pipeline panel instead of only console/log).
 4. Extend round-trip fixtures to cover disabled steps and mixed nesting (ROUND + LOOP + FOREACH_*).
+
+## README
+- Updated `README.md` to document `FOREACH_ACTION` support in the pipeline script (parse/render + fallback parser), and noted runner semantics are still a placeholder.

@@ -43,3 +43,10 @@ Verification (no TCP bind):
 - Extend backend tests with direct handler-level request/response assertions for `/api/projects/settings` GET/POST payload shapes.
 - Use `effective_novel_settings()` in any runner paths that still read only `effective_novel_language()` so future novel settings are consistently consumed.
 - Document the new project override fields in `docs/autonovelwriter_spec.md` settings/API sections.
+
+## README
+- Updated `README.md` to reflect current T032 project-settings reality:
+  - `GET/POST /api/projects/settings` now documented with inherit-capable overrides for `novel_language`, `novel_tone`, and `novel_target_length_words`.
+  - Novel settings section now documents project-level override fields explicitly and their blank/unset inherit behavior.
+  - Added a short driver safety note (clean branch/worktree + check `references/autonovelwriter_dev/state.tsv` before restart).
+- Left `AUTO_DEV_PROGRESS` markers untouched.

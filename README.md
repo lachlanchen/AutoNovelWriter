@@ -102,7 +102,7 @@ Blocks UI notes:
 - Health: `GET /api/health`
 - Settings: `GET/POST /api/settings`
 - Projects: `GET /api/projects`, `POST /api/projects/active`
-- Project settings (active project): `GET/POST /api/projects/settings` (per-project overrides like novel language)
+- Project settings (active project): `GET/POST /api/projects/settings` (per-project overrides with inherit semantics: `novel_language`, `novel_tone`, `novel_target_length_words`)
 - Materials index (active project): `GET /api/materials/index`
 - Outputs index (active project): `GET /api/outputs/index`
 - Task batches index: `GET /api/tasks/batches/index` (optional: `?project=<project_id>`)
@@ -164,7 +164,7 @@ Novel-writing preferences are stored in backend settings under `settings.novel.*
 
 These are intentionally **separate** from the PWA UI language (`?lang=` / `anw_lang`).
 
-Per-project overrides (currently: novel language) are stored under:
+Per-project overrides are stored under:
 - `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json`
 
 Current fields (editable in the PWA Settings modal):
@@ -175,11 +175,16 @@ Current fields (editable in the PWA Settings modal):
 - `settings.novel.tense`
 - `settings.novel.chapter_count_target`
 
+Current project-level override fields (blank/unset = inherit global):
+- `project_settings.novel_language`
+- `project_settings.novel_tone`
+- `project_settings.novel_target_length_words`
+
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T02:47:31Z
-- current: T032_project_settings_extend_novel_overrides / summary — Project settings: extend novel overrides (inherit)
+- updated_utc: 2026-02-16T02:48:02Z
+- current: T032_project_settings_extend_novel_overrides / update_readme — Project settings: extend novel overrides (inherit)
 - queue: total=32 done=31 pending=1
 - last_done: T031_runner_foreach_action_semantics_and_var_scopes — Runner: FOREACH_ACTION semantics + var scopes @ 2026-02-16T10:35:36+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3
@@ -192,6 +197,7 @@ Useful controls:
 - Stop after current task: `touch references/autonovelwriter_dev/STOP`
 - Reset state tracking (keeps queue): `scripts/auto-autonovelwriter-development.sh --reset-state`
 - Start a fresh Codex session: `scripts/auto-autonovelwriter-development.sh --new-session`
+- Safe practice: run in a clean branch/worktree and monitor `references/autonovelwriter_dev/state.tsv` before restarting.
 
 ## Contents
 - `docs/autonovelwriter_spec.md`: Product spec for the Scratch-like controller (chat + folder pipe + start/pause/stop + settings).

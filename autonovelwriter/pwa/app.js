@@ -3378,6 +3378,9 @@
       } else if (obj && obj.type === 'action_created') {
         // Refresh Action Library index so new user actions are selectable without reload.
         loadActionsIndex().then(() => renderPipeline());
+      } else if (obj && obj.type === 'action_updated') {
+        // Best-effort refresh: keeps multiple clients in sync when a user action is edited in-place.
+        loadActionsIndex().then(() => renderPipeline());
       } else if (obj && obj.type === 'run_status') {
         setRunStatus(obj.status, obj.task_id, obj.block);
       } else if (obj && obj.type === 'task_status') {

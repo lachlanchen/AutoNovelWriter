@@ -9,3 +9,5 @@ Verification (no server start):
 - `python3 autonovelwriter/backend/tests/actions_library_unit_test.py`
 - `python3 autonovelwriter/backend/tests/actions_library_update_unit_test.py`
 
+## Fixes
+- PWA: added WS handling for `action_updated` to refresh the Action Library index after in-place user action edits: `autonovelwriter/pwa/app.js`.

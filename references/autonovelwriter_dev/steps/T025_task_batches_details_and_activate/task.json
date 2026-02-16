@@ -1,0 +1,20 @@
+{
+  "id": "T025_task_batches_details_and_activate",
+  "title": "Task batches: details API + activate batch",
+  "notes": "Build on the existing batches index by adding a batch-details endpoint and an explicit activation flow (select a batch to become the current task list for FOREACH_TASK). Add a minimal PWA interaction in the Task Batches panel to view/activate.",
+  "acceptance": [
+    "Backend: GET batch details returns manifest + task_count + a bounded preview/tail of `tasks.jsonl`.",
+    "Backend: POST activate batch sets current tasks pointer for the active project (persisted under runtime/project state).",
+    "PWA: Task Batches panel can open details and activate a selected batch with clear status feedback.",
+    "WS broadcasts an event on activation so other clients refresh.",
+    "All new UI strings localized for all required languages.",
+    "No TCP binds; python/js checks pass."
+  ],
+  "tags": [
+    "backend",
+    "pwa",
+    "tasks",
+    "runtime",
+    "i18n"
+  ]
+}

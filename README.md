@@ -178,8 +178,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T02:47:12Z
-- current: T032_project_settings_extend_novel_overrides / i18n — Project settings: extend novel overrides (inherit)
+- updated_utc: 2026-02-16T02:47:31Z
+- current: T032_project_settings_extend_novel_overrides / summary — Project settings: extend novel overrides (inherit)
 - queue: total=32 done=31 pending=1
 - last_done: T031_runner_foreach_action_semantics_and_var_scopes — Runner: FOREACH_ACTION semantics + var scopes @ 2026-02-16T10:35:36+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3

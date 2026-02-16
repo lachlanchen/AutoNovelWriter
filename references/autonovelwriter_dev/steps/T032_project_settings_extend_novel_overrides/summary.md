@@ -37,3 +37,9 @@ Verification (no TCP bind):
 - Verified the new Settings modal fields in `autonovelwriter/pwa/index.html` are fully wired to i18n keys (`project.novel_tone*`, `project.novel_target_words*`, `project.inherit_hint`, `project.effective_label`, `project.global_label`).
 - No additional code changes were required in this i18n stage.
 - Verification run: `node --check autonovelwriter/pwa/app.js`.
+
+## Next
+- Add a small PWA inline validation hint for project target words to mirror backend range (`1000..5000000`) before submit.
+- Extend backend tests with direct handler-level request/response assertions for `/api/projects/settings` GET/POST payload shapes.
+- Use `effective_novel_settings()` in any runner paths that still read only `effective_novel_language()` so future novel settings are consistently consumed.
+- Document the new project override fields in `docs/autonovelwriter_spec.md` settings/API sections.

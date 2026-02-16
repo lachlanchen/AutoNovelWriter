@@ -295,6 +295,10 @@ def _ast_foreach_task(children: list) -> dict:
     return {"kind": "foreach_task", "children": children}
 
 
+def _ast_foreach_action(children: list) -> dict:
+    return {"kind": "foreach_action", "children": children}
+
+
 def _ast_root(children: list) -> dict:
     return {"kind": "root", "version": 2, "children": children}
 
@@ -311,7 +315,7 @@ def _flatten_ast_steps(ast: dict) -> list:
             if isinstance(t, str) and t:
                 out.append({"id": t, "type": t, "enabled": bool(node.get("enabled", True))})
             return
-        if k in ("loop", "round", "foreach_task"):
+        if k in ("loop", "round", "foreach_task", "foreach_action"):
             kids = node.get("children")
             if isinstance(kids, list):
                 for c in kids:
@@ -330,7 +334,7 @@ def _ast_has_loop(ast: dict) -> bool:
         if not isinstance(node, dict):
             return False
         k = node.get("kind")
-        if k in ("loop", "round", "foreach_task"):
+        if k in ("loop", "round", "foreach_task", "foreach_action"):
             return True
         kids = node.get("children")
         if isinstance(kids, list):
@@ -402,6 +406,13 @@ def render_pipeline_script_from_ast(ast: dict) -> str:
             return
         if k == "foreach_task":
             lines.append(indent + "FOREACH_TASK")
+            kids = node.get("children")
+            if isinstance(kids, list):
+                for c in kids:
+                    emit(c, level + 1)
+            return
+        if k == "foreach_action":
+            lines.append(indent + "FOREACH_ACTION")
             kids = node.get("children")
             if isinstance(kids, list):
                 for c in kids:
@@ -481,6 +492,8 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
                     errors.append({"line": line_no, "code": "round_empty", "text": "ROUND"})
                 elif kind == "foreach_task":
                     errors.append({"line": line_no, "code": "foreach_task_empty", "text": "FOREACH_TASK"})
+                elif kind == "foreach_action":
+                    errors.append({"line": line_no, "code": "foreach_action_empty", "text": "FOREACH_ACTION"})
             stack.pop()
 
     def leading_spaces(raw: str) -> tuple[int, bool]:
@@ -564,6 +577,15 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
             foreach_node = _ast_foreach_task(children=foreach_children)
             stack[-1][1].append(foreach_node)
             stack.append((lvl + 1, foreach_children, "foreach_task", ln))
+            continue
+
+        if verb == "FOREACH_ACTION":
+            if len(parts) != 1:
+                warnings.append({"line": ln, "code": "too_many_tokens", "text": raw})
+            foreach_children = []
+            foreach_node = _ast_foreach_action(children=foreach_children)
+            stack[-1][1].append(foreach_node)
+            stack.append((lvl + 1, foreach_children, "foreach_action", ln))
             continue
 
         if verb in ("STEP", "DISABLED"):
@@ -2018,6 +2040,13 @@ class Runner:
             if k == "foreach_task":
                 frame["child_i"] = child_i + 1
                 stack.append({"kind": "foreach_task", "path": node_path, "child_i": 0, "task_i": 0, "task_id": None})
+                continue
+
+            if k == "foreach_action":
+                # Placeholder semantics for now: treat as a normal container that runs its children once.
+                # A later task will implement iteration over task.actions with explicit dataflow.
+                frame["child_i"] = child_i + 1
+                stack.append({"kind": "foreach_action", "path": node_path, "child_i": 0})
                 continue
 
             # Unknown nodes: skip but never silently.

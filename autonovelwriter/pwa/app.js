@@ -61,6 +61,7 @@
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.verb_foreach_action': 'FOREACH_ACTION',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'enabled',
       'pipeline.state_disabled': 'disabled',
@@ -142,6 +143,7 @@
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.verb_foreach_action': 'FOREACH_ACTION',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': '启用',
       'pipeline.state_disabled': '禁用',
@@ -223,6 +225,7 @@
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.verb_foreach_action': 'FOREACH_ACTION',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': '啟用',
       'pipeline.state_disabled': '停用',
@@ -304,6 +307,7 @@
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.verb_foreach_action': 'FOREACH_ACTION',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': '有効',
       'pipeline.state_disabled': '無効',
@@ -385,6 +389,7 @@
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.verb_foreach_action': 'FOREACH_ACTION',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': '사용',
       'pipeline.state_disabled': '사용 안 함',
@@ -466,6 +471,7 @@
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.verb_foreach_action': 'FOREACH_ACTION',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'bat',
       'pipeline.state_disabled': 'tat',
@@ -547,6 +553,7 @@
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.verb_foreach_action': 'FOREACH_ACTION',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'مفعل',
       'pipeline.state_disabled': 'معطل',
@@ -628,6 +635,7 @@
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.verb_foreach_action': 'FOREACH_ACTION',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'actif',
       'pipeline.state_disabled': 'inactif',
@@ -709,6 +717,7 @@
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.verb_foreach_action': 'FOREACH_ACTION',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'activo',
       'pipeline.state_disabled': 'inactivo',
@@ -790,6 +799,7 @@
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.verb_foreach_action': 'FOREACH_ACTION',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'включено',
       'pipeline.state_disabled': 'выключено',
@@ -871,6 +881,7 @@
       'pipeline.verb_loop': 'LOOP',
       'pipeline.verb_round': 'ROUND',
       'pipeline.verb_foreach_task': 'FOREACH_TASK',
+      'pipeline.verb_foreach_action': 'FOREACH_ACTION',
       'pipeline.badge_foreach': 'foreach',
       'pipeline.state_enabled': 'aktiv',
       'pipeline.state_disabled': 'inaktiv',
@@ -1598,12 +1609,23 @@
       }
       return { kind: 'foreach_task', children };
     };
+    const cleanForeachAction = (n) => {
+      if (!n || typeof n !== 'object') return null;
+      const kids = Array.isArray(n.children) ? n.children : [];
+      const children = [];
+      for (const c of kids) {
+        const cc = cleanNode(c);
+        if (cc) children.push(cc);
+      }
+      return { kind: 'foreach_action', children };
+    };
     const cleanNode = (n) => {
       if (!n || typeof n !== 'object') return null;
       if (n.kind === 'step') return cleanStep(n);
       if (n.kind === 'loop') return cleanLoop(n);
       if (n.kind === 'round') return cleanRound(n);
       if (n.kind === 'foreach_task') return cleanForeachTask(n);
+      if (n.kind === 'foreach_action') return cleanForeachAction(n);
       return null;
     };
 
@@ -1626,7 +1648,7 @@
         out.push({ id: n.type, type: n.type, enabled: n.enabled !== false });
         return;
       }
-      if ((n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task') && Array.isArray(n.children)) {
+      if ((n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task' || n.kind === 'foreach_action') && Array.isArray(n.children)) {
         for (const c of n.children) walk(c);
       }
     };
@@ -1638,7 +1660,7 @@
 
   function astHasLoop(n) {
     if (!n || typeof n !== 'object') return false;
-    if (n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task') return true;
+    if (n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task' || n.kind === 'foreach_action') return true;
     const kids = Array.isArray(n.children) ? n.children : [];
     for (const c of kids) {
       if (astHasLoop(c)) return true;
@@ -1675,6 +1697,12 @@
         lines.push(`${indent}FOREACH_TASK`);
         const kids = Array.isArray(n.children) ? n.children : [];
         for (const c of kids) emit(c, level + 1);
+        return;
+      }
+      if (n.kind === 'foreach_action') {
+        lines.push(`${indent}FOREACH_ACTION`);
+        const kids = Array.isArray(n.children) ? n.children : [];
+        for (const c of kids) emit(c, level + 1);
       }
     };
     const kids = ast && typeof ast === 'object' && Array.isArray(ast.children) ? ast.children : [];
@@ -1701,6 +1729,7 @@
           if (kind === 'loop') errors.push({ line: top.containerLine, code: 'loop_empty', text: 'LOOP' });
           else if (kind === 'round') errors.push({ line: top.containerLine, code: 'round_empty', text: 'ROUND' });
           else if (kind === 'foreach_task') errors.push({ line: top.containerLine, code: 'foreach_task_empty', text: 'FOREACH_TASK' });
+          else if (kind === 'foreach_action') errors.push({ line: top.containerLine, code: 'foreach_action_empty', text: 'FOREACH_ACTION' });
         }
         stack.pop();
       }
@@ -1797,6 +1826,14 @@
         continue;
       }
 
+      if (verb === 'FOREACH_ACTION') {
+        if (parts.length > 1) warnings.push({ line: ln, code: 'too_many_tokens', text: raw });
+        const fa = { kind: 'foreach_action', children: [] };
+        stack[stack.length - 1].children.push(fa);
+        stack.push({ level: lvl + 1, children: fa.children, containerLine: ln, containerKind: 'foreach_action' });
+        continue;
+      }
+
       if (verb === 'STEP' || verb === 'DISABLED') {
         if (parts.length < 2) {
           warnings.push({ line: ln, code: 'too_few_tokens', text: raw });
@@ -1848,7 +1885,7 @@
     for (let d = 0; d < path.length - 1; d++) {
       const idx = path[d];
       const node = container[idx];
-      if (!node || typeof node !== 'object' || (node.kind !== 'loop' && node.kind !== 'round' && node.kind !== 'foreach_task') || !Array.isArray(node.children)) return null;
+      if (!node || typeof node !== 'object' || (node.kind !== 'loop' && node.kind !== 'round' && node.kind !== 'foreach_task' && node.kind !== 'foreach_action') || !Array.isArray(node.children)) return null;
       parent = node;
       container = node.children;
     }
@@ -1899,7 +1936,7 @@
     updateIndentButtons();
 
     function isContainerKind(kind) {
-      return kind === 'loop' || kind === 'round' || kind === 'foreach_task';
+      return kind === 'loop' || kind === 'round' || kind === 'foreach_task' || kind === 'foreach_action';
     }
 
     function attachContainerDrop(ol, parentPath) {
@@ -1956,6 +1993,7 @@
           n.kind === 'loop' ? t('pipeline.verb_loop')
             : n.kind === 'round' ? t('pipeline.verb_round')
               : n.kind === 'foreach_task' ? t('pipeline.verb_foreach_task')
+                : n.kind === 'foreach_action' ? t('pipeline.verb_foreach_action')
                 : n.type;
         const meta = document.createElement('div');
         meta.className = 'btype';
@@ -2052,7 +2090,7 @@
           row.appendChild(inp);
           meta.appendChild(row);
           meta.appendChild(err);
-        } else if (n.kind === 'foreach_task') {
+        } else if (n.kind === 'foreach_task' || n.kind === 'foreach_action') {
           const badge = document.createElement('span');
           badge.className = 'badge';
           badge.textContent = t('pipeline.badge_foreach');
@@ -2224,7 +2262,7 @@
       for (const c of n.children) {
         if (!c || typeof c !== 'object') continue;
         prune(c);
-        if ((c.kind === 'loop' || c.kind === 'round' || c.kind === 'foreach_task') && (!Array.isArray(c.children) || c.children.length === 0)) {
+        if ((c.kind === 'loop' || c.kind === 'round' || c.kind === 'foreach_task' || c.kind === 'foreach_action') && (!Array.isArray(c.children) || c.children.length === 0)) {
           continue;
         }
         next.push(c);
@@ -2235,7 +2273,7 @@
   }
 
   function isContainerNode(n) {
-    return !!(n && typeof n === 'object' && (n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task') && Array.isArray(n.children));
+    return !!(n && typeof n === 'object' && (n.kind === 'loop' || n.kind === 'round' || n.kind === 'foreach_task' || n.kind === 'foreach_action') && Array.isArray(n.children));
   }
 
   function ensureNonEmptyChildren(children) {
@@ -2293,7 +2331,7 @@
     if (index <= 0) return;
     const prev = container[index - 1];
     const node = container.splice(index, 1)[0];
-    if (prev && typeof prev === 'object' && (prev.kind === 'loop' || prev.kind === 'round' || prev.kind === 'foreach_task') && Array.isArray(prev.children)) {
+    if (prev && typeof prev === 'object' && (prev.kind === 'loop' || prev.kind === 'round' || prev.kind === 'foreach_task' || prev.kind === 'foreach_action') && Array.isArray(prev.children)) {
       prev.children.push(node);
       setSelected(pathKey(parentPath.concat([index - 1, prev.children.length - 1])));
     } else {
@@ -2318,7 +2356,7 @@
     // parentPath points to the parent container node.
     const containerPath = parentPath;
     const cInfo = getContainerAndIndex(pipelineAst, containerPath);
-    if (!cInfo || !cInfo.node || (cInfo.node.kind !== 'loop' && cInfo.node.kind !== 'round' && cInfo.node.kind !== 'foreach_task')) return;
+    if (!cInfo || !cInfo.node || (cInfo.node.kind !== 'loop' && cInfo.node.kind !== 'round' && cInfo.node.kind !== 'foreach_task' && cInfo.node.kind !== 'foreach_action')) return;
     const containerNode = cInfo.node;
     const outerParentPath = cInfo.parentPath;
     const outerInfo = outerParentPath.length ? getContainerAndIndex(pipelineAst, outerParentPath) : null;

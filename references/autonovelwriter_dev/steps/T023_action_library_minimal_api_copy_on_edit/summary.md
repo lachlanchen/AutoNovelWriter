@@ -25,3 +25,9 @@
 ## I18N
 - New Action Library UI strings added in this task (STEP action selector + “Customize”) are localized in `autonovelwriter/pwa/app.js` for all required UI languages: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`.
 - No additional user-facing strings were introduced during the Fix stage.
+
+## Next
+1. Add `PUT/PATCH /api/actions/<action_id>` for user actions (and a small PWA editor modal) so “copy-on-edit” becomes real editing: rename, tool binding, prompt/script, inputs/outputs schema.
+2. Extend canonical pipeline script syntax to separate “block kind” from `action_id` (e.g. `STEP <action_id>` is fine, but add `IF/ELSE` and variable bindings while keeping script stable).
+3. Implement runner `ActionResult` persistence + explicit dataflow (store inputs/outputs/artifacts per action execution; allow next action to consume prior outputs without scanning folders).
+4. Add UI affordances for Action Library browsing: search/filter defaults vs user, show origin/base_action_id, and allow deleting user actions safely.

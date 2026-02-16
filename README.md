@@ -164,8 +164,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T01:05:06Z
-- current: T026_project_settings_novel_language_separate / implement — Project settings: novel language (separate from UI)
+- updated_utc: 2026-02-16T01:07:13Z
+- current: T026_project_settings_novel_language_separate / debug — Project settings: novel language (separate from UI)
 - queue: total=26 done=25 pending=1
 - last_done: T025_task_batches_details_and_activate — Task batches: details API + activate batch @ 2026-02-16T08:53:11+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_074635_b2

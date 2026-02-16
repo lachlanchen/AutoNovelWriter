@@ -14,3 +14,9 @@
 
 ## I18N
 - Added PWA i18n keys for conditional block verbs: `pipeline.verb_if` and `pipeline.verb_else` across all required UI languages.
+
+## Next
+1. Add UI insertion controls for `IF` and `ELSE` containers (wrap selected / append) to avoid hand-editing script.
+2. Define and document expression syntax for `IF <expr>` (even if evaluation remains stubbed), and add validation for obviously-invalid expressions.
+3. Implement runner semantics for IF/ELSE (evaluate expression and choose branch) with explicit vars/context available to expressions.
+4. Update docs/spec/README to explicitly document accepted ELSE formatting and the canonical render form.

@@ -10,3 +10,7 @@ Verification (no server start):
 - `python3 autonovelwriter/backend/tests/runner_actionresult_vars_unit_test.py`
 - `python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py`
 
+## Fixes
+- Adjusted `FOREACH_ACTION` semantics to do **zero iterations** when the task has no `actions` list (so it truly runs once per entry): `autonovelwriter/backend/server.py`.
+- Prevented `STEP <action_id>` from executing/committing an ActionResult unless a real `ctx.action_id` is present (avoids polluting results/vars with the placeholder token): `autonovelwriter/backend/server.py`.
+- Added a regression unit test for the empty-actions case to ensure no ActionResults are committed: `autonovelwriter/backend/tests/runner_foreach_action_empty_actions_unit_test.py`.

@@ -2917,9 +2917,6 @@ class Runner:
                 out.append({"action_id_ref": action_id_ref, "action_key": action_key})
                 if len(out) >= 2000:
                     break
-            # If no actions are provided, run a single iteration so non-placeholder children can still execute.
-            if not out:
-                out = [{"action_id_ref": "", "action_key": "__none__"}]
             return out
 
         while stack:
@@ -2990,7 +2987,12 @@ class Runner:
                 foreach_f = self._foreach_from_stack(stack)
                 task_id = foreach_f.get("task_id") if foreach_f else None
                 tobj = tasks_by_id.get(task_id) if isinstance(task_id, str) and task_id else None
-                actions = _actions_for_task(tobj) if isinstance(tobj, dict) else [{"action_id_ref": "", "action_key": "__no_task__"}]
+                actions = _actions_for_task(tobj) if isinstance(tobj, dict) else []
+
+                # If there are no actions for this task, do zero iterations (per-task semantics).
+                if not actions:
+                    stack.pop()
+                    continue
 
                 # Advance to next action if needed.
                 if frame["action_i"] >= len(actions):
@@ -3077,6 +3079,11 @@ class Runner:
                     # Primary action id for placeholder steps.
                     if isinstance(aid_ref, str) and aid_ref:
                         ctx["action_id"] = aid_ref
+
+                # Guard: placeholder step outside a valid FOREACH_ACTION context should not execute.
+                if t == "<action_id>" and not (isinstance(ctx.get("action_id"), str) and ctx.get("action_id")):
+                    frame["child_i"] = child_i + 1
+                    continue
                 exec_id = self._exec_id_for_ctx(ctx)
                 # Mark this step as pending until it completes successfully; only then advance `child_i`.
                 cur["pending"] = {

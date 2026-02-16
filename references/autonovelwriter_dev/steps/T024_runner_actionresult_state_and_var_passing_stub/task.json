@@ -1,0 +1,19 @@
+{
+  "id": "T024_runner_actionresult_state_and_var_passing_stub",
+  "title": "Runner: ActionResult state + explicit var passing (stub)",
+  "notes": "Add a structured `ActionResult` record emitted per STEP execution (even if execution is stubbed). Persist it in runner state and make the next STEP receive prior outputs explicitly via a variable map, not by scanning folders. Keep scope tight: implement schema + persistence + plumbing without full tool execution.",
+  "acceptance": [
+    "Define `ActionResult` schema: action_id, inputs, outputs, artifacts[], timestamps, status.",
+    "Runner writes ActionResult to `runtime/state/` and links it to cursor/ast_path.",
+    "Next step receives an explicit `vars` map derived from previous outputs (documented fields).",
+    "Resumability: restart does not duplicate already-committed ActionResults.",
+    "No TCP binds; python import/compile checks and a small unit-style runner test pass."
+  ],
+  "tags": [
+    "backend",
+    "runner",
+    "state",
+    "resumable",
+    "dataflow"
+  ]
+}

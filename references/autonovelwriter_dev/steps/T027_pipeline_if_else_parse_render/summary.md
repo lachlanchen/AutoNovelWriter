@@ -5,3 +5,9 @@
 - PWA: updated the local fallback script parser/renderer and AST normalization to preserve IF/ELSE when the backend is unreachable, and to avoid dropping unknown nodes.
 - Tests: added `autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py` covering roundtrip + key validation errors (`if_missing_expr`, `else_without_if`, `if_empty`, `else_empty`).
 
+## Fixes
+- Parser now accepts `ELSE` in both common styles:
+  - aligned with `IF` (canonical render), and
+  - indented at the same level as the `IF` body (accepted, then canonicalized on render).
+- Updated PWA local fallback parser to match backend ELSE permissiveness.
+- Extended unit tests to cover indented-ELSE acceptance and canonicalization.

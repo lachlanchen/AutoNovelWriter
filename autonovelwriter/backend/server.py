@@ -948,8 +948,26 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
         if verb == "ELSE":
             if len(parts) != 1:
                 warnings.append({"line": ln, "code": "too_many_tokens", "text": raw})
-            # ELSE attaches to the immediately preceding IF at this indentation level.
+            # Support both:
+            # - ELSE aligned with IF header (same level as IF line): attaches to prior IF sibling.
+            # - ELSE indented inside IF body (same level as IF children): attaches to currently open IF frame.
             parent_kids = stack[-1][1]
+            if stack[-1][2] == "if":
+                # Indented ELSE: we are currently inside the IF body, so append ELSE as a child of this IF.
+                if_children = parent_kids if isinstance(parent_kids, list) else None
+                if not isinstance(if_children, list):
+                    errors.append({"line": ln, "code": "else_without_if", "text": raw})
+                    continue
+                if any(isinstance(c, dict) and c.get("kind") == "else" for c in if_children):
+                    errors.append({"line": ln, "code": "else_duplicate", "text": raw})
+                    continue
+                else_children = []
+                else_node = {"kind": "else", "children": else_children}
+                if_children.append(else_node)
+                stack.append((lvl + 1, else_children, "else", ln))
+                continue
+
+            # Aligned ELSE: attach to the immediately preceding IF at this indentation level.
             prev = parent_kids[-1] if isinstance(parent_kids, list) and parent_kids else None
             if not isinstance(prev, dict) or prev.get("kind") != "if":
                 errors.append({"line": ln, "code": "else_without_if", "text": raw})

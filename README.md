@@ -169,8 +169,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T01:27:06Z
-- current: T027_pipeline_if_else_parse_render / debug — Pipeline: IF/ELSE parse+render
+- updated_utc: 2026-02-16T01:29:21Z
+- current: T027_pipeline_if_else_parse_render / fix — Pipeline: IF/ELSE parse+render
 - queue: total=32 done=26 pending=6
 - last_done: T026_project_settings_novel_language_separate — Project settings: novel language (separate from UI) @ 2026-02-16T09:13:32+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3

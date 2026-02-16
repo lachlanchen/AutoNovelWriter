@@ -59,6 +59,28 @@ def test_roundtrip_if_else_nested() -> None:
     assert _norm(out2) == _norm(out), "roundtrip render mismatch"
 
 
+def test_else_indented_inside_if_is_accepted_and_canonicalized() -> None:
+    # ELSE appears at the same indentation as the IF body (Python-ish style).
+    src = "\n".join(
+        [
+            "# AutoNovelWriter pipeline script v2",
+            "IF x",
+            "  STEP write",
+            "  ELSE",
+            "    STEP plan",
+            "",
+        ]
+    )
+    _pipeline, ast, warnings, errors = parse_pipeline_script_v2(src)
+    assert errors == [], f"unexpected errors: {errors}"
+    out = render_pipeline_script_from_ast(ast)
+    # Canonical render aligns ELSE with IF.
+    assert "IF x" in out
+    assert "\nELSE\n" in out
+    assert "  STEP write" in out
+    assert "  STEP plan" in out
+
+
 def test_if_missing_expr_is_error() -> None:
     src = "\n".join(["# AutoNovelWriter pipeline script v2", "IF", "  STEP write", ""])
     _pipeline, _ast, _warnings, errors = parse_pipeline_script_v2(src)
@@ -85,9 +107,9 @@ def test_empty_else_body_is_error() -> None:
 
 if __name__ == "__main__":
     test_roundtrip_if_else_nested()
+    test_else_indented_inside_if_is_accepted_and_canonicalized()
     test_if_missing_expr_is_error()
     test_else_without_if_is_error()
     test_empty_if_body_is_error()
     test_empty_else_body_is_error()
     print("ok - pipeline_if_else_roundtrip")
-

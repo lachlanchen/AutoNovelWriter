@@ -2247,7 +2247,23 @@
 
 	      if (verb === 'ELSE') {
 	        if (parts.length > 1) warnings.push({ line: ln, code: 'too_many_tokens', text: raw });
-	        const parentKids = stack[stack.length - 1].children;
+	        // Support both:
+	        // - ELSE aligned with IF header (same level as IF line): attaches to prior IF sibling.
+	        // - ELSE indented inside IF body (same level as IF children): attaches to currently open IF frame.
+	        const top = stack[stack.length - 1];
+	        if (top && top.containerKind === 'if' && Array.isArray(top.children)) {
+	          const ifKids = top.children;
+	          if (ifKids.some((c) => c && typeof c === 'object' && c.kind === 'else')) {
+	            errors.push({ line: ln, code: 'else_duplicate', text: raw });
+	            continue;
+	          }
+	          const en = { kind: 'else', children: [] };
+	          ifKids.push(en);
+	          stack.push({ level: lvl + 1, children: en.children, containerLine: ln, containerKind: 'else' });
+	          continue;
+	        }
+
+	        const parentKids = top ? top.children : null;
 	        const prev = Array.isArray(parentKids) && parentKids.length ? parentKids[parentKids.length - 1] : null;
 	        if (!prev || typeof prev !== 'object' || prev.kind !== 'if' || !Array.isArray(prev.children)) {
 	          errors.push({ line: ln, code: 'else_without_if', text: raw });

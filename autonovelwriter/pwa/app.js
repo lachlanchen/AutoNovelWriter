@@ -57,9 +57,13 @@
       'pipeline.add_loop': 'Add LOOP',
       'pipeline.add_round': 'Add ROUND',
       'pipeline.add_foreach_task': 'Add FOREACH_TASK',
+      'pipeline.add_foreach_action': 'Add FOREACH_ACTION',
+      'pipeline.add_if': 'Add IF',
       'pipeline.add_loop_title': 'Add LOOP (wrap selected, or append)',
       'pipeline.add_round_title': 'Add ROUND (wrap selected, or append)',
       'pipeline.add_foreach_task_title': 'Add FOREACH_TASK (wrap selected, or append)',
+      'pipeline.add_foreach_action_title': 'Add FOREACH_ACTION (wrap selected, or append)',
+      'pipeline.add_if_title': 'Add IF (wrap selected, or append)',
       'pipeline.delete': 'Delete',
       'pipeline.delete_title': 'Delete selected block (Del)',
       'pipeline.script_canonical': 'Pipeline script (canonical)',
@@ -159,9 +163,13 @@
       'pipeline.add_loop': '添加 LOOP',
       'pipeline.add_round': '添加 ROUND',
       'pipeline.add_foreach_task': '添加 FOREACH_TASK',
+      'pipeline.add_foreach_action': '添加 FOREACH_ACTION',
+      'pipeline.add_if': '添加 IF',
       'pipeline.add_loop_title': '添加 LOOP（包裹选中块或追加）',
       'pipeline.add_round_title': '添加 ROUND（包裹选中块或追加）',
       'pipeline.add_foreach_task_title': '添加 FOREACH_TASK（包裹选中块或追加）',
+      'pipeline.add_foreach_action_title': '添加 FOREACH_ACTION（包裹选中块或追加）',
+      'pipeline.add_if_title': '添加 IF（包裹选中块或追加）',
       'pipeline.delete': '删除',
       'pipeline.delete_title': '删除选中块（Del）',
       'pipeline.script_canonical': '流水线脚本（规范）',
@@ -261,9 +269,13 @@
       'pipeline.add_loop': '新增 LOOP',
       'pipeline.add_round': '新增 ROUND',
       'pipeline.add_foreach_task': '新增 FOREACH_TASK',
+      'pipeline.add_foreach_action': '新增 FOREACH_ACTION',
+      'pipeline.add_if': '新增 IF',
       'pipeline.add_loop_title': '新增 LOOP（包住所選區塊或加到末尾）',
       'pipeline.add_round_title': '新增 ROUND（包住所選區塊或加到末尾）',
       'pipeline.add_foreach_task_title': '新增 FOREACH_TASK（包住所選區塊或加到末尾）',
+      'pipeline.add_foreach_action_title': '新增 FOREACH_ACTION（包住所選區塊或加到末尾）',
+      'pipeline.add_if_title': '新增 IF（包住所選區塊或加到末尾）',
       'pipeline.delete': '刪除',
       'pipeline.delete_title': '刪除所選區塊（Del）',
       'pipeline.script_canonical': '流程腳本（規範）',
@@ -363,9 +375,13 @@
       'pipeline.add_loop': 'LOOP を追加',
       'pipeline.add_round': 'ROUND を追加',
       'pipeline.add_foreach_task': 'FOREACH_TASK を追加',
+      'pipeline.add_foreach_action': 'FOREACH_ACTION を追加',
+      'pipeline.add_if': 'IF を追加',
       'pipeline.add_loop_title': 'LOOP を追加（選択を包む/末尾に追加）',
       'pipeline.add_round_title': 'ROUND を追加（選択を包む/末尾に追加）',
       'pipeline.add_foreach_task_title': 'FOREACH_TASK を追加（選択を包む/末尾に追加）',
+      'pipeline.add_foreach_action_title': 'FOREACH_ACTION を追加（選択を包む/末尾に追加）',
+      'pipeline.add_if_title': 'IF を追加（選択を包む/末尾に追加）',
       'pipeline.delete': '削除',
       'pipeline.delete_title': '選択ブロックを削除（Del）',
       'pipeline.script_canonical': 'パイプラインスクリプト（正）',
@@ -465,9 +481,13 @@
       'pipeline.add_loop': 'LOOP 추가',
       'pipeline.add_round': 'ROUND 추가',
       'pipeline.add_foreach_task': 'FOREACH_TASK 추가',
+      'pipeline.add_foreach_action': 'FOREACH_ACTION 추가',
+      'pipeline.add_if': 'IF 추가',
       'pipeline.add_loop_title': 'LOOP 추가(선택 감싸기/끝에 추가)',
       'pipeline.add_round_title': 'ROUND 추가(선택 감싸기/끝에 추가)',
       'pipeline.add_foreach_task_title': 'FOREACH_TASK 추가(선택 감싸기/끝에 추가)',
+      'pipeline.add_foreach_action_title': 'FOREACH_ACTION 추가(선택 감싸기/끝에 추가)',
+      'pipeline.add_if_title': 'IF 추가(선택 감싸기/끝에 추가)',
       'pipeline.delete': '삭제',
       'pipeline.delete_title': '선택 블록 삭제(Del)',
       'pipeline.script_canonical': '파이프라인 스크립트(원본)',
@@ -567,9 +587,13 @@
       'pipeline.add_loop': 'Them LOOP',
       'pipeline.add_round': 'Them ROUND',
       'pipeline.add_foreach_task': 'Them FOREACH_TASK',
+      'pipeline.add_foreach_action': 'Them FOREACH_ACTION',
+      'pipeline.add_if': 'Them IF',
       'pipeline.add_loop_title': 'Them LOOP (bao boc chon / them cuoi)',
       'pipeline.add_round_title': 'Them ROUND (bao boc chon / them cuoi)',
       'pipeline.add_foreach_task_title': 'Them FOREACH_TASK (bao boc chon / them cuoi)',
+      'pipeline.add_foreach_action_title': 'Them FOREACH_ACTION (bao boc chon / them cuoi)',
+      'pipeline.add_if_title': 'Them IF (bao boc chon / them cuoi)',
       'pipeline.delete': 'Xoa',
       'pipeline.delete_title': 'Xoa khoi da chon (Del)',
       'pipeline.script_canonical': 'Script pipeline (chuan)',
@@ -669,9 +693,13 @@
       'pipeline.add_loop': 'إضافة LOOP',
       'pipeline.add_round': 'إضافة ROUND',
       'pipeline.add_foreach_task': 'إضافة FOREACH_TASK',
+      'pipeline.add_foreach_action': 'إضافة FOREACH_ACTION',
+      'pipeline.add_if': 'إضافة IF',
       'pipeline.add_loop_title': 'إضافة LOOP (تغليف المحدد أو الإلحاق)',
       'pipeline.add_round_title': 'إضافة ROUND (تغليف المحدد أو الإلحاق)',
       'pipeline.add_foreach_task_title': 'إضافة FOREACH_TASK (تغليف المحدد أو الإلحاق)',
+      'pipeline.add_foreach_action_title': 'إضافة FOREACH_ACTION (تغليف المحدد أو الإلحاق)',
+      'pipeline.add_if_title': 'إضافة IF (تغليف المحدد أو الإلحاق)',
       'pipeline.delete': 'حذف',
       'pipeline.delete_title': 'حذف الكتلة المحددة (Del)',
       'pipeline.script_canonical': 'نص خط الأنابيب (مرجعي)',
@@ -771,9 +799,13 @@
       'pipeline.add_loop': 'Ajouter LOOP',
       'pipeline.add_round': 'Ajouter ROUND',
       'pipeline.add_foreach_task': 'Ajouter FOREACH_TASK',
+      'pipeline.add_foreach_action': 'Ajouter FOREACH_ACTION',
+      'pipeline.add_if': 'Ajouter IF',
       'pipeline.add_loop_title': 'Ajouter LOOP (englober la sélection ou ajouter)',
       'pipeline.add_round_title': 'Ajouter ROUND (englober la sélection ou ajouter)',
       'pipeline.add_foreach_task_title': 'Ajouter FOREACH_TASK (englober la sélection ou ajouter)',
+      'pipeline.add_foreach_action_title': 'Ajouter FOREACH_ACTION (englober la sélection ou ajouter)',
+      'pipeline.add_if_title': 'Ajouter IF (englober la sélection ou ajouter)',
       'pipeline.delete': 'Supprimer',
       'pipeline.delete_title': 'Supprimer le bloc sélectionné (Suppr)',
       'pipeline.script_canonical': 'Script du pipeline (canonique)',
@@ -873,9 +905,13 @@
       'pipeline.add_loop': 'Agregar LOOP',
       'pipeline.add_round': 'Agregar ROUND',
       'pipeline.add_foreach_task': 'Agregar FOREACH_TASK',
+      'pipeline.add_foreach_action': 'Agregar FOREACH_ACTION',
+      'pipeline.add_if': 'Agregar IF',
       'pipeline.add_loop_title': 'Agregar LOOP (envolver selección o añadir)',
       'pipeline.add_round_title': 'Agregar ROUND (envolver selección o añadir)',
       'pipeline.add_foreach_task_title': 'Agregar FOREACH_TASK (envolver selección o añadir)',
+      'pipeline.add_foreach_action_title': 'Agregar FOREACH_ACTION (envolver selección o añadir)',
+      'pipeline.add_if_title': 'Agregar IF (envolver selección o añadir)',
       'pipeline.delete': 'Eliminar',
       'pipeline.delete_title': 'Eliminar el bloque seleccionado (Supr)',
       'pipeline.script_canonical': 'Script del pipeline (canónico)',
@@ -975,9 +1011,13 @@
       'pipeline.add_loop': 'Добавить LOOP',
       'pipeline.add_round': 'Добавить ROUND',
       'pipeline.add_foreach_task': 'Добавить FOREACH_TASK',
+      'pipeline.add_foreach_action': 'Добавить FOREACH_ACTION',
+      'pipeline.add_if': 'Добавить IF',
       'pipeline.add_loop_title': 'Добавить LOOP (обернуть выбранное или добавить)',
       'pipeline.add_round_title': 'Добавить ROUND (обернуть выбранное или добавить)',
       'pipeline.add_foreach_task_title': 'Добавить FOREACH_TASK (обернуть выбранное или добавить)',
+      'pipeline.add_foreach_action_title': 'Добавить FOREACH_ACTION (обернуть выбранное или добавить)',
+      'pipeline.add_if_title': 'Добавить IF (обернуть выбранное или добавить)',
       'pipeline.delete': 'Удалить',
       'pipeline.delete_title': 'Удалить выбранный блок (Del)',
       'pipeline.script_canonical': 'Скрипт пайплайна (канон.)',
@@ -1077,9 +1117,13 @@
       'pipeline.add_loop': 'LOOP hinzufügen',
       'pipeline.add_round': 'ROUND hinzufügen',
       'pipeline.add_foreach_task': 'FOREACH_TASK hinzufügen',
+      'pipeline.add_foreach_action': 'FOREACH_ACTION hinzufügen',
+      'pipeline.add_if': 'IF hinzufügen',
       'pipeline.add_loop_title': 'LOOP hinzufügen (Auswahl umschließen oder anhängen)',
       'pipeline.add_round_title': 'ROUND hinzufügen (Auswahl umschließen oder anhängen)',
       'pipeline.add_foreach_task_title': 'FOREACH_TASK hinzufügen (Auswahl umschließen oder anhängen)',
+      'pipeline.add_foreach_action_title': 'FOREACH_ACTION hinzufügen (Auswahl umschließen oder anhängen)',
+      'pipeline.add_if_title': 'IF hinzufügen (Auswahl umschließen oder anhängen)',
       'pipeline.delete': 'Löschen',
       'pipeline.delete_title': 'Ausgewählten Block löschen (Entf)',
       'pipeline.script_canonical': 'Pipeline-Skript (kanonisch)',
@@ -1225,6 +1269,8 @@
   const pipeAddLoop = $('pipeAddLoop');
   const pipeAddRound = $('pipeAddRound');
   const pipeAddForeachTask = $('pipeAddForeachTask');
+  const pipeAddForeachAction = $('pipeAddForeachAction');
+  const pipeAddIf = $('pipeAddIf');
   const pipeSave = $('pipeSave');
   const pipeReset = $('pipeReset');
   const pipeStatus = $('pipeStatus');
@@ -2860,6 +2906,54 @@
     return true;
   }
 
+  function fixIfNode(ifNode) {
+    if (!ifNode || typeof ifNode !== 'object' || ifNode.kind !== 'if' || !Array.isArray(ifNode.children)) return;
+    const kids = ifNode.children;
+
+    // Ensure at most one ELSE child (merge duplicates) and keep ELSE as the last child.
+    let elseNode = null;
+    let elseIdx = -1;
+    for (let i = 0; i < kids.length; i++) {
+      const c = kids[i];
+      if (!c || typeof c !== 'object' || c.kind !== 'else') continue;
+      if (!elseNode) {
+        elseNode = c;
+        elseIdx = i;
+      } else {
+        const ek = Array.isArray(c.children) ? c.children : [];
+        if (!Array.isArray(elseNode.children)) elseNode.children = [];
+        elseNode.children.push(...ek);
+        kids.splice(i, 1);
+        i -= 1;
+      }
+    }
+
+    if (elseNode && elseIdx >= 0 && elseIdx !== kids.length - 1) {
+      kids.splice(elseIdx, 1);
+      kids.push(elseNode);
+    }
+
+    // IF must have at least one non-ELSE child (then-branch) to remain valid.
+    let hasThen = false;
+    for (const c of kids) {
+      if (c && typeof c === 'object' && c.kind !== 'else') {
+        hasThen = true;
+        break;
+      }
+    }
+    if (!hasThen) {
+      const step = { kind: 'step', type: defaultStepType(), enabled: true };
+      if (elseNode && kids.length) kids.splice(kids.length - 1, 0, step);
+      else kids.push(step);
+    }
+
+    // ELSE must not be empty when present; keep a placeholder STEP rather than producing else_empty.
+    if (elseNode && typeof elseNode === 'object') {
+      if (!Array.isArray(elseNode.children)) elseNode.children = [];
+      ensureNonEmptyChildren(elseNode.children);
+    }
+  }
+
   function deleteSelected() {
     if (!selected) return;
     const path = parsePathKey(selected);
@@ -2871,8 +2965,26 @@
     if (!Array.isArray(container)) return;
     if (!node || typeof node !== 'object') return;
 
+    const parentNode = info.parent;
+    const touchedIfParent = !!(parentNode && typeof parentNode === 'object' && parentNode.kind === 'if');
+
     if (node.kind === 'step') {
       container.splice(index, 1);
+    } else if (node.kind === 'if') {
+      // Deleting IF should splice its then+else bodies upward, but must not leave a raw ELSE node
+      // at the parent level (ELSE without IF is invalid in the script format).
+      const kids = Array.isArray(node.children) ? node.children : [];
+      const spliced = [];
+      for (const c of kids) {
+        if (c && typeof c === 'object' && c.kind === 'else') {
+          const ek = Array.isArray(c.children) ? c.children : [];
+          for (const e of ek) spliced.push(e);
+        } else {
+          spliced.push(c);
+        }
+      }
+      if (spliced.length) container.splice(index, 1, ...spliced);
+      else container.splice(index, 1);
     } else if (isContainerNode(node)) {
       const kids = Array.isArray(node.children) ? node.children : [];
       if (kids.length) container.splice(index, 1, ...kids);
@@ -2884,6 +2996,7 @@
 
     // Never allow a container (including root) to become empty; backend validate rejects empty containers.
     const insertedDefault = ensureNonEmptyChildren(container);
+    if (touchedIfParent) fixIfNode(parentNode);
 
     let nextIndex = index;
     if (!container.length) nextIndex = 0;
@@ -3336,7 +3449,7 @@
 
   function insertContainer(kind) {
     const k = String(kind || '');
-    if (k !== 'loop' && k !== 'round' && k !== 'foreach_task') return;
+    if (k !== 'loop' && k !== 'round' && k !== 'foreach_task' && k !== 'foreach_action' && k !== 'if') return;
 
     const wrapSelected = () => {
       if (!selected) return false;
@@ -3349,7 +3462,19 @@
       const containerNode =
         k === 'foreach_task'
           ? { kind: 'foreach_task', children: [node] }
-          : { kind: k, repeat: 1, children: [node] };
+          : k === 'foreach_action'
+            ? { kind: 'foreach_action', children: [node] }
+            : k === 'if'
+              ? {
+                  kind: 'if',
+                  expr: 'true',
+                  children: [
+                    node,
+                    { kind: 'else', children: [{ kind: 'step', type: defaultStepType(), enabled: true }] }
+                  ]
+                }
+              : { kind: k, repeat: 1, children: [node] };
+      if (containerNode.kind === 'if') fixIfNode(containerNode);
       info.container.splice(info.index, 1, containerNode);
       setSelected(pathKey(info.parentPath.concat([info.index])));
       return true;
@@ -3360,7 +3485,19 @@
       const containerNode =
         k === 'foreach_task'
           ? { kind: 'foreach_task', children: [step] }
-          : { kind: k, repeat: 1, children: [step] };
+          : k === 'foreach_action'
+            ? { kind: 'foreach_action', children: [step] }
+            : k === 'if'
+              ? {
+                  kind: 'if',
+                  expr: 'true',
+                  children: [
+                    step,
+                    { kind: 'else', children: [{ kind: 'step', type: defaultStepType(), enabled: true }] }
+                  ]
+                }
+              : { kind: k, repeat: 1, children: [step] };
+      if (containerNode.kind === 'if') fixIfNode(containerNode);
       if (!Array.isArray(pipelineAst.children)) pipelineAst.children = [];
       pipelineAst.children.push(containerNode);
       setSelected(pathKey([pipelineAst.children.length - 1]));
@@ -3379,6 +3516,8 @@
   if (pipeAddLoop) pipeAddLoop.addEventListener('click', () => insertContainer('loop'));
   if (pipeAddRound) pipeAddRound.addEventListener('click', () => insertContainer('round'));
   if (pipeAddForeachTask) pipeAddForeachTask.addEventListener('click', () => insertContainer('foreach_task'));
+  if (pipeAddForeachAction) pipeAddForeachAction.addEventListener('click', () => insertContainer('foreach_action'));
+  if (pipeAddIf) pipeAddIf.addEventListener('click', () => insertContainer('if'));
 
   pipelineScript.addEventListener('input', () => {
     setPipeStatus('dirty');

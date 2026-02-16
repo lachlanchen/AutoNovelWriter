@@ -1,0 +1,19 @@
+{
+  "id": "T030_pwa_action_editor_minimal",
+  "title": "PWA: Action Editor (prompt/script/tool)",
+  "notes": "Add a minimal Action Editor modal to view/edit the selected block’s action template (name/tool/prompt/script). When saving edits to a default action, call the backend update endpoint and automatically switch the selected block to reference the returned `new_action_id` (copy-on-edit). Keep UI small, light-theme friendly, and fully i18n’d.",
+  "acceptance": [
+    "PWA provides an Action Editor UI entrypoint (e.g., button on a STEP block) showing current action fields.",
+    "Saving calls the backend action update endpoint; if copy-on-edit returns `new_action_id`, the block’s `action_id` is updated and the pipeline script/AST is re-rendered accordingly.",
+    "Action list refreshes so the new user action appears without page reload.",
+    "All new UI strings are localized across required languages.",
+    "No TCP binds required; `node --check autonovelwriter/pwa/app.js` passes."
+  ],
+  "tags": [
+    "pwa",
+    "actions",
+    "editor",
+    "copy-on-edit",
+    "i18n"
+  ]
+}

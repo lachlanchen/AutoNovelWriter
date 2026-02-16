@@ -55,6 +55,9 @@ def resolve_paths() -> dict:
         "runner_log": runtime_root / "logs" / "runner.log",
         "projects_root": runtime_root / "projects",
         "active_project_json": runtime_root / "state" / "active_project.json",
+        "actions_root": runtime_root / "actions",
+        "actions_defaults": runtime_root / "actions" / "defaults",
+        "actions_user": runtime_root / "actions" / "user",
     }
     return paths
 
@@ -67,6 +70,9 @@ def ensure_runtime_dirs(paths: dict) -> None:
     _safe_mkdir(Path(paths["logs"]))
     _safe_mkdir(Path(paths["state"]))
     _safe_mkdir(Path(paths["projects_root"]))
+    _safe_mkdir(Path(paths["actions_root"]))
+    _safe_mkdir(Path(paths["actions_defaults"]))
+    _safe_mkdir(Path(paths["actions_user"]))
 
 
 def _is_safe_project_id(s: str) -> bool:
@@ -76,6 +82,19 @@ def _is_safe_project_id(s: str) -> bool:
     if not s:
         return False
     if len(s) > 64:
+        return False
+    allowed = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_")
+    return all(ch in allowed for ch in s)
+
+
+def _is_safe_action_id(s: str) -> bool:
+    # Action ids are used as filenames; keep the character set tight.
+    if not isinstance(s, str):
+        return False
+    s = s.strip()
+    if not s:
+        return False
+    if len(s) > 96:
         return False
     allowed = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_")
     return all(ch in allowed for ch in s)
@@ -251,6 +270,158 @@ PIPELINE_SCRIPT_HEADER_V2 = "# AutoNovelWriter pipeline script v2\n"
 
 def _sha256_hex(text: str) -> str:
     return hashlib.sha256((text or "").encode("utf-8", errors="replace")).hexdigest()
+
+
+def _action_default_template(action_id: str) -> dict:
+    # Minimal default template; later tasks will expand tool bindings and schemas.
+    return {
+        "id": action_id,
+        "name": action_id,
+        "tool": "builtin",
+        "prompt": "",
+        "script": "",
+        "inputs_schema": {},
+        "outputs_schema": {},
+    }
+
+
+def seed_default_actions(paths: dict) -> None:
+    """
+    Ensure a stable set of default action templates exist under runtime/actions/defaults.
+    This is best-effort and only creates missing files (never overwrites).
+    """
+    defaults_dir = Path(paths["actions_defaults"])
+    _safe_mkdir(defaults_dir)
+    for t in PIPELINE_BLOCK_TYPES:
+        if not _is_safe_action_id(t):
+            continue
+        p = defaults_dir / f"{t}.json"
+        if p.exists():
+            continue
+        try:
+            p.write_text(json.dumps(_action_default_template(t), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        except Exception:
+            # Best-effort: missing defaults should not prevent server start.
+            continue
+
+
+def _load_action_file(p: Path) -> dict | None:
+    try:
+        obj = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    return obj if isinstance(obj, dict) else None
+
+
+def list_actions(paths: dict, limit: int = 2000) -> list[dict]:
+    defaults_dir = Path(paths["actions_defaults"])
+    user_dir = Path(paths["actions_user"])
+    _safe_mkdir(defaults_dir)
+    _safe_mkdir(user_dir)
+
+    def scan(dir_path: Path, origin: str) -> list[dict]:
+        out = []
+        try:
+            entries = [p for p in dir_path.iterdir() if p.is_file() and p.suffix == ".json"]
+        except Exception:
+            entries = []
+        for p in entries:
+            aid = p.stem
+            if not _is_safe_action_id(aid):
+                continue
+            obj = _load_action_file(p) or {}
+            name = obj.get("name") if isinstance(obj.get("name"), str) and obj.get("name") else aid
+            rec = {
+                "id": aid,
+                "name": name,
+                "origin": origin,
+                "inputs_schema": obj.get("inputs_schema") if isinstance(obj.get("inputs_schema"), dict) else {},
+                "outputs_schema": obj.get("outputs_schema") if isinstance(obj.get("outputs_schema"), dict) else {},
+            }
+            out.append(rec)
+        return out
+
+    actions = scan(defaults_dir, "default") + scan(user_dir, "user")
+    actions.sort(key=lambda a: (a.get("origin") != "default", str(a.get("id") or "")))
+    return actions[: max(1, min(int(limit or 2000), 5000))]
+
+
+def get_action(paths: dict, action_id: str) -> dict | None:
+    if not _is_safe_action_id(action_id):
+        return None
+    # User overrides defaults by id.
+    for root, origin in ((Path(paths["actions_user"]), "user"), (Path(paths["actions_defaults"]), "default")):
+        p = root / f"{action_id}.json"
+        if not p.exists():
+            continue
+        obj = _load_action_file(p)
+        if not isinstance(obj, dict):
+            return None
+        obj = dict(obj)
+        obj.setdefault("id", action_id)
+        obj.setdefault("name", action_id)
+        obj["origin"] = origin
+        return obj
+    return None
+
+
+def copy_default_action(paths: dict, action_id: str, overrides: dict | None = None) -> dict | None:
+    """
+    Copy a default action into runtime/actions/user with a new id (copy-on-edit).
+    Returns the created action dict (including id/origin/base_action_id).
+    """
+    if not _is_safe_action_id(action_id):
+        return None
+    src_path = Path(paths["actions_defaults"]) / f"{action_id}.json"
+    if not src_path.exists():
+        return None
+    src = _load_action_file(src_path)
+    if not isinstance(src, dict):
+        return None
+
+    # Generate a stable-ish unique id; avoid collisions.
+    base = action_id
+    suffix = f"{time.strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+    new_id = f"{base}__user__{suffix}"
+    if not _is_safe_action_id(new_id):
+        new_id = f"user__{suffix}"
+    user_dir = Path(paths["actions_user"])
+    _safe_mkdir(user_dir)
+    p = user_dir / f"{new_id}.json"
+    tries = 0
+    while p.exists() and tries < 5:
+        suffix = f"{time.strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+        new_id = f"{base}__user__{suffix}"
+        p = user_dir / f"{new_id}.json"
+        tries += 1
+
+    out = dict(src)
+    out["id"] = new_id
+    out["origin"] = "user"
+    out["base_action_id"] = action_id
+    # Apply caller overrides (best-effort, shallow).
+    if isinstance(overrides, dict):
+        for k in ("name", "tool", "prompt", "script", "inputs_schema", "outputs_schema"):
+            if k in overrides:
+                out[k] = overrides.get(k)
+    if not isinstance(out.get("name"), str) or not out.get("name"):
+        out["name"] = new_id
+    if not isinstance(out.get("tool"), str) or not out.get("tool"):
+        out["tool"] = "stub"
+    if not isinstance(out.get("prompt"), str):
+        out["prompt"] = ""
+    if not isinstance(out.get("script"), str):
+        out["script"] = ""
+    if not isinstance(out.get("inputs_schema"), dict):
+        out["inputs_schema"] = {}
+    if not isinstance(out.get("outputs_schema"), dict):
+        out["outputs_schema"] = {}
+
+    try:
+        p.write_text(json.dumps(out, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    except Exception:
+        return None
+    return out
 
 
 def default_pipeline() -> dict:
@@ -473,7 +644,7 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
     # - pipeline_ast (nested)
     # - warnings (non-fatal)
     # - errors (fatal)
-    allowed = set(PIPELINE_BLOCK_TYPES)
+    allowed_builtin = set(PIPELINE_BLOCK_TYPES)
     warnings = []
     errors = []
 
@@ -600,10 +771,12 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
                 warnings.append({"line": ln, "code": "too_few_tokens", "text": raw})
                 continue
             t = parts[1].strip()
-            if t not in allowed:
-                warnings.append({"line": ln, "code": "unknown_type", "text": raw})
+            if not is_safe_step_token(t):
+                warnings.append({"line": ln, "code": "invalid_step_token", "text": raw})
                 continue
             enabled = verb == "STEP"
+            if t not in allowed_builtin:
+                warnings.append({"line": ln, "code": "unknown_action_id", "text": raw})
             stack[-1][1].append(_ast_step(t, enabled))
             continue
 
@@ -2549,10 +2722,64 @@ class TasksBatchesIndexHandler(BaseHandler):
         self.write_json({"ok": True, "batches_root": str(batches_root), "batches": batches})
 
 
+class ActionsIndexHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    def get(self):
+        try:
+            limit = int(self.get_query_argument("limit", default="2000"))
+        except Exception:
+            limit = 2000
+        seed_default_actions(self._paths)
+        actions = list_actions(self._paths, limit=limit)
+        self.write_json({"ok": True, "actions": actions})
+
+
+class ActionGetHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    def get(self, action_id: str):
+        seed_default_actions(self._paths)
+        aid = str(action_id or "").strip()
+        if not _is_safe_action_id(aid):
+            return self.write_json({"ok": False, "error": "bad_action_id"}, status=400)
+        act = get_action(self._paths, aid)
+        if not act:
+            return self.write_json({"ok": False, "error": "not_found"}, status=404)
+        self.write_json({"ok": True, "action": act})
+
+
+class ActionCopyHandler(BaseHandler):
+    def initialize(self, paths: dict, hub: "WebSocketHub"):
+        self._paths = paths
+        self._hub = hub
+
+    def post(self, action_id: str):
+        seed_default_actions(self._paths)
+        aid = str(action_id or "").strip()
+        if not _is_safe_action_id(aid):
+            return self.write_json({"ok": False, "error": "bad_action_id"}, status=400)
+        try:
+            body = tornado.escape.json_decode(self.request.body or b"{}")
+        except Exception:
+            body = {}
+        overrides = body.get("overrides") if isinstance(body, dict) and isinstance(body.get("overrides"), dict) else None
+        act = copy_default_action(self._paths, aid, overrides=overrides)
+        if not act:
+            return self.write_json({"ok": False, "error": "copy_failed"}, status=400)
+        self._hub.broadcast({"type": "action_created", "ts_ms": _now_ms(), "action_id": act.get("id"), "base_action_id": aid})
+        self.write_json({"ok": True, "new_action_id": act.get("id"), "action": act})
+
+
 def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Application:
     hub = WebSocketHub()
     chat_store = ChatStore(Path(paths["chat_jsonl"]))
     runner = Runner(paths, hub=hub)
+
+    # Ensure action defaults exist early so the PWA can list them immediately.
+    seed_default_actions(paths)
 
     handlers = [
         (r"/api/health", HealthHandler),
@@ -2562,6 +2789,9 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
         (r"/api/materials/index", MaterialsIndexHandler, {"paths": paths}),
         (r"/api/outputs/index", OutputsIndexHandler, {"paths": paths}),
         (r"/api/tasks/batches/index", TasksBatchesIndexHandler, {"paths": paths}),
+        (r"/api/actions", ActionsIndexHandler, {"paths": paths}),
+        (r"/api/actions/([A-Za-z0-9_-]+)", ActionGetHandler, {"paths": paths}),
+        (r"/api/actions/([A-Za-z0-9_-]+)/copy", ActionCopyHandler, {"paths": paths, "hub": hub}),
         (r"/api/pipeline", PipelineHandler, {"paths": paths, "hub": hub}),
         (r"/api/pipeline/validate", PipelineValidateHandler, {"paths": paths}),
         (r"/api/chat/history", ChatHistoryHandler, {"chat_store": chat_store}),
@@ -2626,3 +2856,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    def is_safe_step_token(s: str) -> bool:
+        return _is_safe_action_id(s)

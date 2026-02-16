@@ -22,6 +22,7 @@ autonovelwriter/runtime/logs/*
 autonovelwriter/runtime/state/*
 autonovelwriter/runtime/tasks/*
 autonovelwriter/runtime/projects/*
+autonovelwriter/runtime/actions/*
 
 # Auto-dev driver artifacts (keep plans/steps/tasks, ignore raw codex JSONL + session/locks)
 references/autonovelwriter_dev/logs/

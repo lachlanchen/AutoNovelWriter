@@ -87,6 +87,11 @@
       'settings.codex_gate_hint': 'Codex subprocess is disabled by default. To enable: set',
       'settings.codex_gate_hint_2': 'in your environment and set Agent SDK to',
       'settings.codex_gate_hint_3': 'with “Enable agent runner”.',
+      'actions.action': 'Action',
+      'actions.action_title': 'Action template',
+      'actions.user_suffix': 'user',
+      'actions.customize': 'Customize',
+      'actions.customize_title': 'Copy default action to a user action and switch',
       'novel.section': 'Novel',
       'novel.language': 'Novel language',
       'novel.tone': 'Tone',
@@ -169,6 +174,11 @@
       'settings.codex_gate_hint': 'Codex 子进程默认禁用。启用：设置',
       'settings.codex_gate_hint_2': '并将 Agent SDK 设为',
       'settings.codex_gate_hint_3': '且勾选“启用代理运行器”。',
+      'actions.action': '动作',
+      'actions.action_title': '动作模板',
+      'actions.user_suffix': '用户',
+      'actions.customize': '自定义',
+      'actions.customize_title': '复制默认动作为用户动作并切换',
       'novel.section': '小说',
       'novel.language': '小说语言',
       'novel.tone': '风格',
@@ -251,6 +261,11 @@
       'settings.codex_gate_hint': 'Codex 子程序預設停用。啟用：設定',
       'settings.codex_gate_hint_2': '並將 Agent SDK 設為',
       'settings.codex_gate_hint_3': '並勾選「啟用代理執行器」。',
+      'actions.action': '動作',
+      'actions.action_title': '動作範本',
+      'actions.user_suffix': '使用者',
+      'actions.customize': '自訂',
+      'actions.customize_title': '將預設動作複製為使用者動作並切換',
       'novel.section': '小說',
       'novel.language': '小說語言',
       'novel.tone': '風格',
@@ -333,6 +348,11 @@
       'settings.codex_gate_hint': 'Codex サブプロセスは既定で無効。有効化：',
       'settings.codex_gate_hint_2': 'を環境に設定し、Agent SDK を',
       'settings.codex_gate_hint_3': 'にして「エージェント実行を有効化」。',
+      'actions.action': 'アクション',
+      'actions.action_title': 'アクションテンプレート',
+      'actions.user_suffix': 'ユーザー',
+      'actions.customize': 'カスタマイズ',
+      'actions.customize_title': '既定アクションをユーザー用にコピーして切り替え',
       'novel.section': '小説',
       'novel.language': '小説の言語',
       'novel.tone': 'トーン',
@@ -415,6 +435,11 @@
       'settings.codex_gate_hint': 'Codex 서브프로세스는 기본 비활성. 활성화:',
       'settings.codex_gate_hint_2': '을 설정하고 Agent SDK를',
       'settings.codex_gate_hint_3': '로 설정 후 “에이전트 실행 활성화”.',
+      'actions.action': '액션',
+      'actions.action_title': '액션 템플릿',
+      'actions.user_suffix': '사용자',
+      'actions.customize': '사용자화',
+      'actions.customize_title': '기본 액션을 사용자 액션으로 복사 후 전환',
       'novel.section': '소설',
       'novel.language': '소설 언어',
       'novel.tone': '톤',
@@ -497,6 +522,11 @@
       'settings.codex_gate_hint': 'Codex subprocess mac dinh tat. De bat:',
       'settings.codex_gate_hint_2': 'trong moi truong va dat Agent SDK =',
       'settings.codex_gate_hint_3': 'va chon “Bat agent runner”.',
+      'actions.action': 'Hanh dong',
+      'actions.action_title': 'Mau hanh dong',
+      'actions.user_suffix': 'nguoi dung',
+      'actions.customize': 'Tuy chinh',
+      'actions.customize_title': 'Sao chep mau mac dinh sang mau nguoi dung va chuyen doi',
       'novel.section': 'Tieu thuyet',
       'novel.language': 'Ngon ngu tieu thuyet',
       'novel.tone': 'Giong dieu',
@@ -579,6 +609,11 @@
       'settings.codex_gate_hint': 'تشغيل Codex معطّل افتراضياً. للتمكين: عيّن',
       'settings.codex_gate_hint_2': 'في البيئة واختر Agent SDK =',
       'settings.codex_gate_hint_3': 'مع “تمكين تشغيل الوكيل”.',
+      'actions.action': 'إجراء',
+      'actions.action_title': 'قالب الإجراء',
+      'actions.user_suffix': 'مستخدم',
+      'actions.customize': 'تخصيص',
+      'actions.customize_title': 'نسخ الإجراء الافتراضي إلى إجراء مستخدم والتبديل',
       'novel.section': 'الرواية',
       'novel.language': 'لغة الرواية',
       'novel.tone': 'النبرة',
@@ -661,6 +696,11 @@
       'settings.codex_gate_hint': 'Le sous-processus Codex est désactivé par défaut. Pour activer : définir',
       'settings.codex_gate_hint_2': 'dans l’environnement et choisir Agent SDK =',
       'settings.codex_gate_hint_3': 'avec « Activer le runner agent ».',
+      'actions.action': 'Action',
+      'actions.action_title': 'Modèle d’action',
+      'actions.user_suffix': 'utilisateur',
+      'actions.customize': 'Personnaliser',
+      'actions.customize_title': 'Copier l’action par défaut en action utilisateur et basculer',
       'novel.section': 'Roman',
       'novel.language': 'Langue du roman',
       'novel.tone': 'Ton',
@@ -743,6 +783,11 @@
       'settings.codex_gate_hint': 'El subproceso de Codex está deshabilitado por defecto. Para habilitar: establece',
       'settings.codex_gate_hint_2': 'en el entorno y elige Agent SDK =',
       'settings.codex_gate_hint_3': 'con “Habilitar runner del agente”.',
+      'actions.action': 'Acción',
+      'actions.action_title': 'Plantilla de acción',
+      'actions.user_suffix': 'usuario',
+      'actions.customize': 'Personalizar',
+      'actions.customize_title': 'Copiar la acción por defecto a una acción de usuario y cambiar',
       'novel.section': 'Novela',
       'novel.language': 'Idioma de la novela',
       'novel.tone': 'Tono',
@@ -825,6 +870,11 @@
       'settings.codex_gate_hint': 'Подпроцесс Codex по умолчанию отключён. Чтобы включить: задайте',
       'settings.codex_gate_hint_2': 'в окружении и выберите Agent SDK =',
       'settings.codex_gate_hint_3': 'с «Включить запуск агента».',
+      'actions.action': 'Действие',
+      'actions.action_title': 'Шаблон действия',
+      'actions.user_suffix': 'пользователь',
+      'actions.customize': 'Настроить',
+      'actions.customize_title': 'Скопировать действие по умолчанию в пользовательское и переключить',
       'novel.section': 'Роман',
       'novel.language': 'Язык романа',
       'novel.tone': 'Тон',
@@ -907,6 +957,11 @@
       'settings.codex_gate_hint': 'Codex-Subprozess ist standardmäßig deaktiviert. Zum Aktivieren: setze',
       'settings.codex_gate_hint_2': 'in der Umgebung und wähle Agent SDK =',
       'settings.codex_gate_hint_3': 'mit „Agent-Runner aktivieren“.',
+      'actions.action': 'Aktion',
+      'actions.action_title': 'Aktionsvorlage',
+      'actions.user_suffix': 'Benutzer',
+      'actions.customize': 'Anpassen',
+      'actions.customize_title': 'Standardaktion als Benutzeraktion kopieren und umschalten',
       'novel.section': 'Roman',
       'novel.language': 'Romansprache',
       'novel.tone': 'Ton',
@@ -1843,10 +1898,11 @@
           continue;
         }
         const type = parts[1];
-        if (!ALLOWED_TYPES.has(type)) {
-          warnings.push({ line: ln, code: 'unknown_type', text: raw });
+        if (!/^[A-Za-z0-9_-]+$/.test(String(type || ''))) {
+          warnings.push({ line: ln, code: 'invalid_step_token', text: raw });
           continue;
         }
+        if (!ALLOWED_TYPES.has(type)) warnings.push({ line: ln, code: 'unknown_action_id', text: raw });
         stack[stack.length - 1].children.push({ kind: 'step', type, enabled: verb === 'STEP' });
         continue;
       }
@@ -1907,6 +1963,28 @@
   let selected = '';
   let dragFrom = '';
   let dragParent = '';
+  let actionsIndex = [];
+  let actionsById = {};
+
+  function setActionsIndex(list) {
+    actionsIndex = Array.isArray(list) ? list.filter((a) => a && typeof a.id === 'string' && a.id.trim()) : [];
+    actionsById = {};
+    for (const a of actionsIndex) actionsById[String(a.id)] = a;
+  }
+
+  async function loadActionsIndex() {
+    const url = backendApiUrl('/api/actions');
+    if (!url) return null;
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const obj = await res.json();
+      if (!obj || !obj.ok || !Array.isArray(obj.actions)) return null;
+      setActionsIndex(obj.actions);
+      return obj;
+    } catch (_) {
+      return null;
+    }
+  }
 
   function setSelected(key) {
     selected = String(key || '');
@@ -2166,6 +2244,86 @@
           toggle.appendChild(cb);
           toggle.appendChild(lbl);
           side.appendChild(toggle);
+
+          // Minimal wiring: allow choosing an action_id for this STEP.
+          // (This sets `n.type`, which is what the canonical script uses today.)
+          const sel = document.createElement('select');
+          sel.className = 'input input-compact';
+          sel.title = t('actions.action_title');
+          sel.setAttribute('aria-label', t('actions.action'));
+          sel.addEventListener('mousedown', (e) => e.stopPropagation());
+          sel.addEventListener('click', (e) => e.stopPropagation());
+
+          const curId = String(n.type || '').trim();
+          const opts = [];
+          // Ensure the current id is always present.
+          if (curId) opts.push({ id: curId, name: curId, origin: 'current' });
+          for (const a of actionsIndex) {
+            const id = String(a.id || '').trim();
+            if (!id) continue;
+            if (id === curId) continue;
+            opts.push({ id, name: String(a.name || id), origin: String(a.origin || '') });
+          }
+
+          // De-dupe while preserving order.
+          const seen = new Set();
+          for (const o of opts) {
+            if (seen.has(o.id)) continue;
+            seen.add(o.id);
+            const op = document.createElement('option');
+            op.value = o.id;
+            op.textContent = o.origin === 'user' ? `${o.name} (${t('actions.user_suffix')})` : o.name;
+            sel.appendChild(op);
+          }
+          sel.value = curId;
+          sel.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const next = String(sel.value || '').trim();
+            if (!next || next === n.type) return;
+            n.type = next;
+            setPipeStatus('dirty');
+            updateDerivedFromAst({ writeScript: true });
+            renderPipeline();
+          });
+          side.appendChild(sel);
+
+          // Copy-on-edit wiring: allow creating a user action from a default action and
+          // switching this STEP to reference it.
+          const bcustom = document.createElement('button');
+          bcustom.type = 'button';
+          bcustom.className = 'mini';
+          bcustom.textContent = t('actions.customize');
+          bcustom.title = t('actions.customize_title');
+          bcustom.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const aid = String(n.type || '').trim();
+            if (!aid) return;
+            const meta = actionsById[aid];
+            if (!meta || meta.origin !== 'default') return;
+            const url = backendApiUrl(`/api/actions/${encodeURIComponent(aid)}/copy`);
+            if (!url) return;
+            try {
+              const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ overrides: {} })
+              });
+              const obj = await res.json();
+              if (!obj || !obj.ok || typeof obj.new_action_id !== 'string') {
+                addMsg('err', 'actions', JSON.stringify(obj || { ok: false }));
+                return;
+              }
+              await loadActionsIndex();
+              n.type = String(obj.new_action_id);
+              setPipeStatus('dirty');
+              updateDerivedFromAst({ writeScript: true });
+              renderPipeline();
+            } catch (e2) {
+              addMsg('err', 'actions', String(e2));
+            }
+          });
+          bcustom.disabled = !curId || !(actionsById[curId] && actionsById[curId].origin === 'default');
+          side.appendChild(bcustom);
         }
 
         li.appendChild(handle);
@@ -2397,6 +2555,7 @@
           else if (obj.pipeline) pipelineAst = pipelineAstFromPipeline(obj.pipeline);
           setSelected('');
           updateDerivedFromAst({ writeScript: false });
+          await loadActionsIndex();
           renderPipeline();
           updateIndentButtons();
           if (Array.isArray(obj.warnings) && obj.warnings.length) {
@@ -2426,6 +2585,7 @@
       setSelected('');
       updateDerivedFromAst({ writeScript: false });
       setPipeStatus('local');
+      await loadActionsIndex();
       renderPipeline();
       updateIndentButtons();
       return;
@@ -2436,6 +2596,7 @@
     setSelected('');
     updateDerivedFromAst({ writeScript: false });
     setPipeStatus('loaded');
+    await loadActionsIndex();
     renderPipeline();
     updateIndentButtons();
   }
@@ -2643,6 +2804,9 @@
         if (bid) addMsg('hello', t('tasks_batches.title'), `${t('tasks_batches.created')} ${bid}`);
         else addMsg('hello', t('tasks_batches.title'), t('tasks_batches.created'));
         scheduleBatchesRefresh(500);
+      } else if (obj && obj.type === 'action_created') {
+        // Refresh Action Library index so new user actions are selectable without reload.
+        loadActionsIndex().then(() => renderPipeline());
       } else if (obj && obj.type === 'run_status') {
         setRunStatus(obj.status, obj.task_id, obj.block);
       } else if (obj && obj.type === 'task_status') {

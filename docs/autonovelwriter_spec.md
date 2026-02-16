@@ -36,6 +36,8 @@ Recommended default (gitignored) runtime layout:
 - `autonovelwriter/runtime/projects/<project_id>/outputs/` (drafts/exports)
 - `autonovelwriter/runtime/projects/<project_id>/interactions/` (project-local interaction artifacts)
 - `autonovelwriter/runtime/projects/<project_id>/state/` (derived caches + resume pointers)
+- `autonovelwriter/runtime/actions/defaults/` (seeded action templates; treated as immutable)
+- `autonovelwriter/runtime/actions/user/` (user-defined actions; created via copy-on-edit)
 
 ## 1) UI (Scratch-like)
 - Light theme by default (no dark-first UI).
@@ -55,6 +57,7 @@ Recommended default (gitignored) runtime layout:
   - `autonovelwriter/runtime/state/`
   - `autonovelwriter/runtime/tasks/`
   - `autonovelwriter/runtime/projects/` (per-project materials/outputs/state)
+  - `autonovelwriter/runtime/actions/` (Action Library: defaults + user)
 - Backend monitors inbox changes (polling is OK initially); UI shows chat in real-time (WebSocket).
 
 ## 3) Start/Stop/Pause + Settings

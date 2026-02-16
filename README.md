@@ -172,8 +172,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T02:16:31Z
-- current: T030_pwa_action_editor_minimal / fix — PWA: Action Editor (prompt/script/tool)
+- updated_utc: 2026-02-16T02:17:03Z
+- current: T030_pwa_action_editor_minimal / i18n — PWA: Action Editor (prompt/script/tool)
 - queue: total=32 done=29 pending=3
 - last_done: T029_action_library_update_api_copy_on_edit — Action Library: update API (copy-on-edit) @ 2026-02-16T09:58:03+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3

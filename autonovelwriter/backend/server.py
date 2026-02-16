@@ -50,6 +50,7 @@ def resolve_paths() -> dict:
         "chat_jsonl": runtime_root / "state" / "chat.jsonl",
         "inbox_state_json": runtime_root / "state" / "inbox_state.json",
         "runner_state_json": runtime_root / "state" / "runner_state.json",
+        "action_results_jsonl": runtime_root / "state" / "action_results.jsonl",
         "task_status_json": runtime_root / "state" / "task_status.json",
         "tasks_json": runtime_root / "tasks" / "tasks.json",
         "runner_log": runtime_root / "logs" / "runner.log",
@@ -124,6 +125,12 @@ def _ensure_project_dirs(paths: dict, project_id: str) -> dict:
         "outputs_root": outputs,
         "state_root": state,
     }
+
+
+def _append_jsonl(p: Path, obj: dict) -> None:
+    _safe_mkdir(p.parent)
+    with p.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(obj, sort_keys=True) + "\n")
 
 
 def load_active_project(paths: dict) -> str:
@@ -1139,6 +1146,89 @@ class ChatStore:
             return list(self._messages[-limit:])
 
 
+class ActionResultsStore:
+    """
+    Append-only ActionResult store.
+    Used for idempotency (skip already-committed executions) and basic observability.
+    """
+
+    def __init__(self, jsonl_path: Path, max_in_memory: int = 5000):
+        self._jsonl = Path(jsonl_path)
+        self._max_in_memory = max_in_memory
+        self._by_id: dict[str, dict] = {}
+        self._ids: set[str] = set()
+        self._lock = tornado.locks.Lock()
+
+    async def load_tail(self, limit_bytes: int = 2_000_000) -> None:
+        p = self._jsonl
+        if not p.exists():
+            return
+        try:
+            with p.open("rb") as f:
+                f.seek(0, os.SEEK_END)
+                size = f.tell()
+                start = max(0, size - int(limit_bytes or 2_000_000))
+                f.seek(start, os.SEEK_SET)
+                chunk = f.read()
+            text = chunk.decode("utf-8", errors="replace")
+            lines = text.splitlines()
+        except Exception:
+            return
+
+        by_id: dict[str, dict] = {}
+        ids: set[str] = set()
+        for line in lines[-self._max_in_memory :]:
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if not isinstance(obj, dict):
+                continue
+            rid = obj.get("id")
+            if not isinstance(rid, str) or not rid:
+                continue
+            ids.add(rid)
+            by_id[rid] = obj
+        async with self._lock:
+            self._ids = ids
+            self._by_id = by_id
+
+    async def has(self, result_id: str) -> bool:
+        rid = str(result_id or "").strip()
+        if not rid:
+            return False
+        async with self._lock:
+            return rid in self._ids
+
+    async def get(self, result_id: str) -> dict | None:
+        rid = str(result_id or "").strip()
+        if not rid:
+            return None
+        async with self._lock:
+            obj = self._by_id.get(rid)
+        return dict(obj) if isinstance(obj, dict) else None
+
+    async def append(self, result: dict) -> None:
+        if not isinstance(result, dict):
+            return
+        rid = result.get("id")
+        if not isinstance(rid, str) or not rid:
+            return
+        async with self._lock:
+            if rid in self._ids:
+                return
+            _append_jsonl(self._jsonl, result)
+            self._ids.add(rid)
+            self._by_id[rid] = result
+            # Best-effort cap.
+            if len(self._by_id) > self._max_in_memory:
+                # Drop an arbitrary key; tail reload will refresh a coherent window later.
+                k = next(iter(self._by_id.keys()))
+                if k:
+                    self._by_id.pop(k, None)
+                    self._ids.discard(k)
+
+
 def _read_text_file(p: Path, max_bytes: int = 512_000) -> str:
     try:
         data = p.read_bytes()
@@ -1546,6 +1636,9 @@ class Runner:
         # Run-session scoped: cache generated batches by execution key (e.g. per-round global id).
         self._meta_tasks_batch = {}
         self._cursor = None
+        self._vars_global = {}
+        self._vars_by_task = {}
+        self._action_results = ActionResultsStore(Path(paths["action_results_jsonl"]))
 
         # Safe restart behavior: if previous run was 'running', come up paused.
         state = _load_json(Path(paths["runner_state_json"]), {})
@@ -1557,6 +1650,10 @@ class Runner:
             self._paused = self._status == "paused"
         if isinstance(state, dict) and isinstance(state.get("cursor"), dict):
             self._cursor = state.get("cursor")
+        if isinstance(state, dict) and isinstance(state.get("vars_global"), dict):
+            self._vars_global = state.get("vars_global") or {}
+        if isinstance(state, dict) and isinstance(state.get("vars_by_task"), dict):
+            self._vars_by_task = state.get("vars_by_task") or {}
 
         self._save_state()
 
@@ -1918,6 +2015,8 @@ class Runner:
                 "task_id": self._task_id,
                 "block": self._block,
                 "cursor": cursor,
+                "vars_global": self._vars_global if isinstance(self._vars_global, dict) else {},
+                "vars_by_task": self._vars_by_task if isinstance(self._vars_by_task, dict) else {},
             },
         )
 
@@ -1986,6 +2085,94 @@ class Runner:
 
     def _pipeline_hash(self, script: str) -> str:
         return _sha256_hex(script or "")
+
+    def _exec_id_for_ctx(self, ctx: dict) -> str:
+        """
+        Deterministic execution id for idempotency (avoid duplicate ActionResults on restart).
+        """
+        if not isinstance(ctx, dict):
+            ctx = {}
+        task_id = ctx.get("task_id") if isinstance(ctx.get("task_id"), str) else None
+        ast_path = ctx.get("ast_path") if isinstance(ctx.get("ast_path"), list) else []
+        round_index = int(ctx.get("round_index") or 0)
+        pipeline_hash = ""
+        if isinstance(self._cursor, dict) and isinstance(self._cursor.get("pipeline_hash"), str):
+            pipeline_hash = self._cursor.get("pipeline_hash") or ""
+        # For global phase, use a stable exec task id so different tasks don't collide.
+        if not task_id:
+            try:
+                stack = self._cursor.get("stack") if isinstance(self._cursor, dict) else []
+            except Exception:
+                stack = []
+            task_id = self._global_exec_task_id(stack if isinstance(stack, list) else [])
+        payload = {
+            "pipeline_hash": pipeline_hash,
+            "task_id": task_id,
+            "round_index": round_index,
+            "ast_path": ast_path,
+        }
+        return _sha256_hex(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+
+    def _vars_for_ctx(self, ctx: dict) -> dict:
+        task_id = ctx.get("task_id") if isinstance(ctx, dict) and isinstance(ctx.get("task_id"), str) else None
+        base = self._vars_by_task.get(task_id) if task_id and isinstance(self._vars_by_task, dict) else None
+        if not isinstance(base, dict):
+            base = self._vars_global if isinstance(self._vars_global, dict) else {}
+        prev = base.get("prev") if isinstance(base, dict) else None
+        if not isinstance(prev, dict):
+            prev = {}
+        return {
+            "run": {"pipeline_hash": (self._cursor or {}).get("pipeline_hash")},
+            "ctx": {
+                "task_id": task_id,
+                "phase": ctx.get("phase") if isinstance(ctx, dict) else None,
+                "round_index": int(ctx.get("round_index") or 0) if isinstance(ctx, dict) else 0,
+                "round_repeat_total": int(ctx.get("round_repeat_total") or 1) if isinstance(ctx, dict) else 1,
+                "ast_path": ctx.get("ast_path") if isinstance(ctx, dict) else None,
+            },
+            "prev": {
+                "action_id": prev.get("action_id"),
+                "action_result_id": prev.get("action_result_id"),
+                "outputs": prev.get("outputs") if isinstance(prev.get("outputs"), dict) else {},
+                "artifacts": prev.get("artifacts") if isinstance(prev.get("artifacts"), list) else [],
+            },
+        }
+
+    def _update_vars_from_action_result(self, ctx: dict, ar: dict) -> None:
+        if not isinstance(ctx, dict) or not isinstance(ar, dict):
+            return
+        task_id = ctx.get("task_id") if isinstance(ctx.get("task_id"), str) else None
+        scope = None
+        if task_id:
+            if not isinstance(self._vars_by_task, dict):
+                self._vars_by_task = {}
+            scope = self._vars_by_task.setdefault(task_id, {})
+        else:
+            if not isinstance(self._vars_global, dict):
+                self._vars_global = {}
+            scope = self._vars_global
+        if not isinstance(scope, dict):
+            return
+        scope["prev"] = {
+            "action_id": ar.get("action_id"),
+            "action_result_id": ar.get("id"),
+            "outputs": ar.get("outputs") if isinstance(ar.get("outputs"), dict) else {},
+            "artifacts": ar.get("artifacts") if isinstance(ar.get("artifacts"), list) else [],
+        }
+
+    async def _commit_action_result(self, ar: dict) -> None:
+        await self._action_results.append(ar)
+        self._hub.broadcast(
+            {
+                "type": "action_result_committed",
+                "ts_ms": _now_ms(),
+                "exec_id": ar.get("id"),
+                "action_id": ar.get("action_id"),
+                "task_id": ar.get("task_id"),
+                "ast_path": ar.get("ast_path"),
+                "status": ar.get("status"),
+            }
+        )
 
     def _node_by_path(self, ast: dict, path: list) -> dict | None:
         node = ast
@@ -2109,6 +2296,8 @@ class Runner:
             if isinstance(node_path, list) and isinstance(ctx, dict):
                 node = self._node_by_path(ast, node_path)
                 if isinstance(node, dict) and node.get("kind") == "step":
+                    if isinstance(pending.get("exec_id"), str):
+                        ctx["exec_id"] = pending.get("exec_id")
                     return {"node": node, "ctx": ctx}
             # Pending entry is invalid/stale; drop it and continue.
             cur.pop("pending", None)
@@ -2231,15 +2420,18 @@ class Runner:
                     "round_repeat_total": int(round_f.get("repeat_total") or 1) if round_f else 1,
                     "ast_path": node_path,
                 }
+                exec_id = self._exec_id_for_ctx(ctx)
                 # Mark this step as pending until it completes successfully; only then advance `child_i`.
                 cur["pending"] = {
                     "frame_depth": len(stack) - 1,
                     "child_i": child_i,
                     "node_path": node_path,
+                    "exec_id": exec_id,
                     "ctx": ctx,
                 }
                 if isinstance(task_id, str) and task_id:
                     self._task_mark_running(task_id, st, ctx=ctx, block=t)
+                ctx["exec_id"] = exec_id
                 return {"node": node, "ctx": ctx}
 
             if k == "round":
@@ -2429,6 +2621,10 @@ class Runner:
                 tasks = self._load_tasks()
                 st = self._load_task_status()
 
+                # Best-effort load action results tail for idempotent restart behavior.
+                # (This is cheap when the file doesn't exist yet.)
+                await self._action_results.load_tail(limit_bytes=1_500_000)
+
                 # Optional, gated codex subprocess stub (does not run by default).
                 self._maybe_run_codex_stub_once()
 
@@ -2463,7 +2659,23 @@ class Runner:
                 round_tot = int(ctx.get("round_repeat_total") or 1)
                 phase = ctx.get("phase") or "global"
                 ttag = f" task={task_id}" if task_id else ""
-                self._log(f"[runner] round={round_idx}/{round_tot} phase={phase}{ttag} block={block_type} start")
+                exec_id = ctx.get("exec_id") if isinstance(ctx, dict) and isinstance(ctx.get("exec_id"), str) else self._exec_id_for_ctx(ctx)
+                self._log(f"[runner] round={round_idx}/{round_tot} phase={phase}{ttag} block={block_type} exec_id={exec_id[:12]} start")
+
+                # Idempotency: if this exact execution was already committed, skip re-executing it.
+                if exec_id and await self._action_results.has(exec_id):
+                    prev = await self._action_results.get(exec_id)
+                    if isinstance(prev, dict):
+                        self._update_vars_from_action_result(ctx, prev)
+                    self._cursor_commit_pending()
+                    async with self._lock:
+                        self._save_state()
+                        self._emit_status()
+                    self._log(f"[runner] skipped (already committed): exec_id={exec_id[:12]}")
+                    continue
+
+                vars_map = self._vars_for_ctx(ctx)
+                ts_start = _now_ms()
 
                 res = {"ok": True}
                 if block_type == "meta_tasks_generate":
@@ -2481,6 +2693,46 @@ class Runner:
                     # Stub work unit (cooperative cancellation point).
                     await tornado.gen.sleep(0.25)
 
+                ts_end = _now_ms()
+                ar_outputs = {}
+                ar_artifacts = []
+                if block_type == "write":
+                    if isinstance(res.get("path"), str) and res.get("path"):
+                        ar_outputs["draft_path"] = res.get("path")
+                        ar_outputs["project_rel_path"] = res.get("project_rel_path")
+                        ar_artifacts.append({"path": res.get("path"), "kind": "draft", "name": "draft"})
+                    if res.get("skipped"):
+                        ar_outputs["skipped"] = True
+                elif block_type == "meta_tasks_generate":
+                    for k in ("batch_dir", "tasks_jsonl", "task_count"):
+                        if k in res:
+                            ar_outputs[k] = res.get(k)
+                    if isinstance(res.get("tasks_jsonl"), str) and res.get("tasks_jsonl"):
+                        ar_artifacts.append({"path": res.get("tasks_jsonl"), "kind": "tasks_jsonl", "name": "tasks"})
+                else:
+                    ar_outputs["ok"] = True
+                    ar_outputs["note"] = "stub"
+
+                action_result = {
+                    "id": exec_id,
+                    "ts_start_ms": ts_start,
+                    "ts_end_ms": ts_end,
+                    "status": "ok" if res.get("ok") else "error",
+                    "action_id": block_type,
+                    "task_id": task_id,
+                    "phase": phase,
+                    "round_index": int(ctx.get("round_index") or 0),
+                    "round_repeat_total": int(ctx.get("round_repeat_total") or 1),
+                    "ast_path": ctx.get("ast_path"),
+                    "inputs": {"vars": vars_map},
+                    "outputs": ar_outputs,
+                    "artifacts": ar_artifacts,
+                }
+                if not res.get("ok"):
+                    action_result["error"] = {"code": res.get("error") or "action_failed", "detail": res.get("detail") or ""}
+                await self._commit_action_result(action_result)
+                self._update_vars_from_action_result(ctx, action_result)
+
                 if not res.get("ok"):
                     reason = res.get("error") or f"{block_type}_failed"
                     if task_id:
@@ -2496,7 +2748,7 @@ class Runner:
 
                 # Advance cursor only after successful completion so restarts do not skip unfinished work.
                 self._cursor_commit_pending()
-                self._log(f"[runner] round={round_idx}/{round_tot} phase={phase}{ttag} block={block_type} done")
+                self._log(f"[runner] round={round_idx}/{round_tot} phase={phase}{ttag} block={block_type} exec_id={exec_id[:12]} done")
 
                 async with self._lock:
                     # Persist progress frequently for resumability.

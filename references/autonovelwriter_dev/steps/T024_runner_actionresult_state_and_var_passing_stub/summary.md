@@ -22,3 +22,6 @@
 2. Make idempotency durable for large histories: write per-`exec_id` files or maintain a compact on-disk index so restarts can reliably detect already-committed results beyond the JSONL tail window.
 3. Implement `FOREACH_ACTION` runner semantics: iterate `task.actions`, feed each action’s outputs into the next via the vars map, and emit one ActionResult per action execution.
 4. Reduce persisted `inputs.vars` size (store only `prev` pointers and small previews; keep large data in artifacts).
+
+## README
+- Documented ActionResult persistence (`autonovelwriter/runtime/state/action_results.jsonl`) and WS `action_result_committed`.

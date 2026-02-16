@@ -67,6 +67,7 @@ Resumability:
 - The runner persists a resumable execution cursor to `autonovelwriter/runtime/state/runner_state.json`.
 - The cursor only advances after a block completes successfully (so restarts do not skip unfinished work).
 - If the canonical pipeline script changes (hash mismatch), the runner stops and requires a restart (cursor invalidated).
+- The runner persists per-step `ActionResult` records to `autonovelwriter/runtime/state/action_results.jsonl` and uses a deterministic per-step `exec_id` to avoid duplicating already-committed results on restart.
 
 Pipeline script v2 supports nesting:
 - `LOOP <n>` introduces a loop block
@@ -100,7 +101,7 @@ Blocks UI notes:
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
 - Agent test (gated): `POST /api/agent/test` (runs `codex --version` only when enabled + env gate)
-- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `action_created`, `run_status`, `task_status`, `log`, `pipeline_updated`)
+- WebSocket events: `/ws` (broadcasts `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `action_created`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`)
 
 ## Runner Outputs (Draft Stub)
 
@@ -160,8 +161,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T00:43:10Z
-- current: T024_runner_actionresult_state_and_var_passing_stub / summary — Runner: ActionResult state + explicit var passing (stub)
+- updated_utc: 2026-02-16T00:44:09Z
+- current: T024_runner_actionresult_state_and_var_passing_stub / update_readme — Runner: ActionResult state + explicit var passing (stub)
 - queue: total=26 done=23 pending=3
 - last_done: T023_action_library_minimal_api_copy_on_edit — Action Library: minimal API + copy-on-edit @ 2026-02-16T08:34:09+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_074635_b2

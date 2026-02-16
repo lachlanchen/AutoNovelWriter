@@ -16,3 +16,9 @@
 
 ## I18N
 - No new PWA user-facing strings were introduced by T024 (runner-only state/dataflow plumbing). No localization changes required.
+
+## Next
+1. Add a minimal API to fetch ActionResults tail (e.g. `GET /api/run/action_results?tail=200`) so the PWA can show a live “Variables / ActionResults” panel without reading disk directly.
+2. Make idempotency durable for large histories: write per-`exec_id` files or maintain a compact on-disk index so restarts can reliably detect already-committed results beyond the JSONL tail window.
+3. Implement `FOREACH_ACTION` runner semantics: iterate `task.actions`, feed each action’s outputs into the next via the vars map, and emit one ActionResult per action execution.
+4. Reduce persisted `inputs.vars` size (store only `prev` pointers and small previews; keep large data in artifacts).

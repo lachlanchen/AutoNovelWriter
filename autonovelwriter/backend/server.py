@@ -136,6 +136,9 @@ def _is_safe_action_id(s: str) -> bool:
 
 def is_safe_step_token(s: str) -> bool:
     # Pipeline STEP tokens are action ids; keep the validation identical.
+    # Special-case placeholder used by the default Scratch-like template.
+    if isinstance(s, str) and s.strip() == "<action_id>":
+        return True
     return _is_safe_action_id(s)
 
 
@@ -623,6 +626,9 @@ def _filter_unknown_action_warnings(paths: dict, warnings: list) -> list:
             continue
         parts = raw.strip().split()
         aid = parts[1].strip() if len(parts) >= 2 else ""
+        if aid == "<action_id>":
+            # Placeholder token (resolved at runtime in FOREACH_ACTION).
+            continue
         if aid and _is_safe_action_id(aid) and get_action(paths, aid):
             # Known action id (default or user) => suppress warning.
             continue
@@ -1076,7 +1082,7 @@ def parse_pipeline_script_v2(script: str) -> tuple[dict, dict, list, list]:
                 warnings.append({"line": ln, "code": "invalid_step_token", "text": raw})
                 continue
             enabled = verb == "STEP"
-            if t not in allowed_builtin:
+            if t not in allowed_builtin and t != "<action_id>":
                 warnings.append({"line": ln, "code": "unknown_action_id", "text": raw})
             stack[-1][1].append(_ast_step(t, enabled))
             continue
@@ -2094,6 +2100,7 @@ class Runner:
         self._cursor = None
         self._vars_global = {}
         self._vars_by_task = {}
+        self._vars_by_task_action = {}
         self._action_results = ActionResultsStore(Path(paths["action_results_jsonl"]))
 
         # Safe restart behavior: if previous run was 'running', come up paused.
@@ -2110,6 +2117,8 @@ class Runner:
             self._vars_global = state.get("vars_global") or {}
         if isinstance(state, dict) and isinstance(state.get("vars_by_task"), dict):
             self._vars_by_task = state.get("vars_by_task") or {}
+        if isinstance(state, dict) and isinstance(state.get("vars_by_task_action"), dict):
+            self._vars_by_task_action = state.get("vars_by_task_action") or {}
 
         self._save_state()
 
@@ -2441,6 +2450,7 @@ class Runner:
             return {}
         round_f = None
         foreach_f = None
+        foreach_action_f = None
         for f in stack:
             if not isinstance(f, dict):
                 continue
@@ -2448,10 +2458,23 @@ class Runner:
                 round_f = f
             elif f.get("kind") == "foreach_task":
                 foreach_f = f
+            elif f.get("kind") == "foreach_action":
+                foreach_action_f = f
         out = {
             "pipeline_hash": cur.get("pipeline_hash"),
-            "phase": "foreach" if foreach_f else "global",
+            "phase": "foreach_action" if foreach_action_f else ("foreach" if foreach_f else "global"),
         }
+        if foreach_action_f:
+            try:
+                out["action_index"] = int(foreach_action_f.get("action_i") or 0)
+            except Exception:
+                out["action_index"] = 0
+            aid_ref = foreach_action_f.get("action_id_ref")
+            if isinstance(aid_ref, str):
+                out["action_id_ref"] = aid_ref
+            ak = foreach_action_f.get("action_key")
+            if isinstance(ak, str):
+                out["action_key"] = ak
         if round_f:
             out["round_index"] = int(round_f.get("repeat_i") or 0)
             out["round_repeat_total"] = int(round_f.get("repeat_total") or 1)
@@ -2478,6 +2501,7 @@ class Runner:
                 "cursor": cursor,
                 "vars_global": self._vars_global if isinstance(self._vars_global, dict) else {},
                 "vars_by_task": self._vars_by_task if isinstance(self._vars_by_task, dict) else {},
+                "vars_by_task_action": self._vars_by_task_action if isinstance(self._vars_by_task_action, dict) else {},
             },
         )
 
@@ -2556,6 +2580,8 @@ class Runner:
         task_id = ctx.get("task_id") if isinstance(ctx.get("task_id"), str) else None
         ast_path = ctx.get("ast_path") if isinstance(ctx.get("ast_path"), list) else []
         round_index = int(ctx.get("round_index") or 0)
+        action_index = int(ctx.get("action_index") or 0) if isinstance(ctx.get("action_index"), int) or isinstance(ctx.get("action_index"), str) else 0
+        action_key = ctx.get("action_key") if isinstance(ctx.get("action_key"), str) else ""
         pipeline_hash = ""
         if isinstance(self._cursor, dict) and isinstance(self._cursor.get("pipeline_hash"), str):
             pipeline_hash = self._cursor.get("pipeline_hash") or ""
@@ -2571,17 +2597,38 @@ class Runner:
             "task_id": task_id,
             "round_index": round_index,
             "ast_path": ast_path,
+            "action_index": action_index,
+            "action_key": action_key,
         }
         return _sha256_hex(json.dumps(payload, sort_keys=True, separators=(",", ":")))
 
     def _vars_for_ctx(self, ctx: dict) -> dict:
         task_id = ctx.get("task_id") if isinstance(ctx, dict) and isinstance(ctx.get("task_id"), str) else None
-        base = self._vars_by_task.get(task_id) if task_id and isinstance(self._vars_by_task, dict) else None
-        if not isinstance(base, dict):
-            base = self._vars_global if isinstance(self._vars_global, dict) else {}
-        prev = base.get("prev") if isinstance(base, dict) else None
+        action_key = ctx.get("action_key") if isinstance(ctx, dict) and isinstance(ctx.get("action_key"), str) else ""
+
+        task_scope = self._vars_by_task.get(task_id) if task_id and isinstance(self._vars_by_task, dict) else None
+        if not isinstance(task_scope, dict):
+            task_scope = self._vars_global if isinstance(self._vars_global, dict) else {}
+
+        action_scope = None
+        if task_id and action_key and isinstance(self._vars_by_task_action, dict):
+            by_task = self._vars_by_task_action.get(task_id)
+            if isinstance(by_task, dict):
+                action_scope = by_task.get(action_key)
+        if not isinstance(action_scope, dict):
+            action_scope = {}
+
+        # Current scope is action-scope when present; otherwise task/global scope.
+        cur_scope = action_scope if action_key else task_scope
+        prev = cur_scope.get("prev") if isinstance(cur_scope, dict) else None
         if not isinstance(prev, dict):
             prev = {}
+        prev_task = task_scope.get("prev") if isinstance(task_scope, dict) else None
+        if not isinstance(prev_task, dict):
+            prev_task = {}
+        prev_action = action_scope.get("prev") if isinstance(action_scope, dict) else None
+        if not isinstance(prev_action, dict):
+            prev_action = {}
         return {
             "run": {"pipeline_hash": (self._cursor or {}).get("pipeline_hash")},
             "ctx": {
@@ -2590,6 +2637,9 @@ class Runner:
                 "round_index": int(ctx.get("round_index") or 0) if isinstance(ctx, dict) else 0,
                 "round_repeat_total": int(ctx.get("round_repeat_total") or 1) if isinstance(ctx, dict) else 1,
                 "ast_path": ctx.get("ast_path") if isinstance(ctx, dict) else None,
+                "action_index": int(ctx.get("action_index") or 0) if isinstance(ctx, dict) and ctx.get("action_index") is not None else None,
+                "action_id": ctx.get("action_id") if isinstance(ctx, dict) else None,
+                "action_key": action_key or None,
             },
             "prev": {
                 "action_id": prev.get("action_id"),
@@ -2597,29 +2647,61 @@ class Runner:
                 "outputs": prev.get("outputs") if isinstance(prev.get("outputs"), dict) else {},
                 "artifacts": prev.get("artifacts") if isinstance(prev.get("artifacts"), list) else [],
             },
+            "task": {
+                "prev": {
+                    "action_id": prev_task.get("action_id"),
+                    "action_result_id": prev_task.get("action_result_id"),
+                    "outputs": prev_task.get("outputs") if isinstance(prev_task.get("outputs"), dict) else {},
+                    "artifacts": prev_task.get("artifacts") if isinstance(prev_task.get("artifacts"), list) else [],
+                }
+            },
+            "action": {
+                "prev": {
+                    "action_id": prev_action.get("action_id"),
+                    "action_result_id": prev_action.get("action_result_id"),
+                    "outputs": prev_action.get("outputs") if isinstance(prev_action.get("outputs"), dict) else {},
+                    "artifacts": prev_action.get("artifacts") if isinstance(prev_action.get("artifacts"), list) else [],
+                }
+            },
         }
 
     def _update_vars_from_action_result(self, ctx: dict, ar: dict) -> None:
         if not isinstance(ctx, dict) or not isinstance(ar, dict):
             return
         task_id = ctx.get("task_id") if isinstance(ctx.get("task_id"), str) else None
-        scope = None
+        action_key = ctx.get("action_key") if isinstance(ctx.get("action_key"), str) else ""
+
+        # Always update task/global scope.
         if task_id:
             if not isinstance(self._vars_by_task, dict):
                 self._vars_by_task = {}
-            scope = self._vars_by_task.setdefault(task_id, {})
+            t_scope = self._vars_by_task.setdefault(task_id, {})
         else:
             if not isinstance(self._vars_global, dict):
                 self._vars_global = {}
-            scope = self._vars_global
-        if not isinstance(scope, dict):
-            return
-        scope["prev"] = {
-            "action_id": ar.get("action_id"),
-            "action_result_id": ar.get("id"),
-            "outputs": ar.get("outputs") if isinstance(ar.get("outputs"), dict) else {},
-            "artifacts": ar.get("artifacts") if isinstance(ar.get("artifacts"), list) else [],
-        }
+            t_scope = self._vars_global
+        if isinstance(t_scope, dict):
+            t_scope["prev"] = {
+                "action_id": ar.get("action_id"),
+                "action_result_id": ar.get("id"),
+                "outputs": ar.get("outputs") if isinstance(ar.get("outputs"), dict) else {},
+                "artifacts": ar.get("artifacts") if isinstance(ar.get("artifacts"), list) else [],
+            }
+
+        # Additionally update action scope when present.
+        if task_id and action_key:
+            if not isinstance(self._vars_by_task_action, dict):
+                self._vars_by_task_action = {}
+            by_task = self._vars_by_task_action.setdefault(task_id, {})
+            if isinstance(by_task, dict):
+                a_scope = by_task.setdefault(action_key, {})
+                if isinstance(a_scope, dict):
+                    a_scope["prev"] = {
+                        "action_id": ar.get("action_id"),
+                        "action_result_id": ar.get("id"),
+                        "outputs": ar.get("outputs") if isinstance(ar.get("outputs"), dict) else {},
+                        "artifacts": ar.get("artifacts") if isinstance(ar.get("artifacts"), list) else [],
+                    }
 
     async def _commit_action_result(self, ar: dict) -> None:
         await self._action_results.append(ar)
@@ -2632,6 +2714,9 @@ class Runner:
                 "task_id": ar.get("task_id"),
                 "ast_path": ar.get("ast_path"),
                 "status": ar.get("status"),
+                "action_index": ar.get("action_index"),
+                "action_id_ref": ar.get("action_id_ref"),
+                "action_key": ar.get("action_key"),
             }
         )
 
@@ -2681,6 +2766,13 @@ class Runner:
         out = None
         for f in stack:
             if isinstance(f, dict) and f.get("kind") == "foreach_task":
+                out = f
+        return out
+
+    def _foreach_action_from_stack(self, stack: list) -> dict | None:
+        out = None
+        for f in stack:
+            if isinstance(f, dict) and f.get("kind") == "foreach_action":
                 out = f
         return out
 
@@ -2778,6 +2870,58 @@ class Runner:
             tid = t.get("id") if isinstance(t, dict) else None
             return tid if isinstance(tid, str) and tid else None
 
+        # Best-effort task lookup for payload/actions.
+        tasks_by_id = {}
+        for t in tasks or []:
+            if not isinstance(t, dict):
+                continue
+            tid = t.get("id")
+            if isinstance(tid, str) and tid:
+                tasks_by_id[tid] = t
+
+        def _actions_for_task(tobj: dict) -> list[dict]:
+            """
+            Returns a normalized list of action refs for FOREACH_ACTION iteration.
+            Each entry: {"action_id_ref": <str|''>, "action_key": <str>}
+            """
+            raw = None
+            if isinstance(tobj.get("actions"), list):
+                raw = tobj.get("actions")
+            else:
+                payload = tobj.get("payload")
+                if isinstance(payload, dict) and isinstance(payload.get("actions"), list):
+                    raw = payload.get("actions")
+            if not isinstance(raw, list):
+                raw = []
+            out = []
+            for i, a in enumerate(raw):
+                action_id_ref = ""
+                if isinstance(a, str):
+                    action_id_ref = a.strip()
+                    base_key = action_id_ref
+                elif isinstance(a, dict):
+                    if isinstance(a.get("id"), str):
+                        action_id_ref = a.get("id").strip()
+                    elif isinstance(a.get("action_id"), str):
+                        action_id_ref = a.get("action_id").strip()
+                    elif isinstance(a.get("action"), str):
+                        action_id_ref = a.get("action").strip()
+                    base_key = action_id_ref if action_id_ref else _sha256_hex(json.dumps(a, sort_keys=True, separators=(",", ":")))
+                else:
+                    continue
+                if not base_key:
+                    continue
+                # Make scope stable per list entry (not just per action id), so repeated action ids
+                # do not collide in the action-scope namespace.
+                action_key = f"{base_key}__i{i}"
+                out.append({"action_id_ref": action_id_ref, "action_key": action_key})
+                if len(out) >= 2000:
+                    break
+            # If no actions are provided, run a single iteration so non-placeholder children can still execute.
+            if not out:
+                out = [{"action_id_ref": "", "action_key": "__none__"}]
+            return out
+
         while stack:
             frame = stack[-1]
             if not isinstance(frame, dict):
@@ -2836,6 +2980,35 @@ class Runner:
                     frame["task_id"] = None
                     continue
 
+            # FOREACH_ACTION: for the current task, iterate task.actions (normalized).
+            if frame.get("kind") == "foreach_action":
+                if not isinstance(frame.get("action_i"), int):
+                    frame["action_i"] = 0
+                if not isinstance(frame.get("child_i"), int):
+                    frame["child_i"] = 0
+
+                foreach_f = self._foreach_from_stack(stack)
+                task_id = foreach_f.get("task_id") if foreach_f else None
+                tobj = tasks_by_id.get(task_id) if isinstance(task_id, str) and task_id else None
+                actions = _actions_for_task(tobj) if isinstance(tobj, dict) else [{"action_id_ref": "", "action_key": "__no_task__"}]
+
+                # Advance to next action if needed.
+                if frame["action_i"] >= len(actions):
+                    stack.pop()
+                    continue
+
+                # Action boundary completion.
+                if frame["child_i"] >= len(kids):
+                    frame["action_i"] += 1
+                    frame["child_i"] = 0
+                    continue
+
+                # Keep current action ref on the frame for ctx derivation.
+                cur_a = actions[frame["action_i"]] if frame["action_i"] < len(actions) else None
+                if isinstance(cur_a, dict):
+                    frame["action_key"] = cur_a.get("action_key")
+                    frame["action_id_ref"] = cur_a.get("action_id_ref")
+
             # ROUND repetition.
             if frame.get("kind") == "round":
                 if not isinstance(frame.get("repeat_total"), int):
@@ -2880,15 +3053,30 @@ class Runner:
                     frame["child_i"] = child_i + 1
                     continue
                 foreach_f = self._foreach_from_stack(stack)
+                foreach_action_f = self._foreach_action_from_stack(stack)
                 task_id = foreach_f.get("task_id") if foreach_f else None
                 round_f = self._round_from_stack(stack)
                 ctx = {
                     "task_id": task_id,
-                    "phase": "foreach" if foreach_f else "global",
+                    "phase": "foreach_action" if foreach_action_f else ("foreach" if foreach_f else "global"),
                     "round_index": int(round_f.get("repeat_i") or 0) if round_f else 0,
                     "round_repeat_total": int(round_f.get("repeat_total") or 1) if round_f else 1,
                     "ast_path": node_path,
                 }
+                if foreach_action_f:
+                    try:
+                        ctx["action_index"] = int(foreach_action_f.get("action_i") or 0)
+                    except Exception:
+                        ctx["action_index"] = 0
+                    aid_ref = foreach_action_f.get("action_id_ref")
+                    if isinstance(aid_ref, str):
+                        ctx["action_id_ref"] = aid_ref
+                    ak = foreach_action_f.get("action_key")
+                    if isinstance(ak, str) and ak:
+                        ctx["action_key"] = ak
+                    # Primary action id for placeholder steps.
+                    if isinstance(aid_ref, str) and aid_ref:
+                        ctx["action_id"] = aid_ref
                 exec_id = self._exec_id_for_ctx(ctx)
                 # Mark this step as pending until it completes successfully; only then advance `child_i`.
                 cur["pending"] = {
@@ -2921,10 +3109,8 @@ class Runner:
                 continue
 
             if k == "foreach_action":
-                # Placeholder semantics for now: treat as a normal container that runs its children once.
-                # A later task will implement iteration over task.actions with explicit dataflow.
                 frame["child_i"] = child_i + 1
-                stack.append({"kind": "foreach_action", "path": node_path, "child_i": 0})
+                stack.append({"kind": "foreach_action", "path": node_path, "child_i": 0, "action_i": 0, "action_key": "", "action_id_ref": ""})
                 continue
 
             if k == "if":
@@ -3120,13 +3306,24 @@ class Runner:
                 if not isinstance(block_type, str) or not block_type:
                     continue
 
+                # Placeholder: allow pipelines to use `STEP <action_id>` to mean
+                # "execute the current FOREACH_ACTION action id".
+                effective_block_type = block_type
+                if block_type == "<action_id>":
+                    aid = ctx.get("action_id") if isinstance(ctx, dict) else None
+                    if isinstance(aid, str) and aid.strip():
+                        effective_block_type = aid.strip()
+                    else:
+                        self._log("[runner] <action_id> skipped (no action_id in ctx; place under FOREACH_TASK/FOREACH_ACTION with task.payload.actions)")
+                        effective_block_type = "<action_id>"
+
                 task_id = ctx.get("task_id")
                 if not isinstance(task_id, str) or not task_id:
                     task_id = None
 
                 async with self._lock:
                     self._task_id = task_id
-                    self._block = block_type
+                    self._block = effective_block_type
                     self._save_state()
                     self._emit_status()
 
@@ -3135,7 +3332,7 @@ class Runner:
                 phase = ctx.get("phase") or "global"
                 ttag = f" task={task_id}" if task_id else ""
                 exec_id = ctx.get("exec_id") if isinstance(ctx, dict) and isinstance(ctx.get("exec_id"), str) else self._exec_id_for_ctx(ctx)
-                self._log(f"[runner] round={round_idx}/{round_tot} phase={phase}{ttag} block={block_type} exec_id={exec_id[:12]} start")
+                self._log(f"[runner] round={round_idx}/{round_tot} phase={phase}{ttag} block={effective_block_type} exec_id={exec_id[:12]} start")
 
                 # Idempotency: if this exact execution was already committed, skip re-executing it.
                 if exec_id and await self._action_results.has(exec_id):
@@ -3153,16 +3350,16 @@ class Runner:
                 ts_start = _now_ms()
 
                 res = {"ok": True}
-                if block_type == "meta_tasks_generate":
+                if effective_block_type == "meta_tasks_generate":
                     exec_task_id = task_id or self._global_exec_task_id(self._cursor.get("stack") or [])
-                    res = self._write_tasks_batch_stub(exec_task_id, block_type, st)
+                    res = self._write_tasks_batch_stub(exec_task_id, effective_block_type, st)
                     self._save_task_status(st)
-                elif block_type == "write":
+                elif effective_block_type == "write":
                     if not task_id:
                         self._log("[runner] write skipped (no task context; place under FOREACH_TASK)")
                         res = {"ok": True, "skipped": True}
                     else:
-                        res = self._write_draft_stub(task_id, block_type, st)
+                        res = self._write_draft_stub(task_id, effective_block_type, st)
                         self._save_task_status(st)
                 else:
                     # Stub work unit (cooperative cancellation point).
@@ -3171,14 +3368,14 @@ class Runner:
                 ts_end = _now_ms()
                 ar_outputs = {}
                 ar_artifacts = []
-                if block_type == "write":
+                if effective_block_type == "write":
                     if isinstance(res.get("path"), str) and res.get("path"):
                         ar_outputs["draft_path"] = res.get("path")
                         ar_outputs["project_rel_path"] = res.get("project_rel_path")
                         ar_artifacts.append({"path": res.get("path"), "kind": "draft", "name": "draft"})
                     if res.get("skipped"):
                         ar_outputs["skipped"] = True
-                elif block_type == "meta_tasks_generate":
+                elif effective_block_type == "meta_tasks_generate":
                     for k in ("batch_dir", "tasks_jsonl", "task_count"):
                         if k in res:
                             ar_outputs[k] = res.get(k)
@@ -3193,12 +3390,15 @@ class Runner:
                     "ts_start_ms": ts_start,
                     "ts_end_ms": ts_end,
                     "status": "ok" if res.get("ok") else "error",
-                    "action_id": block_type,
+                    "action_id": effective_block_type,
                     "task_id": task_id,
                     "phase": phase,
                     "round_index": int(ctx.get("round_index") or 0),
                     "round_repeat_total": int(ctx.get("round_repeat_total") or 1),
                     "ast_path": ctx.get("ast_path"),
+                    "action_index": ctx.get("action_index") if isinstance(ctx, dict) else None,
+                    "action_id_ref": (ctx.get("action_id_ref") if isinstance(ctx, dict) else None) or (ctx.get("action_id") if isinstance(ctx, dict) else None),
+                    "action_key": ctx.get("action_key") if isinstance(ctx, dict) else None,
                     "inputs": {"vars": vars_map},
                     "outputs": ar_outputs,
                     "artifacts": ar_artifacts,
@@ -3209,9 +3409,9 @@ class Runner:
                 self._update_vars_from_action_result(ctx, action_result)
 
                 if not res.get("ok"):
-                    reason = res.get("error") or f"{block_type}_failed"
+                    reason = res.get("error") or f"{effective_block_type}_failed"
                     if task_id:
-                        self._task_mark_error(task_id, st, reason, ctx=ctx, block=block_type)
+                        self._task_mark_error(task_id, st, reason, ctx=ctx, block=effective_block_type)
                     self._log(f"[runner] block failed: {json.dumps(res)}")
                     async with self._lock:
                         self._status = "idle"
@@ -3223,7 +3423,7 @@ class Runner:
 
                 # Advance cursor only after successful completion so restarts do not skip unfinished work.
                 self._cursor_commit_pending()
-                self._log(f"[runner] round={round_idx}/{round_tot} phase={phase}{ttag} block={block_type} exec_id={exec_id[:12]} done")
+                self._log(f"[runner] round={round_idx}/{round_tot} phase={phase}{ttag} block={effective_block_type} exec_id={exec_id[:12]} done")
 
                 async with self._lock:
                     # Persist progress frequently for resumability.

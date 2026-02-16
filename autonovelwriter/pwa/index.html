@@ -247,6 +247,30 @@
 		            </select>
 		          </div>
 
+		          <div class="field">
+		            <label class="label" for="projectNovelTone" data-i18n="project.novel_tone">Novel tone (project)</label>
+		            <input id="projectNovelTone" class="input" type="text" data-i18n-title="project.novel_tone_title" title="Project override for novel tone. Leave blank to inherit global." data-i18n-placeholder="project.novel_tone_ph" placeholder="(inherit)" />
+		            <div class="hint">
+		              <span data-i18n="project.inherit_hint">Leave blank to inherit global setting.</span>
+		              <span data-i18n="project.effective_label">Effective:</span>
+		              <code id="projectNovelToneEffective">-</code>
+		              <span data-i18n="project.global_label">Global:</span>
+		              <code id="projectNovelToneGlobal">-</code>
+		            </div>
+		          </div>
+
+		          <div class="field">
+		            <label class="label" for="projectNovelTargetWords" data-i18n="project.novel_target_words">Target length (project words)</label>
+		            <input id="projectNovelTargetWords" class="input" type="number" min="1000" step="1000" data-i18n-title="project.novel_target_words_title" title="Project override for target word count. Leave blank to inherit global." data-i18n-placeholder="project.novel_target_words_ph" placeholder="(inherit)" />
+		            <div class="hint">
+		              <span data-i18n="project.inherit_hint">Leave blank to inherit global setting.</span>
+		              <span data-i18n="project.effective_label">Effective:</span>
+		              <code id="projectNovelTargetWordsEffective">-</code>
+		              <span data-i18n="project.global_label">Global:</span>
+		              <code id="projectNovelTargetWordsGlobal">-</code>
+		            </div>
+		          </div>
+
 	          <div class="modal-actions">
 	            <button id="saveSettings" class="btn btn-primary" type="submit" data-i18n="ui.save">Save</button>
 	            <button id="testCodex" class="btn" type="button" data-i18n-title="settings.test_codex_title" title="Runs a gated `codex --version` on backend" data-i18n="settings.test_codex">Test Codex</button>

@@ -140,6 +140,15 @@
       'project.novel_language': 'Novel language (project)',
       'project.novel_language_title': 'Novel language override for this project (separate from UI language)',
       'project.novel_language_inherit': 'Use global default',
+      'project.novel_tone': 'Novel tone (project)',
+      'project.novel_tone_title': 'Novel tone override for this project (leave blank to inherit global)',
+      'project.novel_tone_ph': '(inherit)',
+      'project.novel_target_words': 'Target length (project words)',
+      'project.novel_target_words_title': 'Target word-count override for this project (leave blank to inherit global)',
+      'project.novel_target_words_ph': '(inherit)',
+      'project.inherit_hint': 'Leave blank to inherit global setting.',
+      'project.effective_label': 'Effective:',
+      'project.global_label': 'Global:',
       'errors.backend_api_url': 'Cannot derive backend API URL'
     },
     'zh-Hans': {
@@ -264,6 +273,15 @@
       'project.novel_language': '小说语言（项目）',
       'project.novel_language_title': '此项目的小说语言覆盖（与界面语言分离）',
       'project.novel_language_inherit': '使用全局默认',
+      'project.novel_tone': '小说风格（项目）',
+      'project.novel_tone_title': '此项目的小说风格覆盖（留空继承全局）',
+      'project.novel_tone_ph': '（继承）',
+      'project.novel_target_words': '目标字数（项目）',
+      'project.novel_target_words_title': '此项目的目标字数覆盖（留空继承全局）',
+      'project.novel_target_words_ph': '（继承）',
+      'project.inherit_hint': '留空以继承全局设置。',
+      'project.effective_label': '生效值：',
+      'project.global_label': '全局：',
       'errors.backend_api_url': '无法推导后端 API 地址'
     },
     'zh-Hant': {
@@ -388,6 +406,15 @@
       'project.novel_language': '小說語言（專案）',
       'project.novel_language_title': '此專案的小說語言覆寫（與介面語言分離）',
       'project.novel_language_inherit': '使用全域預設',
+      'project.novel_tone': '小說風格（專案）',
+      'project.novel_tone_title': '此專案的小說風格覆寫（留空繼承全域）',
+      'project.novel_tone_ph': '（繼承）',
+      'project.novel_target_words': '目標字數（專案）',
+      'project.novel_target_words_title': '此專案的目標字數覆寫（留空繼承全域）',
+      'project.novel_target_words_ph': '（繼承）',
+      'project.inherit_hint': '留空以繼承全域設定。',
+      'project.effective_label': '生效值：',
+      'project.global_label': '全域：',
       'errors.backend_api_url': '無法推導後端 API 位址'
     },
     ja: {
@@ -512,6 +539,15 @@
       'project.novel_language': '小説の言語（プロジェクト）',
       'project.novel_language_title': 'このプロジェクトの小説言語の上書き（UI言語とは別）',
       'project.novel_language_inherit': 'グローバル既定を使用',
+      'project.novel_tone': '小説トーン（プロジェクト）',
+      'project.novel_tone_title': 'このプロジェクトの小説トーン上書き（空欄でグローバル継承）',
+      'project.novel_tone_ph': '（継承）',
+      'project.novel_target_words': '目標語数（プロジェクト）',
+      'project.novel_target_words_title': 'このプロジェクトの目標語数上書き（空欄でグローバル継承）',
+      'project.novel_target_words_ph': '（継承）',
+      'project.inherit_hint': '空欄でグローバル設定を継承。',
+      'project.effective_label': '有効値:',
+      'project.global_label': 'グローバル:',
       'errors.backend_api_url': 'バックエンド API URL を取得できません'
     },
     ko: {
@@ -636,6 +672,15 @@
       'project.novel_language': '소설 언어(프로젝트)',
       'project.novel_language_title': '이 프로젝트의 소설 언어 오버라이드(UI 언어와 분리)',
       'project.novel_language_inherit': '전역 기본값 사용',
+      'project.novel_tone': '소설 톤(프로젝트)',
+      'project.novel_tone_title': '이 프로젝트의 소설 톤 오버라이드(비우면 전역 상속)',
+      'project.novel_tone_ph': '(상속)',
+      'project.novel_target_words': '목표 분량(프로젝트 단어 수)',
+      'project.novel_target_words_title': '이 프로젝트의 목표 단어 수 오버라이드(비우면 전역 상속)',
+      'project.novel_target_words_ph': '(상속)',
+      'project.inherit_hint': '비워 두면 전역 설정을 상속합니다.',
+      'project.effective_label': '적용값:',
+      'project.global_label': '전역:',
       'errors.backend_api_url': '백엔드 API URL을 가져올 수 없습니다'
     },
     vi: {
@@ -760,6 +805,15 @@
       'project.novel_language': 'Ngon ngu tieu thuyet (du an)',
       'project.novel_language_title': 'Ghi de ngon ngu tieu thuyet cho du an nay (tach voi ngon ngu UI)',
       'project.novel_language_inherit': 'Dung mac dinh toan cuc',
+      'project.novel_tone': 'Giong dieu tieu thuyet (du an)',
+      'project.novel_tone_title': 'Ghi de giong dieu cho du an nay (de trong de ke thua toan cuc)',
+      'project.novel_tone_ph': '(ke thua)',
+      'project.novel_target_words': 'Muc tieu so tu (du an)',
+      'project.novel_target_words_title': 'Ghi de muc tieu so tu cho du an nay (de trong de ke thua toan cuc)',
+      'project.novel_target_words_ph': '(ke thua)',
+      'project.inherit_hint': 'De trong de ke thua cai dat toan cuc.',
+      'project.effective_label': 'Hieu luc:',
+      'project.global_label': 'Toan cuc:',
       'errors.backend_api_url': 'Khong lay duoc URL API backend'
     },
     ar: {
@@ -884,6 +938,15 @@
       'project.novel_language': 'لغة الرواية (للمشروع)',
       'project.novel_language_title': 'تجاوز لغة الرواية لهذا المشروع (منفصل عن لغة الواجهة)',
       'project.novel_language_inherit': 'استخدم الإعداد العام',
+      'project.novel_tone': 'نبرة الرواية (للمشروع)',
+      'project.novel_tone_title': 'تجاوز نبرة الرواية لهذا المشروع (اتركه فارغاً للوراثة)',
+      'project.novel_tone_ph': '(وراثة)',
+      'project.novel_target_words': 'الطول المستهدف (كلمات المشروع)',
+      'project.novel_target_words_title': 'تجاوز عدد الكلمات المستهدف لهذا المشروع (اتركه فارغاً للوراثة)',
+      'project.novel_target_words_ph': '(وراثة)',
+      'project.inherit_hint': 'اتركه فارغاً لوراثة الإعداد العام.',
+      'project.effective_label': 'الفعلي:',
+      'project.global_label': 'العام:',
       'errors.backend_api_url': 'تعذر تحديد عنوان API للخادم'
     },
     fr: {
@@ -1008,6 +1071,15 @@
       'project.novel_language': 'Langue du roman (projet)',
       'project.novel_language_title': 'Surcharge de langue du roman pour ce projet (séparée de la langue UI)',
       'project.novel_language_inherit': 'Utiliser le défaut global',
+      'project.novel_tone': 'Ton du roman (projet)',
+      'project.novel_tone_title': 'Surcharge du ton du roman pour ce projet (laisser vide pour heriter)',
+      'project.novel_tone_ph': '(heriter)',
+      'project.novel_target_words': 'Longueur cible (mots projet)',
+      'project.novel_target_words_title': 'Surcharge du nombre de mots cible pour ce projet (laisser vide pour heriter)',
+      'project.novel_target_words_ph': '(heriter)',
+      'project.inherit_hint': 'Laisser vide pour heriter du global.',
+      'project.effective_label': 'Effectif :',
+      'project.global_label': 'Global :',
       'errors.backend_api_url': "Impossible de déterminer l'URL de l'API backend"
     },
     es: {
@@ -1132,6 +1204,15 @@
       'project.novel_language': 'Idioma de la novela (proyecto)',
       'project.novel_language_title': 'Sobrescribir idioma de la novela para este proyecto (separado del idioma UI)',
       'project.novel_language_inherit': 'Usar el valor global',
+      'project.novel_tone': 'Tono de novela (proyecto)',
+      'project.novel_tone_title': 'Sobrescribir tono de novela para este proyecto (dejar en blanco para heredar)',
+      'project.novel_tone_ph': '(heredar)',
+      'project.novel_target_words': 'Longitud objetivo (palabras del proyecto)',
+      'project.novel_target_words_title': 'Sobrescribir cantidad objetivo de palabras para este proyecto (dejar en blanco para heredar)',
+      'project.novel_target_words_ph': '(heredar)',
+      'project.inherit_hint': 'Dejar en blanco para heredar la configuracion global.',
+      'project.effective_label': 'Efectivo:',
+      'project.global_label': 'Global:',
       'errors.backend_api_url': 'No se puede determinar la URL de la API del backend'
     },
     ru: {
@@ -1256,6 +1337,15 @@
       'project.novel_language': 'Язык романа (проект)',
       'project.novel_language_title': 'Переопределение языка романа для этого проекта (отдельно от языка UI)',
       'project.novel_language_inherit': 'Использовать глобальный',
+      'project.novel_tone': 'Тон романа (проект)',
+      'project.novel_tone_title': 'Переопределение тона романа для проекта (пусто = наследовать глобальный)',
+      'project.novel_tone_ph': '(наследовать)',
+      'project.novel_target_words': 'Целевая длина (слов, проект)',
+      'project.novel_target_words_title': 'Переопределение целевого числа слов для проекта (пусто = наследовать глобальный)',
+      'project.novel_target_words_ph': '(наследовать)',
+      'project.inherit_hint': 'Оставьте пустым, чтобы наследовать глобальную настройку.',
+      'project.effective_label': 'Эффективно:',
+      'project.global_label': 'Глобально:',
       'errors.backend_api_url': 'Не удалось определить URL API бэкенда'
     },
     de: {
@@ -1380,6 +1470,15 @@
       'project.novel_language': 'Romansprache (Projekt)',
       'project.novel_language_title': 'Romansprache für dieses Projekt überschreiben (getrennt von UI-Sprache)',
       'project.novel_language_inherit': 'Globalen Standard verwenden',
+      'project.novel_tone': 'Roman-Ton (Projekt)',
+      'project.novel_tone_title': 'Roman-Ton fuer dieses Projekt ueberschreiben (leer = global erben)',
+      'project.novel_tone_ph': '(erben)',
+      'project.novel_target_words': 'Ziellaenge (Woerter, Projekt)',
+      'project.novel_target_words_title': 'Ziel-Wortzahl fuer dieses Projekt ueberschreiben (leer = global erben)',
+      'project.novel_target_words_ph': '(erben)',
+      'project.inherit_hint': 'Leer lassen, um globale Einstellung zu erben.',
+      'project.effective_label': 'Effektiv:',
+      'project.global_label': 'Global:',
       'errors.backend_api_url': 'Backend-API-URL kann nicht abgeleitet werden'
     }
   };
@@ -1514,6 +1613,12 @@
   const novelChapters = $('novelChapters');
   const projectActiveSettings = $('projectActiveSettings');
   const projectNovelLanguage = $('projectNovelLanguage');
+  const projectNovelTone = $('projectNovelTone');
+  const projectNovelTargetWords = $('projectNovelTargetWords');
+  const projectNovelToneEffective = $('projectNovelToneEffective');
+  const projectNovelToneGlobal = $('projectNovelToneGlobal');
+  const projectNovelTargetWordsEffective = $('projectNovelTargetWordsEffective');
+  const projectNovelTargetWordsGlobal = $('projectNovelTargetWordsGlobal');
 
   const LS_WS_URL = 'anw_ws_url';
   const LS_PIPELINE = 'anw_pipeline';
@@ -2114,10 +2219,28 @@
     if (projectActiveSettings) projectActiveSettings.value = pid || 'default';
     const ps = obj.project_settings && typeof obj.project_settings === 'object' ? obj.project_settings : {};
     const eff = obj.effective && typeof obj.effective === 'object' ? obj.effective : {};
+    const globalDefaults = obj.global_defaults && typeof obj.global_defaults === 'object' ? obj.global_defaults : {};
     const override = typeof ps.novel_language === 'string' ? ps.novel_language.trim() : '';
     // Empty value means "inherit global default" (no project override).
     const val = override ? override : '';
     if (projectNovelLanguage) projectNovelLanguage.value = val;
+    if (projectNovelTone) projectNovelTone.value = typeof ps.novel_tone === 'string' ? ps.novel_tone : '';
+    if (projectNovelTargetWords) {
+      const t = ps.novel_target_length_words;
+      if (typeof t === 'number' && Number.isFinite(t)) projectNovelTargetWords.value = String(t);
+      else if (typeof t === 'string' && String(t).trim()) projectNovelTargetWords.value = String(t).trim();
+      else projectNovelTargetWords.value = '';
+    }
+    if (projectNovelToneEffective) projectNovelToneEffective.textContent = String(eff.novel_tone || '-');
+    if (projectNovelToneGlobal) projectNovelToneGlobal.textContent = String(globalDefaults.novel_tone || '-');
+    if (projectNovelTargetWordsEffective) {
+      const t = eff.novel_target_length_words;
+      projectNovelTargetWordsEffective.textContent = Number.isFinite(t) ? String(t) : String(t || '-');
+    }
+    if (projectNovelTargetWordsGlobal) {
+      const t = globalDefaults.novel_target_length_words;
+      projectNovelTargetWordsGlobal.textContent = Number.isFinite(t) ? String(t) : String(t || '-');
+    }
   }
 
   async function loadProjectSettings() {
@@ -2141,7 +2264,9 @@
       return;
     }
     const novel_language = projectNovelLanguage ? String(projectNovelLanguage.value || '').trim() : '';
-    const project_settings = { novel_language };
+    const novel_tone = projectNovelTone ? String(projectNovelTone.value || '').trim() : '';
+    const novel_target_length_words = projectNovelTargetWords ? String(projectNovelTargetWords.value || '').trim() : '';
+    const project_settings = { novel_language, novel_tone, novel_target_length_words };
     try {
       const res = await fetch(url, {
         method: 'POST',

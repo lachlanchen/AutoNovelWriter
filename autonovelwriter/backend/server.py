@@ -258,6 +258,119 @@ def default_settings(paths: dict, host: str, port: int) -> dict:
     }
 
 
+NOVEL_LANGUAGE_CODES = {"en", "zh-Hans", "zh-Hant", "ja", "ko", "vi", "ar", "fr", "es", "ru", "de"}
+PROJECT_NOVEL_TARGET_LENGTH_MIN = 1000
+PROJECT_NOVEL_TARGET_LENGTH_MAX = 5_000_000
+
+
+def _global_novel_defaults(paths: dict) -> dict:
+    gs = _load_json(Path(paths["settings_json"]), {})
+    novel = gs.get("novel") if isinstance(gs, dict) and isinstance(gs.get("novel"), dict) else {}
+    out = {
+        "novel_language": "en",
+        "novel_tone": "neutral",
+        "novel_target_length_words": 80000,
+    }
+    if isinstance(novel.get("language"), str) and novel.get("language").strip():
+        out["novel_language"] = novel.get("language").strip()
+    if isinstance(novel.get("tone"), str) and novel.get("tone").strip():
+        out["novel_tone"] = novel.get("tone").strip()
+    t = novel.get("target_length_words")
+    if isinstance(t, int) and not isinstance(t, bool) and t >= 0:
+        out["novel_target_length_words"] = int(t)
+    return out
+
+
+def _apply_project_settings_update(cur: dict, incoming: dict) -> tuple[dict, dict | None]:
+    nxt = dict(cur) if isinstance(cur, dict) else {}
+    if not isinstance(incoming, dict):
+        return nxt, None
+
+    if "novel_language" in incoming:
+        nl = incoming.get("novel_language")
+        if not isinstance(nl, str):
+            return nxt, {"ok": False, "error": "invalid_novel_language_type"}
+        nl = nl.strip()
+        if not nl:
+            nxt.pop("novel_language", None)
+        else:
+            if nl not in NOVEL_LANGUAGE_CODES:
+                return nxt, {"ok": False, "error": "invalid_novel_language", "novel_language": nl}
+            nxt["novel_language"] = nl
+
+    if "novel_tone" in incoming:
+        tone = incoming.get("novel_tone")
+        if not isinstance(tone, str):
+            return nxt, {"ok": False, "error": "invalid_novel_tone_type"}
+        tone = tone.strip()
+        if not tone:
+            nxt.pop("novel_tone", None)
+        else:
+            if len(tone) > 120:
+                return nxt, {"ok": False, "error": "invalid_novel_tone_length", "max_len": 120}
+            nxt["novel_tone"] = tone
+
+    if "novel_target_length_words" in incoming:
+        raw = incoming.get("novel_target_length_words")
+        if raw is None:
+            nxt.pop("novel_target_length_words", None)
+        elif isinstance(raw, str):
+            s = raw.strip()
+            if not s:
+                nxt.pop("novel_target_length_words", None)
+            else:
+                try:
+                    n = int(s, 10)
+                except Exception:
+                    return nxt, {"ok": False, "error": "invalid_novel_target_length_words_type"}
+                if n < PROJECT_NOVEL_TARGET_LENGTH_MIN or n > PROJECT_NOVEL_TARGET_LENGTH_MAX:
+                    return nxt, {
+                        "ok": False,
+                        "error": "invalid_novel_target_length_words_range",
+                        "min": PROJECT_NOVEL_TARGET_LENGTH_MIN,
+                        "max": PROJECT_NOVEL_TARGET_LENGTH_MAX,
+                    }
+                nxt["novel_target_length_words"] = int(n)
+        elif isinstance(raw, int) and not isinstance(raw, bool):
+            n = int(raw)
+            if n < PROJECT_NOVEL_TARGET_LENGTH_MIN or n > PROJECT_NOVEL_TARGET_LENGTH_MAX:
+                return nxt, {
+                    "ok": False,
+                    "error": "invalid_novel_target_length_words_range",
+                    "min": PROJECT_NOVEL_TARGET_LENGTH_MIN,
+                    "max": PROJECT_NOVEL_TARGET_LENGTH_MAX,
+                }
+            nxt["novel_target_length_words"] = n
+        else:
+            return nxt, {"ok": False, "error": "invalid_novel_target_length_words_type"}
+
+    return nxt, None
+
+
+def effective_novel_settings(paths: dict, project_id: str) -> dict:
+    """
+    Project overrides win; otherwise fall back to global settings.novel.* defaults.
+    """
+    pid = project_id if _is_safe_project_id(project_id) else load_active_project(paths)
+    ps = load_project_settings(paths, pid)
+    eff = _global_novel_defaults(paths)
+    if isinstance(ps.get("novel_language"), str) and ps.get("novel_language").strip():
+        eff["novel_language"] = ps.get("novel_language").strip()
+    if isinstance(ps.get("novel_tone"), str) and ps.get("novel_tone").strip():
+        eff["novel_tone"] = ps.get("novel_tone").strip()
+    t = ps.get("novel_target_length_words")
+    if isinstance(t, int) and not isinstance(t, bool):
+        eff["novel_target_length_words"] = int(t)
+    elif isinstance(t, str):
+        s = t.strip()
+        if s:
+            try:
+                eff["novel_target_length_words"] = int(s, 10)
+            except Exception:
+                pass
+    return eff
+
+
 def load_settings(paths: dict, host: str, port: int) -> dict:
     settings = default_settings(paths, host, port)
 
@@ -286,16 +399,7 @@ def effective_novel_language(paths: dict, project_id: str) -> str:
     """
     Project override (project_settings.json) wins; otherwise fall back to global settings.novel.language.
     """
-    pid = project_id if _is_safe_project_id(project_id) else load_active_project(paths)
-    ps = load_project_settings(paths, pid)
-    if isinstance(ps.get("novel_language"), str) and ps.get("novel_language").strip():
-        return ps.get("novel_language").strip()
-    gs = _load_json(Path(paths["settings_json"]), {})
-    if isinstance(gs, dict) and isinstance(gs.get("novel"), dict):
-        nl = gs["novel"].get("language")
-        if isinstance(nl, str) and nl.strip():
-            return nl.strip()
-    return "en"
+    return str(effective_novel_settings(paths, project_id).get("novel_language") or "en")
 
 
 def is_codex_gate_enabled() -> bool:
@@ -3687,18 +3791,15 @@ class ProjectSettingsHandler(BaseHandler):
     def get(self):
         pid = load_active_project(self._paths)
         ps = load_project_settings(self._paths, pid)
-        eff = effective_novel_language(self._paths, pid)
-        gs = _load_json(Path(self._paths["settings_json"]), {})
-        global_novel = (gs.get("novel") if isinstance(gs, dict) else None) if isinstance(gs, dict) else None
-        if not isinstance(global_novel, dict):
-            global_novel = {}
+        eff = effective_novel_settings(self._paths, pid)
+        global_defaults = _global_novel_defaults(self._paths)
         self.write_json(
             {
                 "ok": True,
                 "project_id": pid,
                 "project_settings": ps,
-                "effective": {"novel_language": eff},
-                "global_defaults": {"novel_language": global_novel.get("language") if isinstance(global_novel.get("language"), str) else "en"},
+                "effective": eff,
+                "global_defaults": global_defaults,
                 "project_settings_path": str(_project_settings_json(self._paths, pid)),
             }
         )
@@ -3722,25 +3823,15 @@ class ProjectSettingsHandler(BaseHandler):
         cur = load_project_settings(self._paths, pid)
         if not isinstance(cur, dict):
             cur = {}
-        if isinstance(incoming, dict):
-            if "novel_language" in incoming:
-                nl = incoming.get("novel_language")
-                if isinstance(nl, str):
-                    nl = nl.strip()
-                    # Empty string means "inherit global default" (remove project override).
-                    if not nl:
-                        cur.pop("novel_language", None)
-                    else:
-                        allowed = {"en", "zh-Hans", "zh-Hant", "ja", "ko", "vi", "ar", "fr", "es", "ru", "de"}
-                        if nl not in allowed:
-                            return self.write_json({"ok": False, "error": "invalid_novel_language", "novel_language": nl}, status=400)
-                        cur["novel_language"] = nl
-        saved = save_project_settings(self._paths, pid, cur)
-        eff = effective_novel_language(self._paths, pid)
+        nxt, err = _apply_project_settings_update(cur, incoming)
+        if isinstance(err, dict):
+            return self.write_json(err, status=400)
+        saved = save_project_settings(self._paths, pid, nxt)
+        eff = effective_novel_settings(self._paths, pid)
         self._hub.broadcast(
-            {"type": "project_settings_updated", "ts_ms": _now_ms(), "project_id": pid, "project_settings": saved, "effective": {"novel_language": eff}}
+            {"type": "project_settings_updated", "ts_ms": _now_ms(), "project_id": pid, "project_settings": saved, "effective": eff}
         )
-        self.write_json({"ok": True, "project_id": pid, "project_settings": saved, "effective": {"novel_language": eff}})
+        self.write_json({"ok": True, "project_id": pid, "project_settings": saved, "effective": eff})
 
 
 class TasksBatchesIndexHandler(BaseHandler):

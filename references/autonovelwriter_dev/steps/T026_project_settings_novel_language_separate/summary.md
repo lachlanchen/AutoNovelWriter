@@ -10,3 +10,7 @@
 - PWA: added an explicit “use global default” option for per-project novel language; UI now shows inherit vs override, avoiding accidental “override = effective”.
 - Backend: `POST /api/projects/settings` now treats empty `novel_language` as “inherit” (removes override) and validates `novel_language` against the supported codes.
 - PWA: localized the backend-URL error path used by project settings save.
+
+## I18N
+- Added `project.novel_language_inherit` (new selector option label) across all required UI languages.
+- Added `errors.backend_api_url` (used when the PWA cannot derive the backend API URL) across all required UI languages.

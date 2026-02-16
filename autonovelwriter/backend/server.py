@@ -3328,7 +3328,15 @@ class ProjectSettingsHandler(BaseHandler):
             if "novel_language" in incoming:
                 nl = incoming.get("novel_language")
                 if isinstance(nl, str):
-                    cur["novel_language"] = nl.strip()
+                    nl = nl.strip()
+                    # Empty string means "inherit global default" (remove project override).
+                    if not nl:
+                        cur.pop("novel_language", None)
+                    else:
+                        allowed = {"en", "zh-Hans", "zh-Hant", "ja", "ko", "vi", "ar", "fr", "es", "ru", "de"}
+                        if nl not in allowed:
+                            return self.write_json({"ok": False, "error": "invalid_novel_language", "novel_language": nl}, status=400)
+                        cur["novel_language"] = nl
         saved = save_project_settings(self._paths, pid, cur)
         eff = effective_novel_language(self._paths, pid)
         self._hub.broadcast(

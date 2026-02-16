@@ -5,3 +5,8 @@
 - PWA: Settings modal now includes a Project section showing active project and a per-project novel language override selector; refreshes on project changes and `project_settings_updated`.
 - Runtime defaults: `ensure_runtime_dirs()` now creates a minimal `runtime/state/settings.json` (gitignored) if missing, so there is always a concrete global novel language default.
 - Tests: added a unit-style test for project override precedence (`autonovelwriter/backend/tests/project_settings_novel_language_unit_test.py`).
+
+## Fixes
+- PWA: added an explicit “use global default” option for per-project novel language; UI now shows inherit vs override, avoiding accidental “override = effective”.
+- Backend: `POST /api/projects/settings` now treats empty `novel_language` as “inherit” (removes override) and validates `novel_language` against the supported codes.
+- PWA: localized the backend-URL error path used by project settings save.

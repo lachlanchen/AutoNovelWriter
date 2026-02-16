@@ -114,7 +114,9 @@
       'project.settings_title': 'Project settings',
       'project.active': 'Active project',
       'project.novel_language': 'Novel language (project)',
-      'project.novel_language_title': 'Novel language override for this project (separate from UI language)'
+      'project.novel_language_title': 'Novel language override for this project (separate from UI language)',
+      'project.novel_language_inherit': 'Use global default',
+      'errors.backend_api_url': 'Cannot derive backend API URL'
     },
     'zh-Hans': {
       'app.title': 'AutoNovelWriter',
@@ -212,7 +214,9 @@
       'project.settings_title': '项目设置',
       'project.active': '当前项目',
       'project.novel_language': '小说语言（项目）',
-      'project.novel_language_title': '此项目的小说语言覆盖（与界面语言分离）'
+      'project.novel_language_title': '此项目的小说语言覆盖（与界面语言分离）',
+      'project.novel_language_inherit': '使用全局默认',
+      'errors.backend_api_url': '无法推导后端 API 地址'
     },
     'zh-Hant': {
       'app.title': 'AutoNovelWriter',
@@ -310,7 +314,9 @@
       'project.settings_title': '專案設定',
       'project.active': '目前專案',
       'project.novel_language': '小說語言（專案）',
-      'project.novel_language_title': '此專案的小說語言覆寫（與介面語言分離）'
+      'project.novel_language_title': '此專案的小說語言覆寫（與介面語言分離）',
+      'project.novel_language_inherit': '使用全域預設',
+      'errors.backend_api_url': '無法推導後端 API 位址'
     },
     ja: {
       'app.title': 'AutoNovelWriter',
@@ -408,7 +414,9 @@
       'project.settings_title': 'プロジェクト設定',
       'project.active': '現在のプロジェクト',
       'project.novel_language': '小説の言語（プロジェクト）',
-      'project.novel_language_title': 'このプロジェクトの小説言語の上書き（UI言語とは別）'
+      'project.novel_language_title': 'このプロジェクトの小説言語の上書き（UI言語とは別）',
+      'project.novel_language_inherit': 'グローバル既定を使用',
+      'errors.backend_api_url': 'バックエンド API URL を取得できません'
     },
     ko: {
       'app.title': 'AutoNovelWriter',
@@ -506,7 +514,9 @@
       'project.settings_title': '프로젝트 설정',
       'project.active': '현재 프로젝트',
       'project.novel_language': '소설 언어(프로젝트)',
-      'project.novel_language_title': '이 프로젝트의 소설 언어 오버라이드(UI 언어와 분리)'
+      'project.novel_language_title': '이 프로젝트의 소설 언어 오버라이드(UI 언어와 분리)',
+      'project.novel_language_inherit': '전역 기본값 사용',
+      'errors.backend_api_url': '백엔드 API URL을 가져올 수 없습니다'
     },
     vi: {
       'app.title': 'AutoNovelWriter',
@@ -604,7 +614,9 @@
       'project.settings_title': 'Cai dat du an',
       'project.active': 'Du an dang chon',
       'project.novel_language': 'Ngon ngu tieu thuyet (du an)',
-      'project.novel_language_title': 'Ghi de ngon ngu tieu thuyet cho du an nay (tach voi ngon ngu UI)'
+      'project.novel_language_title': 'Ghi de ngon ngu tieu thuyet cho du an nay (tach voi ngon ngu UI)',
+      'project.novel_language_inherit': 'Dung mac dinh toan cuc',
+      'errors.backend_api_url': 'Khong lay duoc URL API backend'
     },
     ar: {
       'app.title': 'AutoNovelWriter',
@@ -702,7 +714,9 @@
       'project.settings_title': 'إعدادات المشروع',
       'project.active': 'المشروع النشط',
       'project.novel_language': 'لغة الرواية (للمشروع)',
-      'project.novel_language_title': 'تجاوز لغة الرواية لهذا المشروع (منفصل عن لغة الواجهة)'
+      'project.novel_language_title': 'تجاوز لغة الرواية لهذا المشروع (منفصل عن لغة الواجهة)',
+      'project.novel_language_inherit': 'استخدم الإعداد العام',
+      'errors.backend_api_url': 'تعذر تحديد عنوان API للخادم'
     },
     fr: {
       'app.title': 'AutoNovelWriter',
@@ -800,7 +814,9 @@
       'project.settings_title': 'Paramètres du projet',
       'project.active': 'Projet actif',
       'project.novel_language': 'Langue du roman (projet)',
-      'project.novel_language_title': 'Surcharge de langue du roman pour ce projet (séparée de la langue UI)'
+      'project.novel_language_title': 'Surcharge de langue du roman pour ce projet (séparée de la langue UI)',
+      'project.novel_language_inherit': 'Utiliser le défaut global',
+      'errors.backend_api_url': "Impossible de déterminer l'URL de l'API backend"
     },
     es: {
       'app.title': 'AutoNovelWriter',
@@ -898,7 +914,9 @@
       'project.settings_title': 'Ajustes del proyecto',
       'project.active': 'Proyecto activo',
       'project.novel_language': 'Idioma de la novela (proyecto)',
-      'project.novel_language_title': 'Sobrescribir idioma de la novela para este proyecto (separado del idioma UI)'
+      'project.novel_language_title': 'Sobrescribir idioma de la novela para este proyecto (separado del idioma UI)',
+      'project.novel_language_inherit': 'Usar el valor global',
+      'errors.backend_api_url': 'No se puede determinar la URL de la API del backend'
     },
     ru: {
       'app.title': 'AutoNovelWriter',
@@ -996,7 +1014,9 @@
       'project.settings_title': 'Настройки проекта',
       'project.active': 'Активный проект',
       'project.novel_language': 'Язык романа (проект)',
-      'project.novel_language_title': 'Переопределение языка романа для этого проекта (отдельно от языка UI)'
+      'project.novel_language_title': 'Переопределение языка романа для этого проекта (отдельно от языка UI)',
+      'project.novel_language_inherit': 'Использовать глобальный',
+      'errors.backend_api_url': 'Не удалось определить URL API бэкенда'
     },
     de: {
       'app.title': 'AutoNovelWriter',
@@ -1094,7 +1114,9 @@
       'project.settings_title': 'Projekteinstellungen',
       'project.active': 'Aktives Projekt',
       'project.novel_language': 'Romansprache (Projekt)',
-      'project.novel_language_title': 'Romansprache für dieses Projekt überschreiben (getrennt von UI-Sprache)'
+      'project.novel_language_title': 'Romansprache für dieses Projekt überschreiben (getrennt von UI-Sprache)',
+      'project.novel_language_inherit': 'Globalen Standard verwenden',
+      'errors.backend_api_url': 'Backend-API-URL kann nicht abgeleitet werden'
     }
   };
 
@@ -1676,7 +1698,9 @@
     if (projectActiveSettings) projectActiveSettings.value = pid || 'default';
     const ps = obj.project_settings && typeof obj.project_settings === 'object' ? obj.project_settings : {};
     const eff = obj.effective && typeof obj.effective === 'object' ? obj.effective : {};
-    const val = String(ps.novel_language || eff.novel_language || 'en');
+    const override = typeof ps.novel_language === 'string' ? ps.novel_language.trim() : '';
+    // Empty value means "inherit global default" (no project override).
+    const val = override ? override : '';
     if (projectNovelLanguage) projectNovelLanguage.value = val;
   }
 
@@ -1697,12 +1721,11 @@
   async function saveProjectSettingsFromForm() {
     const url = backendApiUrl('/api/projects/settings');
     if (!url) {
-      addMsg('err', 'settings', 'cannot derive backend api url');
+      addMsg('err', t('project.settings_title'), t('errors.backend_api_url'));
       return;
     }
-    const project_settings = {
-      novel_language: String(projectNovelLanguage && projectNovelLanguage.value ? projectNovelLanguage.value : 'en')
-    };
+    const novel_language = projectNovelLanguage ? String(projectNovelLanguage.value || '').trim() : '';
+    const project_settings = { novel_language };
     try {
       const res = await fetch(url, {
         method: 'POST',

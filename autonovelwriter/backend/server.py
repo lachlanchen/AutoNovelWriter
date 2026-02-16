@@ -106,6 +106,19 @@ def is_safe_step_token(s: str) -> bool:
     return _is_safe_action_id(s)
 
 
+def _is_safe_batch_id(s: str) -> bool:
+    # Batch ids are directory names under runtime/tasks/batches.
+    if not isinstance(s, str):
+        return False
+    s = s.strip()
+    if not s:
+        return False
+    if len(s) > 128:
+        return False
+    allowed = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_")
+    return all(ch in allowed for ch in s)
+
+
 def _ensure_project_dirs(paths: dict, project_id: str) -> dict:
     pid = project_id.strip()
     root = Path(paths["projects_root"]) / pid
@@ -1397,6 +1410,178 @@ def list_task_batches(paths: dict, limit: int = 500, project_id: str | None = No
         r.pop("_sort_ms", None)
     return out
 
+
+def _project_active_tasks_json(paths: dict, project_id: str) -> Path:
+    pr = _ensure_project_dirs(paths, project_id)
+    return Path(pr["state_root"]) / "active_tasks.json"
+
+
+def load_active_tasks_pointer(paths: dict, project_id: str) -> dict:
+    p = _project_active_tasks_json(paths, project_id)
+    obj = _load_json(p, {})
+    return obj if isinstance(obj, dict) else {}
+
+
+def save_active_tasks_pointer(paths: dict, project_id: str, ptr: dict) -> None:
+    p = _project_active_tasks_json(paths, project_id)
+    _safe_mkdir(p.parent)
+    if not isinstance(ptr, dict):
+        ptr = {}
+    p.write_text(json.dumps(ptr, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _read_jsonl_preview(p: Path, head_n: int = 20, tail_n: int = 20, max_bytes: int = 2_000_000) -> dict:
+    """
+    Returns a best-effort {head: [...], tail: [...]} preview of a jsonl file.
+    Each entry is either a decoded object or {"_raw": "..."}.
+    """
+    out = {"head": [], "tail": []}
+    if not p.exists():
+        return out
+    # Head
+    try:
+        head = []
+        with p.open("r", encoding="utf-8", errors="replace") as f:
+            for _ in range(max(0, int(head_n or 0))):
+                line = f.readline()
+                if not line:
+                    break
+                t = line.strip()
+                if not t:
+                    continue
+                try:
+                    obj = json.loads(t)
+                    head.append(obj if isinstance(obj, dict) else {"_raw": t})
+                except Exception:
+                    head.append({"_raw": t})
+        out["head"] = head
+    except Exception:
+        out["head"] = []
+
+    # Tail (bounded bytes)
+    try:
+        tail_objs = _read_jsonl_tail(p, limit=max(0, int(tail_n or 0)), max_bytes=int(max_bytes or 2_000_000))
+        out["tail"] = tail_objs
+    except Exception:
+        out["tail"] = []
+    return out
+
+
+def get_task_batch_details(paths: dict, batch_id: str, head_n: int = 20, tail_n: int = 20) -> dict | None:
+    bid = str(batch_id or "").strip()
+    if not _is_safe_batch_id(bid):
+        return None
+    batch_dir = Path(paths["tasks"]) / "batches" / bid
+    if not batch_dir.exists() or not batch_dir.is_dir():
+        return None
+    manifest_path = batch_dir / "manifest.json"
+    tasks_jsonl_path = batch_dir / "tasks.jsonl"
+    manifest = None
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            manifest = None
+    if not isinstance(manifest, dict):
+        manifest = {}
+    # Prefer manifest outputs.tasks_jsonl if present.
+    tj = ""
+    outs = manifest.get("outputs") if isinstance(manifest.get("outputs"), dict) else {}
+    if isinstance(outs.get("tasks_jsonl"), str) and outs.get("tasks_jsonl"):
+        tj = outs.get("tasks_jsonl")
+    if tj:
+        tasks_jsonl_path = Path(tj)
+    preview = _read_jsonl_preview(tasks_jsonl_path, head_n=head_n, tail_n=tail_n)
+    task_count = None
+    try:
+        if isinstance(manifest.get("task_count"), int):
+            task_count = int(manifest.get("task_count"))
+    except Exception:
+        task_count = None
+    if task_count is None and tasks_jsonl_path.exists():
+        try:
+            # best-effort count, bounded
+            if tasks_jsonl_path.stat().st_size <= 10_000_000:
+                n = 0
+                with tasks_jsonl_path.open("rb") as f:
+                    for _ in f:
+                        n += 1
+                        if n > 200_000:
+                            break
+                task_count = n
+        except Exception:
+            task_count = None
+    return {
+        "batch_id": bid,
+        "batch_dir": str(batch_dir),
+        "manifest_path": str(manifest_path) if manifest_path.exists() else "",
+        "tasks_jsonl": str(tasks_jsonl_path) if tasks_jsonl_path.exists() else "",
+        "manifest": manifest,
+        "task_count": task_count,
+        "preview": preview,
+    }
+
+
+def activate_task_batch(paths: dict, project_id: str, batch_id: str) -> dict | None:
+    """
+    Activate a batch as the current task list for FOREACH_TASK.
+    Writes:
+      - runtime/tasks/tasks.json
+      - runtime/projects/<project_id>/state/active_tasks.json
+    """
+    pid = str(project_id or "").strip()
+    if not _is_safe_project_id(pid):
+        return None
+    details = get_task_batch_details(paths, batch_id, head_n=0, tail_n=0)
+    if not details:
+        return None
+    tasks_jsonl = details.get("tasks_jsonl")
+    if not isinstance(tasks_jsonl, str) or not tasks_jsonl:
+        return None
+    p = Path(tasks_jsonl)
+    if not p.exists():
+        return None
+
+    # Convert batch tasks JSONL to current tasks list schema.
+    tasks = []
+    try:
+        with p.open("r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                t = (line or "").strip()
+                if not t:
+                    continue
+                try:
+                    obj = json.loads(t)
+                except Exception:
+                    continue
+                if not isinstance(obj, dict):
+                    continue
+                tid = obj.get("id")
+                title = obj.get("title")
+                if not isinstance(tid, str) or not tid:
+                    continue
+                if not isinstance(title, str) or not title:
+                    title = tid
+                payload = dict(obj)
+                payload.pop("id", None)
+                payload.pop("title", None)
+                tasks.append({"id": tid, "title": title, "payload": payload})
+                if len(tasks) > 5000:
+                    break
+    except Exception:
+        return None
+
+    _save_json(Path(paths["tasks_json"]), tasks)
+    ptr = {
+        "source": "batch",
+        "batch_id": str(details.get("batch_id") or ""),
+        "batch_dir": str(details.get("batch_dir") or ""),
+        "tasks_jsonl": tasks_jsonl,
+        "task_count": len(tasks),
+        "activated_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+    }
+    save_active_tasks_pointer(paths, pid, ptr)
+    return {"project_id": pid, "batch_id": ptr["batch_id"], "task_count": len(tasks), "active_tasks": ptr}
 
 class InboxPoller:
     def __init__(self, paths: dict, chat_store: ChatStore, hub: "WebSocketHub", poll_ms: int = 750):
@@ -3012,9 +3197,68 @@ class TasksBatchesIndexHandler(BaseHandler):
             limit = 500
         q = self.get_query_argument("project", default="").strip()
         pid = q if _is_safe_project_id(q) else ""
+        # If not specified, use active project for the active pointer.
+        active_pid = pid or load_active_project(self._paths)
         batches_root = Path(self._paths["tasks"]) / "batches"
         batches = list_task_batches(self._paths, limit=limit, project_id=pid or None)
-        self.write_json({"ok": True, "batches_root": str(batches_root), "batches": batches})
+        active_ptr = load_active_tasks_pointer(self._paths, active_pid)
+        active_batch_id = active_ptr.get("batch_id") if isinstance(active_ptr, dict) else None
+        self.write_json(
+            {
+                "ok": True,
+                "batches_root": str(batches_root),
+                "project": pid or active_pid,
+                "active_batch_id": active_batch_id if isinstance(active_batch_id, str) else "",
+                "batches": batches,
+            }
+        )
+
+
+class TasksBatchDetailsHandler(BaseHandler):
+    def initialize(self, paths: dict):
+        self._paths = paths
+
+    def get(self, batch_id: str):
+        bid = str(batch_id or "").strip()
+        if not _is_safe_batch_id(bid):
+            return self.write_json({"ok": False, "error": "bad_batch_id"}, status=400)
+        try:
+            head_n = int(self.get_query_argument("head", default="20"))
+        except Exception:
+            head_n = 20
+        try:
+            tail_n = int(self.get_query_argument("tail", default="20"))
+        except Exception:
+            tail_n = 20
+        head_n = max(0, min(200, head_n))
+        tail_n = max(0, min(200, tail_n))
+        details = get_task_batch_details(self._paths, bid, head_n=head_n, tail_n=tail_n)
+        if not details:
+            return self.write_json({"ok": False, "error": "not_found"}, status=404)
+        self.write_json({"ok": True, **details})
+
+
+class TasksBatchActivateHandler(BaseHandler):
+    def initialize(self, paths: dict, hub: "WebSocketHub", runner: Runner):
+        self._paths = paths
+        self._hub = hub
+        self._runner = runner
+
+    def post(self, batch_id: str):
+        bid = str(batch_id or "").strip()
+        if not _is_safe_batch_id(bid):
+            return self.write_json({"ok": False, "error": "bad_batch_id"}, status=400)
+        st = self._runner.status() if self._runner else {}
+        if isinstance(st, dict) and st.get("status") not in ("idle",):
+            return self.write_json({"ok": False, "error": "runner_not_idle", "status": st}, status=409)
+
+        pid = load_active_project(self._paths)
+        res = activate_task_batch(self._paths, pid, bid)
+        if not res:
+            return self.write_json({"ok": False, "error": "activate_failed"}, status=400)
+        evt = {"type": "tasks_batch_activated", "ts_ms": _now_ms(), "project_id": pid, "batch_id": bid, "task_count": res.get("task_count")}
+        self._hub.broadcast(evt)
+        self.write_json({"ok": True, **res})
 
 
 class ActionsIndexHandler(BaseHandler):
@@ -3084,6 +3328,8 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
         (r"/api/materials/index", MaterialsIndexHandler, {"paths": paths}),
         (r"/api/outputs/index", OutputsIndexHandler, {"paths": paths}),
         (r"/api/tasks/batches/index", TasksBatchesIndexHandler, {"paths": paths}),
+        (r"/api/tasks/batches/([A-Za-z0-9_-]+)", TasksBatchDetailsHandler, {"paths": paths}),
+        (r"/api/tasks/batches/([A-Za-z0-9_-]+)/activate", TasksBatchActivateHandler, {"paths": paths, "hub": hub, "runner": runner}),
         (r"/api/actions", ActionsIndexHandler, {"paths": paths}),
         (r"/api/actions/([A-Za-z0-9_-]+)", ActionGetHandler, {"paths": paths}),
         (r"/api/actions/([A-Za-z0-9_-]+)/copy", ActionCopyHandler, {"paths": paths, "hub": hub}),

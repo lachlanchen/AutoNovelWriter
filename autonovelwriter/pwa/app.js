@@ -44,6 +44,12 @@
       'tasks_batches.title': 'Task Batches',
       'tasks_batches.empty': '(no batches yet)',
       'tasks_batches.created': 'Batch created:',
+      'tasks_batches.details': 'Details',
+      'tasks_batches.details_title': 'View batch details',
+      'tasks_batches.activate': 'Activate',
+      'tasks_batches.activate_title': 'Activate this batch for FOREACH_TASK',
+      'tasks_batches.active': 'Active',
+      'tasks_batches.activated': 'Activated batch:',
       'pipeline.indent': 'Indent',
       'pipeline.outdent': 'Outdent',
       'pipeline.indent_title': 'Indent selected block (Tab)',
@@ -131,6 +137,12 @@
       'tasks_batches.title': '任务批次',
       'tasks_batches.empty': '（暂无批次）',
       'tasks_batches.created': '已生成批次：',
+      'tasks_batches.details': '详情',
+      'tasks_batches.details_title': '查看批次详情',
+      'tasks_batches.activate': '启用',
+      'tasks_batches.activate_title': '将此批次设为 FOREACH_TASK 的当前任务列表',
+      'tasks_batches.active': '当前',
+      'tasks_batches.activated': '已启用批次：',
       'pipeline.indent': '缩进',
       'pipeline.outdent': '取消缩进',
       'pipeline.indent_title': '缩进选中块 (Tab)',
@@ -218,6 +230,12 @@
       'tasks_batches.title': '任務批次',
       'tasks_batches.empty': '（尚無批次）',
       'tasks_batches.created': '已產生批次：',
+      'tasks_batches.details': '詳細',
+      'tasks_batches.details_title': '檢視批次詳細資訊',
+      'tasks_batches.activate': '啟用',
+      'tasks_batches.activate_title': '將此批次設為 FOREACH_TASK 的目前任務清單',
+      'tasks_batches.active': '目前',
+      'tasks_batches.activated': '已啟用批次：',
       'pipeline.indent': '縮排',
       'pipeline.outdent': '取消縮排',
       'pipeline.indent_title': '縮排所選區塊 (Tab)',
@@ -305,6 +323,12 @@
       'tasks_batches.title': 'タスクバッチ',
       'tasks_batches.empty': '（バッチなし）',
       'tasks_batches.created': 'バッチ作成:',
+      'tasks_batches.details': '詳細',
+      'tasks_batches.details_title': 'バッチ詳細を表示',
+      'tasks_batches.activate': '有効化',
+      'tasks_batches.activate_title': 'このバッチを FOREACH_TASK のタスクにする',
+      'tasks_batches.active': '有効',
+      'tasks_batches.activated': '有効化したバッチ:',
       'pipeline.indent': 'インデント',
       'pipeline.outdent': 'アウトデント',
       'pipeline.indent_title': '選択ブロックをインデント (Tab)',
@@ -392,6 +416,12 @@
       'tasks_batches.title': '작업 배치',
       'tasks_batches.empty': '(배치 없음)',
       'tasks_batches.created': '배치 생성:',
+      'tasks_batches.details': '상세',
+      'tasks_batches.details_title': '배치 상세 보기',
+      'tasks_batches.activate': '활성화',
+      'tasks_batches.activate_title': '이 배치를 FOREACH_TASK의 작업 목록으로 설정',
+      'tasks_batches.active': '활성',
+      'tasks_batches.activated': '활성화된 배치:',
       'pipeline.indent': '들여쓰기',
       'pipeline.outdent': '내어쓰기',
       'pipeline.indent_title': '선택 블록 들여쓰기 (Tab)',
@@ -479,6 +509,12 @@
       'tasks_batches.title': 'Lo batch',
       'tasks_batches.empty': '(chua co batch)',
       'tasks_batches.created': 'Da tao batch:',
+      'tasks_batches.details': 'Chi tiet',
+      'tasks_batches.details_title': 'Xem chi tiet batch',
+      'tasks_batches.activate': 'Kich hoat',
+      'tasks_batches.activate_title': 'Dat batch nay lam danh sach tac vu cho FOREACH_TASK',
+      'tasks_batches.active': 'Dang dung',
+      'tasks_batches.activated': 'Da kich hoat batch:',
       'pipeline.indent': 'Thut vao',
       'pipeline.outdent': 'Thut ra',
       'pipeline.indent_title': 'Thut vao khoi da chon (Tab)',
@@ -566,6 +602,12 @@
       'tasks_batches.title': 'دفعات المهام',
       'tasks_batches.empty': '(لا توجد دفعات بعد)',
       'tasks_batches.created': 'تم إنشاء دفعة:',
+      'tasks_batches.details': 'تفاصيل',
+      'tasks_batches.details_title': 'عرض تفاصيل الدفعة',
+      'tasks_batches.activate': 'تفعيل',
+      'tasks_batches.activate_title': 'تفعيل هذه الدفعة لـ FOREACH_TASK',
+      'tasks_batches.active': 'مفعّل',
+      'tasks_batches.activated': 'تم تفعيل الدفعة:',
       'pipeline.indent': 'إزاحة للداخل',
       'pipeline.outdent': 'إزاحة للخارج',
       'pipeline.indent_title': 'إزاحة الكتلة المحددة (Tab)',
@@ -653,6 +695,12 @@
       'tasks_batches.title': 'Lots de tâches',
       'tasks_batches.empty': '(aucun lot)',
       'tasks_batches.created': 'Lot créé :',
+      'tasks_batches.details': 'Détails',
+      'tasks_batches.details_title': 'Voir les détails du lot',
+      'tasks_batches.activate': 'Activer',
+      'tasks_batches.activate_title': 'Activer ce lot pour FOREACH_TASK',
+      'tasks_batches.active': 'Actif',
+      'tasks_batches.activated': 'Lot activé :',
       'pipeline.indent': 'Indenter',
       'pipeline.outdent': 'Désindenter',
       'pipeline.indent_title': 'Indenter le bloc sélectionné (Tab)',
@@ -740,6 +788,12 @@
       'tasks_batches.title': 'Lotes de tareas',
       'tasks_batches.empty': '(sin lotes)',
       'tasks_batches.created': 'Lote creado:',
+      'tasks_batches.details': 'Detalles',
+      'tasks_batches.details_title': 'Ver detalles del lote',
+      'tasks_batches.activate': 'Activar',
+      'tasks_batches.activate_title': 'Activar este lote para FOREACH_TASK',
+      'tasks_batches.active': 'Activo',
+      'tasks_batches.activated': 'Lote activado:',
       'pipeline.indent': 'Indentar',
       'pipeline.outdent': 'Desindentar',
       'pipeline.indent_title': 'Indentar bloque seleccionado (Tab)',
@@ -827,6 +881,12 @@
       'tasks_batches.title': 'Пакеты задач',
       'tasks_batches.empty': '(нет пакетов)',
       'tasks_batches.created': 'Пакет создан:',
+      'tasks_batches.details': 'Детали',
+      'tasks_batches.details_title': 'Показать детали пакета',
+      'tasks_batches.activate': 'Активировать',
+      'tasks_batches.activate_title': 'Активировать этот пакет для FOREACH_TASK',
+      'tasks_batches.active': 'Активен',
+      'tasks_batches.activated': 'Активирован пакет:',
       'pipeline.indent': 'Вложить',
       'pipeline.outdent': 'Развернуть',
       'pipeline.indent_title': 'Вложить выбранный блок (Tab)',
@@ -914,6 +974,12 @@
       'tasks_batches.title': 'Aufgaben-Batches',
       'tasks_batches.empty': '(keine Batches)',
       'tasks_batches.created': 'Batch erstellt:',
+      'tasks_batches.details': 'Details',
+      'tasks_batches.details_title': 'Batch-Details anzeigen',
+      'tasks_batches.activate': 'Aktivieren',
+      'tasks_batches.activate_title': 'Diesen Batch für FOREACH_TASK aktivieren',
+      'tasks_batches.active': 'Aktiv',
+      'tasks_batches.activated': 'Batch aktiviert:',
       'pipeline.indent': 'Einrücken',
       'pipeline.outdent': 'Ausrücken',
       'pipeline.indent_title': 'Ausgewählten Block einrücken (Tab)',
@@ -1323,6 +1389,7 @@
     if (!batchesList) return;
     batchesList.innerHTML = '';
     const batches = obj && Array.isArray(obj.batches) ? obj.batches : [];
+    const activeBatchId = obj && typeof obj.active_batch_id === 'string' ? String(obj.active_batch_id || '').trim() : '';
     if (!batches.length) {
       const li = document.createElement('li');
       li.className = 'mat';
@@ -1345,7 +1412,8 @@
 
       const p = document.createElement('div');
       p.className = 'path';
-      p.textContent = String(b.batch_id || '').trim() || '(batch)';
+      const bid = String(b.batch_id || '').trim() || '(batch)';
+      p.textContent = bid;
 
       const m = document.createElement('div');
       m.className = 'meta';
@@ -1358,8 +1426,76 @@
       if (tj) parts.push(tj);
       m.textContent = parts.join('  ');
 
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = t('tasks_batches.active');
+      badge.style.display = activeBatchId && bid === activeBatchId ? 'inline-block' : 'none';
+      actions.appendChild(badge);
+
+      const bdet = document.createElement('button');
+      bdet.type = 'button';
+      bdet.className = 'mini';
+      bdet.textContent = t('tasks_batches.details');
+      bdet.title = t('tasks_batches.details_title');
+      bdet.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const url = backendApiUrl(`/api/tasks/batches/${encodeURIComponent(bid)}`);
+        if (!url) return;
+        try {
+          const res = await fetch(url, { method: 'GET' });
+          const obj2 = await res.json();
+          if (!obj2 || !obj2.ok) {
+            addMsg('err', t('tasks_batches.title'), JSON.stringify(obj2 || { ok: false }));
+            return;
+          }
+          const head = obj2.preview && Array.isArray(obj2.preview.head) ? obj2.preview.head : [];
+          const tail = obj2.preview && Array.isArray(obj2.preview.tail) ? obj2.preview.tail : [];
+          const lines = [];
+          lines.push(`batch_id=${bid}`);
+          if (typeof obj2.task_count === 'number') lines.push(`task_count=${obj2.task_count}`);
+          if (head.length) lines.push(`head=${head.length}`);
+          if (tail.length) lines.push(`tail=${tail.length}`);
+          const sample = head.slice(0, 5).map((x) => (x && typeof x === 'object' ? (x.title || x.id || JSON.stringify(x)) : String(x)));
+          if (sample.length) lines.push(`sample: ${sample.join(' | ')}`);
+          addMsg('hello', t('tasks_batches.title'), lines.join('  '));
+        } catch (e2) {
+          addMsg('err', t('tasks_batches.title'), String(e2));
+        }
+      });
+      actions.appendChild(bdet);
+
+      const bact = document.createElement('button');
+      bact.type = 'button';
+      bact.className = 'mini';
+      bact.textContent = t('tasks_batches.activate');
+      bact.title = t('tasks_batches.activate_title');
+      bact.disabled = !!activeBatchId && bid === activeBatchId;
+      bact.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const url = backendApiUrl(`/api/tasks/batches/${encodeURIComponent(bid)}/activate`);
+        if (!url) return;
+        try {
+          const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+          const obj2 = await res.json();
+          if (!obj2 || !obj2.ok) {
+            addMsg('err', t('tasks_batches.title'), JSON.stringify(obj2 || { ok: false }));
+            return;
+          }
+          addMsg('hello', t('tasks_batches.title'), `${t('tasks_batches.activated')} ${bid}`);
+          const pid = projectSelect ? String(projectSelect.value || '').trim() : '';
+          loadTaskBatchesIndex({ project_id: pid });
+        } catch (e2) {
+          addMsg('err', t('tasks_batches.title'), String(e2));
+        }
+      });
+      actions.appendChild(bact);
+
       li.appendChild(p);
       li.appendChild(m);
+      li.appendChild(actions);
       batchesList.appendChild(li);
     }
   }
@@ -2809,6 +2945,11 @@
         const bid = String(obj.batch_id || '').trim();
         if (bid) addMsg('hello', t('tasks_batches.title'), `${t('tasks_batches.created')} ${bid}`);
         else addMsg('hello', t('tasks_batches.title'), t('tasks_batches.created'));
+        scheduleBatchesRefresh(500);
+      } else if (obj && obj.type === 'tasks_batch_activated') {
+        const bid = String(obj.batch_id || '').trim();
+        if (bid) addMsg('hello', t('tasks_batches.title'), `${t('tasks_batches.activated')} ${bid}`);
+        else addMsg('hello', t('tasks_batches.title'), t('tasks_batches.activated'));
         scheduleBatchesRefresh(500);
       } else if (obj && obj.type === 'action_created') {
         // Refresh Action Library index so new user actions are selectable without reload.

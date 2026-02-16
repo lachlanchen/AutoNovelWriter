@@ -1,0 +1,21 @@
+{
+  "id": "T031_runner_foreach_action_semantics_and_var_scopes",
+  "title": "Runner: FOREACH_ACTION semantics + var scopes",
+  "notes": "Implement real FOREACH_ACTION semantics: for each task, iterate over `task.actions` (list of action_ids or action refs) and execute nested children with an action-scope var namespace. Persist ActionResult with explicit inputs/outputs/artifacts, and ensure next steps consume prior outputs via vars (not folder scanning). Keep execution as stubs (no real LLM calls) but make state/resume correct.",
+  "acceptance": [
+    "Runner executes FOREACH_ACTION children once per entry in `task.actions` (within FOREACH_TASK), setting `ctx.action_id`/`ctx.action_index` appropriately.",
+    "ActionResult records include action-loop metadata (e.g., `phase: 'foreach_action'`, `action_index`, `action_id_ref`).",
+    "Vars include `prev` and stable per-scope namespaces (task-scope vs action-scope) so downstream steps can explicitly consume outputs.",
+    "Resumability: restarting runner does not duplicate committed ActionResults (idempotent exec_id).",
+    "Unit test simulates a task with multiple actions and asserts cursor advancement + ActionResult persistence + var passing.",
+    "No TCP binds required; `python3 -m py_compile` and unit tests pass."
+  ],
+  "tags": [
+    "backend",
+    "runner",
+    "foreach_action",
+    "actionresult",
+    "state",
+    "tests"
+  ]
+}

@@ -262,5 +262,53 @@
         </form>
       </div>
     </div>
+
+    <div id="actionEditorModal" class="modal" aria-hidden="true">
+      <div class="modal-backdrop" data-close="1"></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-label="Action Editor">
+        <div class="modal-head">
+          <div class="panel-title" data-i18n="actions.editor_title">Action Editor</div>
+          <button id="closeActionEditor" class="btn" type="button" data-i18n="ui.close">Close</button>
+        </div>
+
+        <form id="actionEditorForm" class="modal-body">
+          <div class="field">
+            <label class="label" for="actionEditId" data-i18n="actions.editor_action_id">Action id</label>
+            <input id="actionEditId" class="input" type="text" value="" readonly />
+          </div>
+
+          <div class="field">
+            <label class="label" for="actionEditOrigin" data-i18n="actions.editor_origin">Origin</label>
+            <input id="actionEditOrigin" class="input" type="text" value="" readonly />
+            <div class="hint" data-i18n="actions.editor_copy_on_edit_hint">Editing a default action creates a user copy.</div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="actionEditName" data-i18n="actions.editor_name">Name</label>
+            <input id="actionEditName" class="input" type="text" value="" />
+          </div>
+
+          <div class="field">
+            <label class="label" for="actionEditTool" data-i18n="actions.editor_tool">Tool</label>
+            <input id="actionEditTool" class="input" type="text" value="" placeholder="builtin" />
+          </div>
+
+          <div class="field">
+            <label class="label" for="actionEditPrompt" data-i18n="actions.editor_prompt">Prompt</label>
+            <textarea id="actionEditPrompt" class="input" rows="6" spellcheck="false" placeholder=""></textarea>
+          </div>
+
+          <div class="field">
+            <label class="label" for="actionEditScript" data-i18n="actions.editor_script">Script</label>
+            <textarea id="actionEditScript" class="input" rows="6" spellcheck="false" placeholder=""></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button id="saveActionEdits" class="btn btn-primary" type="submit" data-i18n="actions.editor_save">Save</button>
+            <button id="cancelActionEdits" class="btn" type="button" data-i18n="actions.editor_cancel">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </body>
 </html>

@@ -104,6 +104,20 @@
       'actions.user_suffix': 'user',
       'actions.customize': 'Customize',
       'actions.customize_title': 'Copy default action to a user action and switch',
+      'actions.edit': 'Edit',
+      'actions.edit_title': 'Edit action template',
+      'actions.editor_title': 'Action Editor',
+      'actions.editor_action_id': 'Action id',
+      'actions.editor_origin': 'Origin',
+      'actions.editor_origin_default': 'default',
+      'actions.editor_origin_user': 'user',
+      'actions.editor_name': 'Name',
+      'actions.editor_tool': 'Tool',
+      'actions.editor_prompt': 'Prompt',
+      'actions.editor_script': 'Script',
+      'actions.editor_save': 'Save',
+      'actions.editor_cancel': 'Cancel',
+      'actions.editor_copy_on_edit_hint': 'Editing a default action creates a user copy (copy-on-edit).',
       'novel.section': 'Novel',
       'novel.language': 'Novel language',
       'novel.tone': 'Tone',
@@ -210,6 +224,20 @@
       'actions.user_suffix': '用户',
       'actions.customize': '自定义',
       'actions.customize_title': '复制默认动作为用户动作并切换',
+      'actions.edit': '编辑',
+      'actions.edit_title': '编辑动作模板',
+      'actions.editor_title': '动作编辑器',
+      'actions.editor_action_id': '动作ID',
+      'actions.editor_origin': '来源',
+      'actions.editor_origin_default': '默认',
+      'actions.editor_origin_user': '用户',
+      'actions.editor_name': '名称',
+      'actions.editor_tool': '工具',
+      'actions.editor_prompt': '提示词',
+      'actions.editor_script': '脚本',
+      'actions.editor_save': '保存',
+      'actions.editor_cancel': '取消',
+      'actions.editor_copy_on_edit_hint': '编辑默认动作会创建用户副本（复制后编辑）。',
       'novel.section': '小说',
       'novel.language': '小说语言',
       'novel.tone': '风格',
@@ -316,6 +344,20 @@
       'actions.user_suffix': '使用者',
       'actions.customize': '自訂',
       'actions.customize_title': '將預設動作複製為使用者動作並切換',
+      'actions.edit': '編輯',
+      'actions.edit_title': '編輯動作範本',
+      'actions.editor_title': '動作編輯器',
+      'actions.editor_action_id': '動作ID',
+      'actions.editor_origin': '來源',
+      'actions.editor_origin_default': '預設',
+      'actions.editor_origin_user': '使用者',
+      'actions.editor_name': '名稱',
+      'actions.editor_tool': '工具',
+      'actions.editor_prompt': '提示詞',
+      'actions.editor_script': '腳本',
+      'actions.editor_save': '儲存',
+      'actions.editor_cancel': '取消',
+      'actions.editor_copy_on_edit_hint': '編輯預設動作會建立使用者副本（複製後編輯）。',
       'novel.section': '小說',
       'novel.language': '小說語言',
       'novel.tone': '風格',
@@ -422,6 +464,20 @@
       'actions.user_suffix': 'ユーザー',
       'actions.customize': 'カスタマイズ',
       'actions.customize_title': '既定アクションをユーザー用にコピーして切り替え',
+      'actions.edit': '編集',
+      'actions.edit_title': 'アクションテンプレートを編集',
+      'actions.editor_title': 'アクションエディタ',
+      'actions.editor_action_id': 'アクションID',
+      'actions.editor_origin': '種別',
+      'actions.editor_origin_default': '既定',
+      'actions.editor_origin_user': 'ユーザー',
+      'actions.editor_name': '名前',
+      'actions.editor_tool': 'ツール',
+      'actions.editor_prompt': 'プロンプト',
+      'actions.editor_script': 'スクリプト',
+      'actions.editor_save': '保存',
+      'actions.editor_cancel': 'キャンセル',
+      'actions.editor_copy_on_edit_hint': '既定アクションの編集はユーザーコピーを作成します（コピーオン編集）。',
       'novel.section': '小説',
       'novel.language': '小説の言語',
       'novel.tone': 'トーン',
@@ -528,6 +584,20 @@
       'actions.user_suffix': '사용자',
       'actions.customize': '사용자화',
       'actions.customize_title': '기본 액션을 사용자 액션으로 복사 후 전환',
+      'actions.edit': '편집',
+      'actions.edit_title': '액션 템플릿 편집',
+      'actions.editor_title': '액션 편집기',
+      'actions.editor_action_id': '액션 ID',
+      'actions.editor_origin': '출처',
+      'actions.editor_origin_default': '기본',
+      'actions.editor_origin_user': '사용자',
+      'actions.editor_name': '이름',
+      'actions.editor_tool': '도구',
+      'actions.editor_prompt': '프롬프트',
+      'actions.editor_script': '스크립트',
+      'actions.editor_save': '저장',
+      'actions.editor_cancel': '취소',
+      'actions.editor_copy_on_edit_hint': '기본 액션을 편집하면 사용자 복사본이 생성됩니다(복사 후 편집).',
       'novel.section': '소설',
       'novel.language': '소설 언어',
       'novel.tone': '톤',
@@ -634,6 +704,20 @@
       'actions.user_suffix': 'nguoi dung',
       'actions.customize': 'Tuy chinh',
       'actions.customize_title': 'Sao chep mau mac dinh sang mau nguoi dung va chuyen doi',
+      'actions.edit': 'Sua',
+      'actions.edit_title': 'Sua mau hanh dong',
+      'actions.editor_title': 'Trinh sua hanh dong',
+      'actions.editor_action_id': 'Action id',
+      'actions.editor_origin': 'Nguon',
+      'actions.editor_origin_default': 'mac dinh',
+      'actions.editor_origin_user': 'nguoi dung',
+      'actions.editor_name': 'Ten',
+      'actions.editor_tool': 'Cong cu',
+      'actions.editor_prompt': 'Prompt',
+      'actions.editor_script': 'Script',
+      'actions.editor_save': 'Luu',
+      'actions.editor_cancel': 'Huy',
+      'actions.editor_copy_on_edit_hint': 'Sua mau mac dinh se tao ban sao nguoi dung (copy-on-edit).',
       'novel.section': 'Tieu thuyet',
       'novel.language': 'Ngon ngu tieu thuyet',
       'novel.tone': 'Giong dieu',
@@ -740,6 +824,20 @@
       'actions.user_suffix': 'مستخدم',
       'actions.customize': 'تخصيص',
       'actions.customize_title': 'نسخ الإجراء الافتراضي إلى إجراء مستخدم والتبديل',
+      'actions.edit': 'تحرير',
+      'actions.edit_title': 'تحرير قالب الإجراء',
+      'actions.editor_title': 'محرر الإجراء',
+      'actions.editor_action_id': 'معرف الإجراء',
+      'actions.editor_origin': 'المصدر',
+      'actions.editor_origin_default': 'افتراضي',
+      'actions.editor_origin_user': 'مستخدم',
+      'actions.editor_name': 'الاسم',
+      'actions.editor_tool': 'الأداة',
+      'actions.editor_prompt': 'الموجّه',
+      'actions.editor_script': 'السكربت',
+      'actions.editor_save': 'حفظ',
+      'actions.editor_cancel': 'إلغاء',
+      'actions.editor_copy_on_edit_hint': 'تعديل الإجراء الافتراضي ينشئ نسخة مستخدم (نسخ عند التعديل).',
       'novel.section': 'الرواية',
       'novel.language': 'لغة الرواية',
       'novel.tone': 'النبرة',
@@ -846,6 +944,20 @@
       'actions.user_suffix': 'utilisateur',
       'actions.customize': 'Personnaliser',
       'actions.customize_title': 'Copier l’action par défaut en action utilisateur et basculer',
+      'actions.edit': 'Modifier',
+      'actions.edit_title': "Modifier le modele d'action",
+      'actions.editor_title': "Editeur d'action",
+      'actions.editor_action_id': "ID d'action",
+      'actions.editor_origin': 'Origine',
+      'actions.editor_origin_default': 'defaut',
+      'actions.editor_origin_user': 'utilisateur',
+      'actions.editor_name': 'Nom',
+      'actions.editor_tool': 'Outil',
+      'actions.editor_prompt': 'Prompt',
+      'actions.editor_script': 'Script',
+      'actions.editor_save': 'Enregistrer',
+      'actions.editor_cancel': 'Annuler',
+      'actions.editor_copy_on_edit_hint': 'Modifier une action par defaut cree une copie utilisateur (copy-on-edit).',
       'novel.section': 'Roman',
       'novel.language': 'Langue du roman',
       'novel.tone': 'Ton',
@@ -952,6 +1064,20 @@
       'actions.user_suffix': 'usuario',
       'actions.customize': 'Personalizar',
       'actions.customize_title': 'Copiar la acción por defecto a una acción de usuario y cambiar',
+      'actions.edit': 'Editar',
+      'actions.edit_title': 'Editar plantilla de accion',
+      'actions.editor_title': 'Editor de accion',
+      'actions.editor_action_id': 'ID de accion',
+      'actions.editor_origin': 'Origen',
+      'actions.editor_origin_default': 'predeterminada',
+      'actions.editor_origin_user': 'usuario',
+      'actions.editor_name': 'Nombre',
+      'actions.editor_tool': 'Herramienta',
+      'actions.editor_prompt': 'Prompt',
+      'actions.editor_script': 'Script',
+      'actions.editor_save': 'Guardar',
+      'actions.editor_cancel': 'Cancelar',
+      'actions.editor_copy_on_edit_hint': 'Editar una accion predeterminada crea una copia de usuario (copy-on-edit).',
       'novel.section': 'Novela',
       'novel.language': 'Idioma de la novela',
       'novel.tone': 'Tono',
@@ -1058,6 +1184,20 @@
       'actions.user_suffix': 'пользователь',
       'actions.customize': 'Настроить',
       'actions.customize_title': 'Скопировать действие по умолчанию в пользовательское и переключить',
+      'actions.edit': 'Редактировать',
+      'actions.edit_title': 'Редактировать шаблон действия',
+      'actions.editor_title': 'Редактор действия',
+      'actions.editor_action_id': 'ID действия',
+      'actions.editor_origin': 'Источник',
+      'actions.editor_origin_default': 'по умолчанию',
+      'actions.editor_origin_user': 'пользователь',
+      'actions.editor_name': 'Имя',
+      'actions.editor_tool': 'Инструмент',
+      'actions.editor_prompt': 'Промпт',
+      'actions.editor_script': 'Скрипт',
+      'actions.editor_save': 'Сохранить',
+      'actions.editor_cancel': 'Отмена',
+      'actions.editor_copy_on_edit_hint': 'Редактирование действия по умолчанию создаёт пользовательскую копию (copy-on-edit).',
       'novel.section': 'Роман',
       'novel.language': 'Язык романа',
       'novel.tone': 'Тон',
@@ -1164,6 +1304,20 @@
       'actions.user_suffix': 'Benutzer',
       'actions.customize': 'Anpassen',
       'actions.customize_title': 'Standardaktion als Benutzeraktion kopieren und umschalten',
+      'actions.edit': 'Bearbeiten',
+      'actions.edit_title': 'Aktionsvorlage bearbeiten',
+      'actions.editor_title': 'Aktionseditor',
+      'actions.editor_action_id': 'Aktions-ID',
+      'actions.editor_origin': 'Herkunft',
+      'actions.editor_origin_default': 'Standard',
+      'actions.editor_origin_user': 'Benutzer',
+      'actions.editor_name': 'Name',
+      'actions.editor_tool': 'Tool',
+      'actions.editor_prompt': 'Prompt',
+      'actions.editor_script': 'Script',
+      'actions.editor_save': 'Speichern',
+      'actions.editor_cancel': 'Abbrechen',
+      'actions.editor_copy_on_edit_hint': 'Bearbeiten einer Standardaktion erstellt eine Benutzerkopie (copy-on-edit).',
       'novel.section': 'Roman',
       'novel.language': 'Romansprache',
       'novel.tone': 'Ton',
@@ -1291,6 +1445,16 @@
   const openSettings = $('openSettings');
   const settingsModal = $('settingsModal');
   const closeSettings = $('closeSettings');
+  const actionEditorModal = $('actionEditorModal');
+  const closeActionEditor = $('closeActionEditor');
+  const actionEditorForm = $('actionEditorForm');
+  const actionEditId = $('actionEditId');
+  const actionEditOrigin = $('actionEditOrigin');
+  const actionEditName = $('actionEditName');
+  const actionEditTool = $('actionEditTool');
+  const actionEditPrompt = $('actionEditPrompt');
+  const actionEditScript = $('actionEditScript');
+  const cancelActionEdits = $('cancelActionEdits');
   const settingsForm = $('settingsForm');
   const agentSdk = $('agentSdk');
   const agentModel = $('agentModel');
@@ -1730,6 +1894,7 @@
 
   let settingsCache = null;
   let projectSettingsCache = null;
+  let actionEditorState = { pathKey: '', action_id: '' };
 
   function openModal() {
     settingsModal.classList.add('open');
@@ -1739,6 +1904,123 @@
   function closeModal() {
     settingsModal.classList.remove('open');
     settingsModal.setAttribute('aria-hidden', 'true');
+  }
+
+  function openActionEditorModal() {
+    if (!actionEditorModal) return;
+    actionEditorModal.classList.add('open');
+    actionEditorModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeActionEditorModal() {
+    if (!actionEditorModal) return;
+    actionEditorModal.classList.remove('open');
+    actionEditorModal.setAttribute('aria-hidden', 'true');
+  }
+
+  async function loadActionForEdit(actionId) {
+    const aid = String(actionId || '').trim();
+    if (!aid) return null;
+    const url = backendApiUrl(`/api/actions/${encodeURIComponent(aid)}`);
+    if (!url) return null;
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const obj = await res.json();
+      if (!obj || !obj.ok || !obj.action) return null;
+      return obj.action;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function fillActionEditorForm(action) {
+    const act = action && typeof action === 'object' ? action : {};
+    const aid = typeof act.id === 'string' ? act.id : '';
+    const origin = typeof act.origin === 'string' ? act.origin : '';
+    if (actionEditId) actionEditId.value = aid;
+    if (actionEditOrigin) {
+      actionEditOrigin.value =
+        origin === 'default' ? t('actions.editor_origin_default')
+          : origin === 'user' ? t('actions.editor_origin_user')
+          : origin;
+    }
+    if (actionEditName) actionEditName.value = typeof act.name === 'string' ? act.name : '';
+    if (actionEditTool) actionEditTool.value = typeof act.tool === 'string' ? act.tool : '';
+    if (actionEditPrompt) actionEditPrompt.value = typeof act.prompt === 'string' ? act.prompt : '';
+    if (actionEditScript) actionEditScript.value = typeof act.script === 'string' ? act.script : '';
+
+    // Only show the copy-on-edit hint when editing a default action.
+    if (actionEditorForm) {
+      const hintEl = actionEditorForm.querySelector('[data-i18n="actions.editor_copy_on_edit_hint"]');
+      if (hintEl) hintEl.style.display = origin === 'default' ? 'block' : 'none';
+    }
+  }
+
+  async function openActionEditorForStep(stepPathKey, actionId) {
+    actionEditorState = { pathKey: String(stepPathKey || ''), action_id: String(actionId || '').trim() };
+    fillActionEditorForm({ id: actionEditorState.action_id, origin: '', name: '', tool: '', prompt: '', script: '' });
+    openActionEditorModal();
+    const act = await loadActionForEdit(actionEditorState.action_id);
+    if (!act) {
+      addMsg('err', 'actions', `load failed: ${actionEditorState.action_id}`);
+      return;
+    }
+    fillActionEditorForm(act);
+  }
+
+  async function saveActionEdits() {
+    const aid = String(actionEditorState.action_id || '').trim();
+    if (!aid) return false;
+    const url = backendApiUrl(`/api/actions/${encodeURIComponent(aid)}`);
+    if (!url) {
+      addMsg('err', 'actions', t('errors.backend_api_url'));
+      return false;
+    }
+
+    const body = {
+      name: actionEditName ? String(actionEditName.value || '') : '',
+      tool: actionEditTool ? String(actionEditTool.value || '') : '',
+      prompt: actionEditPrompt ? String(actionEditPrompt.value || '') : '',
+      script: actionEditScript ? String(actionEditScript.value || '') : '',
+    };
+
+    try {
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const obj = await res.json();
+      if (!obj || !obj.ok) {
+        addMsg('err', 'actions', JSON.stringify(obj || { ok: false }));
+        return false;
+      }
+
+      // Always refresh index so new user actions are selectable immediately.
+      await loadActionsIndex();
+
+      const newId = typeof obj.new_action_id === 'string' ? String(obj.new_action_id || '').trim() : '';
+      if (newId) {
+        const path = parsePathKey(actionEditorState.pathKey);
+        const info = getContainerAndIndex(pipelineAst, path);
+        const node = info && info.node;
+        if (node && typeof node === 'object' && node.kind === 'step') {
+          node.type = newId;
+          setSelected(actionEditorState.pathKey);
+          setPipeStatus('dirty');
+          updateDerivedFromAst({ writeScript: true });
+          renderPipeline();
+        } else {
+          addMsg('err', 'actions', 'cannot switch step to new_action_id (selection invalid)');
+        }
+      }
+
+      closeActionEditorModal();
+      return true;
+    } catch (e) {
+      addMsg('err', 'actions', String(e));
+      return false;
+    }
   }
 
   function fillSettingsForm(settings) {
@@ -2783,6 +3065,21 @@
           });
           bcustom.disabled = !curId || !(actionsById[curId] && actionsById[curId].origin === 'default');
           side.appendChild(bcustom);
+
+          const bedit = document.createElement('button');
+          bedit.type = 'button';
+          bedit.className = 'mini';
+          bedit.textContent = t('actions.edit');
+          bedit.title = t('actions.edit_title');
+          bedit.disabled = !curId;
+          bedit.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const aid = String(n.type || '').trim();
+            if (!aid) return;
+            setSelected(key);
+            openActionEditorForStep(key, aid);
+          });
+          side.appendChild(bedit);
         }
 
         li.appendChild(handle);
@@ -3607,6 +3904,21 @@
     Promise.all([saveSettingsFromForm(), saveProjectSettingsFromForm()]).then(() => closeModal());
   });
   testCodex.addEventListener('click', () => testCodexStub());
+
+  if (closeActionEditor) closeActionEditor.addEventListener('click', () => closeActionEditorModal());
+  if (cancelActionEdits) cancelActionEdits.addEventListener('click', () => closeActionEditorModal());
+  if (actionEditorModal) {
+    actionEditorModal.addEventListener('click', (e) => {
+      const t = e.target;
+      if (t && t.dataset && t.dataset.close) closeActionEditorModal();
+    });
+  }
+  if (actionEditorForm) {
+    actionEditorForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveActionEdits();
+    });
+  }
 
   if (projectSelect) {
     projectSelect.addEventListener('change', () => {

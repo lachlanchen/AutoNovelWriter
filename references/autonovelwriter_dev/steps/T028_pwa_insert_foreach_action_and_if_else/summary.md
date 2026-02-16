@@ -12,3 +12,9 @@ Verification (no server start):
 
 ## I18N
 - Added localized toolbar strings for the new `Add FOREACH_ACTION` and `Add IF` buttons (label + tooltip) across all required UI languages: `autonovelwriter/pwa/app.js`.
+
+## Next
+1. Make `ELSE` manipulation more intuitive: add an explicit “Remove ELSE branch” action that drops else-body steps instead of splicing them into the then-branch.
+2. Add UI for editing `IF` expressions (`expr`) inline, with immediate script re-render + validate.
+3. Tighten UX constraints around `ELSE`: prevent dragging/outdenting `ELSE` outside its owning `IF` (or show a warning and auto-fix with a clear toast).
+4. Decide how to handle `references/autonovelwriter_dev/prompts/*.txt` artifacts (commit vs gitignore) to keep the repo clean.

@@ -14,3 +14,6 @@ Verification (no server start):
 - Adjusted `FOREACH_ACTION` semantics to do **zero iterations** when the task has no `actions` list (so it truly runs once per entry): `autonovelwriter/backend/server.py`.
 - Prevented `STEP <action_id>` from executing/committing an ActionResult unless a real `ctx.action_id` is present (avoids polluting results/vars with the placeholder token): `autonovelwriter/backend/server.py`.
 - Added a regression unit test for the empty-actions case to ensure no ActionResults are committed: `autonovelwriter/backend/tests/runner_foreach_action_empty_actions_unit_test.py`.
+
+## I18N
+- No user-facing PWA strings were added/changed in this task (runner semantics + backend-only state/WS metadata changes only).

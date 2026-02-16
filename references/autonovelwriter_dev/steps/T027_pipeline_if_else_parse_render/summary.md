@@ -20,3 +20,6 @@
 2. Define and document expression syntax for `IF <expr>` (even if evaluation remains stubbed), and add validation for obviously-invalid expressions.
 3. Implement runner semantics for IF/ELSE (evaluate expression and choose branch) with explicit vars/context available to expressions.
 4. Update docs/spec/README to explicitly document accepted ELSE formatting and the canonical render form.
+
+## README
+- Documented pipeline-script v2 conditional verbs (`IF <expr>`, `ELSE`) and updated the PWA offline parser verb list to include them.

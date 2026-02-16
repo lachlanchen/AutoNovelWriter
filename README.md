@@ -75,13 +75,15 @@ Pipeline script v2 supports nesting:
 - `ROUND <n>` introduces a “rounds” container block
 - `FOREACH_TASK` introduces a per-task container block
 - `FOREACH_ACTION` introduces a per-action container block (parse/render only for now)
+- `IF <expr>` introduces a conditional container block (parse/render; runner executes then-branch only for now)
+- `ELSE` introduces an optional alternate branch under an `IF` block
 - children are indented by 2 spaces per level
 
 Validation (no persistence):
 - `POST /api/pipeline/validate` returns a canonical preview plus `pipeline_ast`, warnings, and errors.
 
 The PWA shows the script in a textarea (source of truth) and renders nested blocks from `pipeline_ast`.
-If the backend validate endpoint is unreachable, the PWA falls back to a local parser that supports the same v2 verbs (`LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `STEP`, `DISABLED`).
+If the backend validate endpoint is unreachable, the PWA falls back to a local parser that supports the same v2 verbs (`LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF`, `ELSE`, `STEP`, `DISABLED`).
 
 Blocks UI notes:
 - `LOOP` and `ROUND` repeat counts are editable inline in the blocks list; valid edits immediately update the canonical script textarea.
@@ -169,8 +171,8 @@ Current fields (editable in the PWA Settings modal):
 ## Driver Workflow (Auto-Dev)
 <!-- AUTO_DEV_PROGRESS_START -->
 ### Auto-Dev Progress (Generated)
-- updated_utc: 2026-02-16T01:32:48Z
-- current: T027_pipeline_if_else_parse_render / summary — Pipeline: IF/ELSE parse+render
+- updated_utc: 2026-02-16T01:33:37Z
+- current: T027_pipeline_if_else_parse_render / update_readme — Pipeline: IF/ELSE parse+render
 - queue: total=32 done=26 pending=6
 - last_done: T026_project_settings_novel_language_separate — Project settings: novel language (separate from UI) @ 2026-02-16T09:13:32+0800
 - latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3

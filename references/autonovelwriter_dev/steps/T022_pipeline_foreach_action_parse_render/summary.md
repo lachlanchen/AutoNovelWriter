@@ -11,3 +11,9 @@
 
 ## I18N
 - Added `pipeline.verb_foreach_action` label (shown in blocks UI) for all required UI languages. The label stays `FOREACH_ACTION` (pipeline verb) in every locale for consistency with the script language.
+
+## Next
+1. Implement real runner semantics for `FOREACH_ACTION` (iterate `task.actions`, propagate explicit ActionResult dataflow).
+2. Add PWA toolbar insertion for `FOREACH_ACTION` (wrap selected or append a valid container).
+3. Add UI affordances to surface parser warnings (e.g., show `foreach_action_outside_foreach_task` in the pipeline panel instead of only console/log).
+4. Extend round-trip fixtures to cover disabled steps and mixed nesting (ROUND + LOOP + FOREACH_*).

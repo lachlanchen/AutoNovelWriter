@@ -109,7 +109,12 @@
       'novel.tense': 'Tense',
       'novel.tense_ph': 'past',
       'novel.chapters': 'Target chapters',
-      'novel.chapters_ph': '12'
+      'novel.chapters_ph': '12',
+      'project.section': 'Project',
+      'project.settings_title': 'Project settings',
+      'project.active': 'Active project',
+      'project.novel_language': 'Novel language (project)',
+      'project.novel_language_title': 'Novel language override for this project (separate from UI language)'
     },
     'zh-Hans': {
       'app.title': 'AutoNovelWriter',
@@ -202,7 +207,12 @@
       'novel.tense': '时态',
       'novel.tense_ph': '过去时',
       'novel.chapters': '目标章节数',
-      'novel.chapters_ph': '12'
+      'novel.chapters_ph': '12',
+      'project.section': '项目',
+      'project.settings_title': '项目设置',
+      'project.active': '当前项目',
+      'project.novel_language': '小说语言（项目）',
+      'project.novel_language_title': '此项目的小说语言覆盖（与界面语言分离）'
     },
     'zh-Hant': {
       'app.title': 'AutoNovelWriter',
@@ -295,7 +305,12 @@
       'novel.tense': '時態',
       'novel.tense_ph': '過去式',
       'novel.chapters': '目標章節數',
-      'novel.chapters_ph': '12'
+      'novel.chapters_ph': '12',
+      'project.section': '專案',
+      'project.settings_title': '專案設定',
+      'project.active': '目前專案',
+      'project.novel_language': '小說語言（專案）',
+      'project.novel_language_title': '此專案的小說語言覆寫（與介面語言分離）'
     },
     ja: {
       'app.title': 'AutoNovelWriter',
@@ -388,7 +403,12 @@
       'novel.tense': '時制',
       'novel.tense_ph': '過去',
       'novel.chapters': '目標章数',
-      'novel.chapters_ph': '12'
+      'novel.chapters_ph': '12',
+      'project.section': 'プロジェクト',
+      'project.settings_title': 'プロジェクト設定',
+      'project.active': '現在のプロジェクト',
+      'project.novel_language': '小説の言語（プロジェクト）',
+      'project.novel_language_title': 'このプロジェクトの小説言語の上書き（UI言語とは別）'
     },
     ko: {
       'app.title': 'AutoNovelWriter',
@@ -481,7 +501,12 @@
       'novel.tense': '시제',
       'novel.tense_ph': '과거',
       'novel.chapters': '목표 장 수',
-      'novel.chapters_ph': '12'
+      'novel.chapters_ph': '12',
+      'project.section': '프로젝트',
+      'project.settings_title': '프로젝트 설정',
+      'project.active': '현재 프로젝트',
+      'project.novel_language': '소설 언어(프로젝트)',
+      'project.novel_language_title': '이 프로젝트의 소설 언어 오버라이드(UI 언어와 분리)'
     },
     vi: {
       'app.title': 'AutoNovelWriter',
@@ -574,7 +599,12 @@
       'novel.tense': 'Thi',
       'novel.tense_ph': 'qua khu',
       'novel.chapters': 'So chuong muc tieu',
-      'novel.chapters_ph': '12'
+      'novel.chapters_ph': '12',
+      'project.section': 'Du an',
+      'project.settings_title': 'Cai dat du an',
+      'project.active': 'Du an dang chon',
+      'project.novel_language': 'Ngon ngu tieu thuyet (du an)',
+      'project.novel_language_title': 'Ghi de ngon ngu tieu thuyet cho du an nay (tach voi ngon ngu UI)'
     },
     ar: {
       'app.title': 'AutoNovelWriter',
@@ -667,7 +697,12 @@
       'novel.tense': 'الزمن',
       'novel.tense_ph': 'ماضٍ',
       'novel.chapters': 'الفصول المستهدفة',
-      'novel.chapters_ph': '12'
+      'novel.chapters_ph': '12',
+      'project.section': 'المشروع',
+      'project.settings_title': 'إعدادات المشروع',
+      'project.active': 'المشروع النشط',
+      'project.novel_language': 'لغة الرواية (للمشروع)',
+      'project.novel_language_title': 'تجاوز لغة الرواية لهذا المشروع (منفصل عن لغة الواجهة)'
     },
     fr: {
       'app.title': 'AutoNovelWriter',
@@ -760,7 +795,12 @@
       'novel.tense': 'Temps',
       'novel.tense_ph': 'passé',
       'novel.chapters': 'Chapitres cibles',
-      'novel.chapters_ph': '12'
+      'novel.chapters_ph': '12',
+      'project.section': 'Projet',
+      'project.settings_title': 'Paramètres du projet',
+      'project.active': 'Projet actif',
+      'project.novel_language': 'Langue du roman (projet)',
+      'project.novel_language_title': 'Surcharge de langue du roman pour ce projet (séparée de la langue UI)'
     },
     es: {
       'app.title': 'AutoNovelWriter',
@@ -853,7 +893,12 @@
       'novel.tense': 'Tiempo verbal',
       'novel.tense_ph': 'pasado',
       'novel.chapters': 'Capítulos objetivo',
-      'novel.chapters_ph': '12'
+      'novel.chapters_ph': '12',
+      'project.section': 'Proyecto',
+      'project.settings_title': 'Ajustes del proyecto',
+      'project.active': 'Proyecto activo',
+      'project.novel_language': 'Idioma de la novela (proyecto)',
+      'project.novel_language_title': 'Sobrescribir idioma de la novela para este proyecto (separado del idioma UI)'
     },
     ru: {
       'app.title': 'AutoNovelWriter',
@@ -946,7 +991,12 @@
       'novel.tense': 'Время',
       'novel.tense_ph': 'прошедшее',
       'novel.chapters': 'Цель по главам',
-      'novel.chapters_ph': '12'
+      'novel.chapters_ph': '12',
+      'project.section': 'Проект',
+      'project.settings_title': 'Настройки проекта',
+      'project.active': 'Активный проект',
+      'project.novel_language': 'Язык романа (проект)',
+      'project.novel_language_title': 'Переопределение языка романа для этого проекта (отдельно от языка UI)'
     },
     de: {
       'app.title': 'AutoNovelWriter',
@@ -1039,7 +1089,12 @@
       'novel.tense': 'Zeitform',
       'novel.tense_ph': 'Vergangenheit',
       'novel.chapters': 'Zielkapitel',
-      'novel.chapters_ph': '12'
+      'novel.chapters_ph': '12',
+      'project.section': 'Projekt',
+      'project.settings_title': 'Projekteinstellungen',
+      'project.active': 'Aktives Projekt',
+      'project.novel_language': 'Romansprache (Projekt)',
+      'project.novel_language_title': 'Romansprache für dieses Projekt überschreiben (getrennt von UI-Sprache)'
     }
   };
 
@@ -1159,6 +1214,8 @@
   const novelPov = $('novelPov');
   const novelTense = $('novelTense');
   const novelChapters = $('novelChapters');
+  const projectActiveSettings = $('projectActiveSettings');
+  const projectNovelLanguage = $('projectNovelLanguage');
 
   const LS_WS_URL = 'anw_ws_url';
   const LS_PIPELINE = 'anw_pipeline';
@@ -1582,6 +1639,7 @@
   }
 
   let settingsCache = null;
+  let projectSettingsCache = null;
 
   function openModal() {
     settingsModal.classList.add('open');
@@ -1608,6 +1666,59 @@
     if (novelPov) novelPov.value = String(n.pov || 'third_limited');
     if (novelTense) novelTense.value = String(n.tense || 'past');
     if (novelChapters) novelChapters.value = String(Number.isFinite(n.chapter_count_target) ? n.chapter_count_target : (n.chapter_count_target || 12));
+  }
+
+  function fillProjectSettingsForm(obj) {
+    if (!obj || !obj.ok) return;
+    projectSettingsCache = obj;
+    const pid = typeof obj.project_id === 'string' ? obj.project_id : '';
+    if (activeProject) activeProject.textContent = pid || 'default';
+    if (projectActiveSettings) projectActiveSettings.value = pid || 'default';
+    const ps = obj.project_settings && typeof obj.project_settings === 'object' ? obj.project_settings : {};
+    const eff = obj.effective && typeof obj.effective === 'object' ? obj.effective : {};
+    const val = String(ps.novel_language || eff.novel_language || 'en');
+    if (projectNovelLanguage) projectNovelLanguage.value = val;
+  }
+
+  async function loadProjectSettings() {
+    const url = backendApiUrl('/api/projects/settings');
+    if (!url) return null;
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const obj = await res.json();
+      if (!obj || !obj.ok) return null;
+      fillProjectSettingsForm(obj);
+      return obj;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function saveProjectSettingsFromForm() {
+    const url = backendApiUrl('/api/projects/settings');
+    if (!url) {
+      addMsg('err', 'settings', 'cannot derive backend api url');
+      return;
+    }
+    const project_settings = {
+      novel_language: String(projectNovelLanguage && projectNovelLanguage.value ? projectNovelLanguage.value : 'en')
+    };
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_settings })
+      });
+      const obj = await res.json();
+      if (obj && obj.ok) {
+        addMsg('hello', t('project.settings_title'), t('ui.save'));
+        loadProjectSettings();
+        return;
+      }
+      addMsg('err', t('project.settings_title'), JSON.stringify(obj));
+    } catch (e) {
+      addMsg('err', t('project.settings_title'), String(e));
+    }
   }
 
   async function loadSettings() {
@@ -2934,9 +3045,14 @@
         setPipeStatus('loaded');
       } else if (obj && obj.type === 'project_active_changed' && obj.project_id) {
         if (activeProject) activeProject.textContent = String(obj.project_id);
+        if (projectActiveSettings) projectActiveSettings.value = String(obj.project_id);
         loadMaterialsIndex();
         loadOutputsIndex();
         loadTaskBatchesIndex({ project_id: String(obj.project_id || '').trim() });
+        loadProjectSettings();
+      } else if (obj && obj.type === 'project_settings_updated' && obj.project_id) {
+        // Best-effort refresh (covers updates from other clients).
+        loadProjectSettings();
       } else if (obj && obj.type === 'output_created') {
         const rel = String(obj.project_rel_path || obj.path || '').trim();
         if (rel) addMsg('hello', t('outputs.title'), `${t('outputs.created')} ${rel}`);
@@ -3141,6 +3257,7 @@
   openSettings.addEventListener('click', () => {
     openModal();
     loadSettings();
+    loadProjectSettings();
   });
   closeSettings.addEventListener('click', () => closeModal());
   settingsModal.addEventListener('click', (e) => {
@@ -3149,7 +3266,7 @@
   });
   settingsForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    saveSettingsFromForm().then(() => closeModal());
+    Promise.all([saveSettingsFromForm(), saveProjectSettingsFromForm()]).then(() => closeModal());
   });
   testCodex.addEventListener('click', () => testCodexStub());
 
@@ -3167,6 +3284,8 @@
         });
         loadMaterialsIndex({ skipSelectSync: true });
         loadOutputsIndex({ skipSelectSync: true });
+        loadTaskBatchesIndex({ project_id: pid });
+        loadProjectSettings();
       });
     });
   }

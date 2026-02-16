@@ -75,6 +75,39 @@ def ensure_runtime_dirs(paths: dict) -> None:
     _safe_mkdir(Path(paths["actions_defaults"]))
     _safe_mkdir(Path(paths["actions_user"]))
 
+    # `runtime/state/settings.json` is gitignored; create minimal defaults so a fresh runtime
+    # has a concrete "novel language" even before the settings API is used.
+    p = Path(paths["settings_json"])
+    if not p.exists():
+        try:
+            p.write_text(
+                json.dumps(
+                    {
+                        "agent": {
+                            "enabled": False,
+                            "sdk": "codex",
+                            "model": "",
+                            "vision_model": "",
+                            "codex_cli_path": "",
+                        },
+                        "novel": {
+                            "language": "en",
+                            "tone": "neutral",
+                            "target_length_words": 80000,
+                            "pov": "third_limited",
+                            "tense": "past",
+                            "chapter_count_target": 12,
+                        },
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+        except Exception:
+            pass
+
 
 def _is_safe_project_id(s: str) -> bool:
     if not isinstance(s, str):
@@ -126,6 +159,7 @@ def _ensure_project_dirs(paths: dict, project_id: str) -> dict:
     interactions = root / "interactions"
     outputs = root / "outputs"
     state = root / "state"
+    # Project-local settings/state files live here (gitignored under runtime).
     _safe_mkdir(materials)
     _safe_mkdir(interactions)
     _safe_mkdir(outputs)
@@ -138,6 +172,26 @@ def _ensure_project_dirs(paths: dict, project_id: str) -> dict:
         "outputs_root": outputs,
         "state_root": state,
     }
+
+
+def _project_settings_json(paths: dict, project_id: str) -> Path:
+    pr = _ensure_project_dirs(paths, project_id)
+    return Path(pr["state_root"]) / "project_settings.json"
+
+
+def load_project_settings(paths: dict, project_id: str) -> dict:
+    p = _project_settings_json(paths, project_id)
+    obj = _load_json(p, {})
+    return obj if isinstance(obj, dict) else {}
+
+
+def save_project_settings(paths: dict, project_id: str, settings: dict) -> dict:
+    p = _project_settings_json(paths, project_id)
+    _safe_mkdir(p.parent)
+    if not isinstance(settings, dict):
+        settings = {}
+    p.write_text(json.dumps(settings, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return settings
 
 
 def _append_jsonl(p: Path, obj: dict) -> None:
@@ -223,6 +277,22 @@ def save_settings(paths: dict, settings: dict) -> None:
     p = Path(paths["settings_json"])
     _safe_mkdir(p.parent)
     p.write_text(json.dumps(settings, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def effective_novel_language(paths: dict, project_id: str) -> str:
+    """
+    Project override (project_settings.json) wins; otherwise fall back to global settings.novel.language.
+    """
+    pid = project_id if _is_safe_project_id(project_id) else load_active_project(paths)
+    ps = load_project_settings(paths, pid)
+    if isinstance(ps.get("novel_language"), str) and ps.get("novel_language").strip():
+        return ps.get("novel_language").strip()
+    gs = _load_json(Path(paths["settings_json"]), {})
+    if isinstance(gs, dict) and isinstance(gs.get("novel"), dict):
+        nl = gs["novel"].get("language")
+        if isinstance(nl, str) and nl.strip():
+            return nl.strip()
+    return "en"
 
 
 def is_codex_gate_enabled() -> bool:
@@ -1904,6 +1974,11 @@ class Runner:
             rel_path = f"outputs/{fname}"
 
         novel = self._load_novel_settings()
+        # Per-project override for novel language (separate from PWA UI language).
+        try:
+            novel_lang = effective_novel_language(self._paths, d.get("project_id") or "default")
+        except Exception:
+            novel_lang = novel.get("language", "en")
         header = [
             f"# Draft ({task_id})",
             "",
@@ -1912,7 +1987,7 @@ class Runner:
             f"- block: {block_type}",
             "",
             "## Novel Settings (from settings.novel.*)",
-            f"- language: {novel.get('language', 'en')}",
+            f"- language: {novel_lang}",
             f"- tone: {novel.get('tone', 'neutral')}",
             f"- target_length_words: {novel.get('target_length_words', 80000)}",
             f"- pov: {novel.get('pov', 'third_limited')}",
@@ -3206,6 +3281,62 @@ class OutputsIndexHandler(BaseHandler):
         )
 
 
+class ProjectSettingsHandler(BaseHandler):
+    def initialize(self, paths: dict, hub: "WebSocketHub"):
+        self._paths = paths
+        self._hub = hub
+
+    def get(self):
+        pid = load_active_project(self._paths)
+        ps = load_project_settings(self._paths, pid)
+        eff = effective_novel_language(self._paths, pid)
+        gs = _load_json(Path(self._paths["settings_json"]), {})
+        global_novel = (gs.get("novel") if isinstance(gs, dict) else None) if isinstance(gs, dict) else None
+        if not isinstance(global_novel, dict):
+            global_novel = {}
+        self.write_json(
+            {
+                "ok": True,
+                "project_id": pid,
+                "project_settings": ps,
+                "effective": {"novel_language": eff},
+                "global_defaults": {"novel_language": global_novel.get("language") if isinstance(global_novel.get("language"), str) else "en"},
+                "project_settings_path": str(_project_settings_json(self._paths, pid)),
+            }
+        )
+
+    def post(self):
+        try:
+            body = tornado.escape.json_decode(self.request.body or b"{}")
+        except Exception:
+            return self.write_json({"ok": False, "error": "invalid_json"}, status=400)
+        if not isinstance(body, dict):
+            return self.write_json({"ok": False, "error": "expected_object"}, status=400)
+        pid = body.get("project_id")
+        if not isinstance(pid, str) or not pid.strip():
+            pid = load_active_project(self._paths)
+        pid = pid.strip()
+        if not _is_safe_project_id(pid):
+            return self.write_json({"ok": False, "error": "invalid_project_id"}, status=400)
+        _ensure_project_dirs(self._paths, pid)
+
+        incoming = body.get("project_settings") if isinstance(body.get("project_settings"), dict) else {}
+        cur = load_project_settings(self._paths, pid)
+        if not isinstance(cur, dict):
+            cur = {}
+        if isinstance(incoming, dict):
+            if "novel_language" in incoming:
+                nl = incoming.get("novel_language")
+                if isinstance(nl, str):
+                    cur["novel_language"] = nl.strip()
+        saved = save_project_settings(self._paths, pid, cur)
+        eff = effective_novel_language(self._paths, pid)
+        self._hub.broadcast(
+            {"type": "project_settings_updated", "ts_ms": _now_ms(), "project_id": pid, "project_settings": saved, "effective": {"novel_language": eff}}
+        )
+        self.write_json({"ok": True, "project_id": pid, "project_settings": saved, "effective": {"novel_language": eff}})
+
+
 class TasksBatchesIndexHandler(BaseHandler):
     def initialize(self, paths: dict):
         self._paths = paths
@@ -3345,6 +3476,7 @@ def make_app(paths: dict, settings: dict, debug: bool) -> tornado.web.Applicatio
         (r"/api/settings", SettingsHandler, {"paths": paths, "settings": settings}),
         (r"/api/projects", ProjectsHandler, {"paths": paths}),
         (r"/api/projects/active", ProjectActiveHandler, {"paths": paths, "hub": hub}),
+        (r"/api/projects/settings", ProjectSettingsHandler, {"paths": paths, "hub": hub}),
         (r"/api/materials/index", MaterialsIndexHandler, {"paths": paths}),
         (r"/api/outputs/index", OutputsIndexHandler, {"paths": paths}),
         (r"/api/tasks/batches/index", TasksBatchesIndexHandler, {"paths": paths}),

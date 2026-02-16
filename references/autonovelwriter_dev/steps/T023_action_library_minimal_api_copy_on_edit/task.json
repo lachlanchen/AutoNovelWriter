@@ -1,0 +1,20 @@
+{
+  "id": "T023_action_library_minimal_api_copy_on_edit",
+  "title": "Action Library: minimal API + copy-on-edit",
+  "notes": "Introduce Action Library storage under runtime (e.g., `runtime/actions/`) with immutable default templates and user-defined actions. Provide minimal backend APIs to list/get actions and to create a user copy when editing a default action (copy-on-edit), returning a new `action_id` that pipeline blocks can reference.",
+  "acceptance": [
+    "Runtime contains a clear actions layout: defaults vs user actions (gitignored runtime; no secrets).",
+    "API: list actions (with metadata: id, name, origin=default|user, inputs/outputs schema placeholder).",
+    "API: get action by id returns full template (tool binding + prompt/script fields).",
+    "API: edit default action does not mutate it; creates a new user action and returns new id (copy-on-edit).",
+    "PWA can switch a STEP block from one `action_id` to another (wiring only; no execution).",
+    "Any new user-facing strings localized across all required UI languages."
+  ],
+  "tags": [
+    "backend",
+    "pwa",
+    "actions",
+    "storage",
+    "i18n"
+  ]
+}

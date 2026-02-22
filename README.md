@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/lachlanchen/lachlanchen/main/figs/banner.png" alt="LazyingArt banner" />
+</p>
+
 # AutoNovelWriter
 
 Scratch-like PWA + Tornado backend for controlling an automated novel-writing (and app-dev) pipeline.
@@ -216,3 +220,10 @@ Useful controls:
 - `docs/ORDERING_RATIONALE.md`: Example rationale for sequencing screenshot-driven steps.
 - `scripts-legacy/`: older automation scripts kept for reference but not used by AutoNovelWriter.
 - `examples/ralph-wiggum-example.sh`: Example Codex CLI automation helper.
+
+## Sponsor & Donate
+
+- GitHub Sponsors: https://github.com/sponsors/lachlanchen
+- Donate: https://chat.lazying.art/donate
+- PayPal: https://paypal.me/RongzhouChen
+- Stripe: https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400

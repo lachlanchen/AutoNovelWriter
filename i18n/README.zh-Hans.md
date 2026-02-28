@@ -1,6 +1,7 @@
 [English](../README.md) · [العربية](README.ar.md) · [Español](README.es.md) · [Français](README.fr.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Tiếng Việt](README.vi.md) · [中文 (简体)](README.zh-Hans.md) · [中文（繁體）](README.zh-Hant.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
 
+
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
 <div align="center">
@@ -14,26 +15,41 @@
     <img alt="Pipeline" src="https://img.shields.io/badge/pipeline-script%20%2B%20AST-2563eb" />
     <img alt="Runtime" src="https://img.shields.io/badge/runtime-local%20state-orange" />
     <img alt="Status" src="https://img.shields.io/badge/status-active%20development-f59e0b" />
+    <img alt="Canonical docs" src="https://img.shields.io/badge/docs-README.md-critical?style=flat" />
+    <img alt="Languages" src="https://img.shields.io/badge/i18n-10%2B%20languages-8b5cf6?style=flat" />
   </p>
 </div>
 
-本仓库同时将 `AutoAppDev/` 以子模块方式内置（可复用的自动化开发脚本集合）。
+本仓库同时将 `AutoAppDev/` 作为子模块内置（可复用的自动化开发脚本集合）。
 
 > [!TIP]
-> `README.md` 是权威基准。各语言版本位于 `i18n/`，并由顶部的单行语言切换链接统一管理。
+> `README.md` 是权威基准。其他语言版本位于 `i18n/`，并通过文件顶部的语言切换行统一导航。
+
+## 🧭 Project Snapshot
 
 | 快速信息 | 说明 |
 |---|---|
 | 主要技术栈 | Python + Tornado 后端、浏览器端 PWA 前端 |
-| 核心交互 | 以单一规范来源支持脚本式编辑与块式编辑 |
+| 核心交互 | 以单一真源支持脚本文本编辑与块状 UI 编辑 |
 | 执行模式 | 支持可恢复运行；持久化执行游标与动作结果 |
 | 实时能力 | WebSocket 端点：`/ws` |
-| 可变运行时根目录 | `autonovelwriter/runtime/`（默认 gitignore） |
+| 可变运行时根目录 | `autonovelwriter/runtime/`（默认为 gitignore） |
 
-| 启动默认值 | 值 |
+## At-a-Glance Navigation
+
+| 🎯 立即操作 | 🔧 命令 / URL |
 |---|---|
-| PWA 地址 | `http://127.0.0.1:8787/` |
-| WebSocket 地址 | `ws://127.0.0.1:8787/ws` |
+| 打开本地 PWA | `http://127.0.0.1:8787/` |
+| 连接实时更新 | `ws://127.0.0.1:8787/ws` |
+| 快速启动后端 | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
+| 一次性脚本化启动 | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
+
+## 🔌 Launch defaults
+
+| 默认项 | 值 |
+|---|---|
+| PWA URL | `http://127.0.0.1:8787/` |
+| WebSocket URL | `ws://127.0.0.1:8787/ws` |
 | 后端主机/端口 | `127.0.0.1:8787` |
 
 ## Table of Contents
@@ -42,6 +58,7 @@
 - [Features](#-features)
 - [Architecture at a Glance](#-architecture-at-a-glance)
 - [Project Structure](#️-project-structure)
+- [At-a-Glance Navigation](#at-a-glance-navigation)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
 - [Usage](#-usage)
@@ -67,12 +84,12 @@
 ## 📌 Overview
 
 AutoNovelWriter 提供本地编排层，用于：
-- 通过源码文本与块状 UI 双路径编辑规范流水线脚本（`pipeline.script`）。
+- 通过源码文本与块状 UI 两种路径编辑规范流水线脚本（`pipeline.script`）。
 - 运行可恢复的后端执行流程，并持久化执行游标与动作结果。
 - 管理项目、素材、产物、任务批次与动作模板。
 - 通过 WebSocket（`/ws`）向 PWA 推送实时更新。
 
-可变运行时根目录是 `autonovelwriter/runtime/`（内容会被 gitignore）。
+可变运行时根目录是 `autonovelwriter/runtime/`（内容默认不进入版本控制）。
 
 | 模块 | 功能 |
 |---|---|
@@ -87,8 +104,8 @@ AutoNovelWriter 提供本地编排层，用于：
 - 运行器控制 API（`start/pause/resume/stop`），支持可恢复状态。
 - 控制流容器：`LOOP`、`ROUND`、`FOREACH_TASK`、`FOREACH_ACTION`、`IF/ELSE`。
 - 动作库：内置默认模板，并支持 copy-on-edit 的用户覆盖。
-- 项目级小说设置覆盖，支持继承语义。
-- `FOREACH_TASK` 的任务批次生成/索引/详情/激活流程。
+- 项目级小说设置覆盖，并支持继承语义。
+- `FOREACH_TASK` 的任务批次生成、索引、详情与激活流程。
 - 输出索引与最新小说 PDF 预览端点。
 - 内置 PWA i18n 字典（`en`、`zh-Hans`、`zh-Hant`、`ja`、`ko`、`vi`、`ar`、`fr`、`es`、`ru`、`de`）。
 - tmux 辅助脚本以及可恢复的 Codex 自动开发驱动。
@@ -186,7 +203,7 @@ AutoNovelWriter/
 |---|---|---|
 | 方案 A | 使用 conda 且偏好仓库提供的环境配置 | `scripts/setup_conda_env.sh --name autonovelwriter` |
 | 方案 B | 希望一步完成安装与启动 | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
-| 方案 C | 你更偏好手动控制 pip | `python3 -m pip install -r autonovelwriter/backend/requirements.txt` |
+| 方案 C | 更偏好手动管理 pip | `python3 -m pip install -r autonovelwriter/backend/requirements.txt` |
 
 ### Option A: Conda helper (recommended for this repo)
 
@@ -221,7 +238,7 @@ git submodule update --init --recursive
 
 ## 🧪 Usage
 
-| 流程 | 命令 / 地址 |
+| 流程 | 命令 / URL |
 |---|---|
 | 启动后端 | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
 | 打开应用 | `http://127.0.0.1:8787/` |
@@ -245,7 +262,7 @@ python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
 python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
 ```
 
-后端默认会从 `autonovelwriter/pwa/` 提供 PWA 的静态资源，因此你可直接打开：
+后端默认会从 `autonovelwriter/pwa/` 提供 PWA 的静态资源，因此可以直接打开：
 - `http://127.0.0.1:8787/`（PWA）
 - WebSocket：`ws://127.0.0.1:8787/ws`
 
@@ -261,25 +278,7 @@ tmux（同时启动两个窗格 + 日志跟随）：
 
 ```bash
 scripts/run_autonovelwriter_tmux.sh --no-attach
-```
-
-### Run backend test files directly
-
-```bash
-python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py
-python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py
-```
-
-### Run PWA logic test file directly
-
-```bash
-node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
-```
-
-### Scripted automation helper example
-
-```bash
-bash examples/ralph-wiggum-example.sh
+tmux attach -t autonovelwriter_app
 ```
 
 Conda 环境辅助：
@@ -300,7 +299,7 @@ scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 3. 通过 Blocks 或脚本文本框编辑流水线。
 4. 校验并保存流水线。
 5. 启动运行器并监控日志 / 状态 / 事件。
-6. 查看生成的产物与任务批次。
+6. 查看生成的产物和任务批次。
 
 ## ⚙️ Configuration
 
@@ -366,7 +365,7 @@ scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 - Health: `GET /api/health`
 - Settings: `GET/POST /api/settings`
 - Projects: `GET /api/projects`, `POST /api/projects/active`
-- Project settings（当前激活项目）: `GET/POST /api/projects/settings`（项目级覆盖，继承字段：`novel_language`、`novel_tone`、`novel_target_length_words`）
+- Project settings（当前激活项目）: `GET/POST /api/projects/settings`（项目级覆盖字段：`novel_language`、`novel_tone`、`novel_target_length_words`）
 - Materials index（当前项目）: `GET /api/materials/index`
 - Outputs index（当前项目）: `GET /api/outputs/index`
 - Task batches index: `GET /api/tasks/batches/index`（可选：`?project=<project_id>`）
@@ -377,43 +376,43 @@ scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 - Pipeline validate（仅预览）: `POST /api/pipeline/validate`
 - Reference writer pipeline preview/load:
   - `GET /api/pipeline/reference_writer`（读取并解析 `../scripts/auto-xiyouzhiyuan-writer.sh`）
-  - `POST /api/pipeline/reference_writer/load`（将解析结果加载到运行时 pipeline；不改动源脚本）
+  - `POST /api/pipeline/reference_writer/load`（将解析结果加载到运行时 pipeline；不会修改源脚本）
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Latest novel PDF:
   - `GET /api/novel/latest`（元信息）
   - `GET /api/novel/latest/pdf`（内联 PDF 流，用于查看器）
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
-- Agent test（受控）: `POST /api/agent/test`（仅在启用且环境变量通过时运行 `codex --version`）
+- Agent test（受控）: `POST /api/agent/test`（仅在开启且通过环境变量门禁时执行 `codex --version`）
 
 ### WebSocket
 
-- 端点: `/ws`
-- 推送事件: `hello`, `chat`, `outbox_written`, `input_mirror_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_updated`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`, `project_active_changed`, `project_settings_updated`, `echo`
+- Endpoint: `/ws`
+- Broadcast events: `hello`, `chat`, `outbox_written`, `input_mirror_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_updated`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`, `project_active_changed`, `project_settings_updated`, `echo`
 
 ## 📁 Runtime Paths
 
 所有可变状态与 IO 都位于 `autonovelwriter/runtime/`：
 
-| 路径 | 用途 |
+| Path | Purpose |
 |---|---|
-| `autonovelwriter/runtime/io/inbox/` | 用户 -> 系统（投递 `.txt`/`.md`） |
-| `autonovelwriter/runtime/io/outbox/` | 系统 -> 用户（后端写入聊天消息） |
+| `autonovelwriter/runtime/io/inbox/` | user -> system（投递 `.txt`/`.md`） |
+| `autonovelwriter/runtime/io/outbox/` | system -> user（后端写入聊天消息） |
 | `autonovelwriter/runtime/state/` | 持久化 JSON 状态（settings、pipeline、runner、chat） |
-| `autonovelwriter/runtime/state/chat.sqlite3` | sqlite 聊天镜像（除了 chat.jsonl） |
-| `autonovelwriter/runtime/state/active_project.json` | 持久化“当前激活项目”指针 |
+| `autonovelwriter/runtime/state/chat.sqlite3` | sqlite 聊天镜像（除 `chat.jsonl` 外） |
+| `autonovelwriter/runtime/state/active_project.json` | 持久化当前激活项目指针 |
 | `autonovelwriter/runtime/tasks/` | 任务队列文件 |
 | `autonovelwriter/runtime/tasks/batches/<batch_id>/` | 生成的任务批次（如 `meta_tasks_generate`） |
 | `autonovelwriter/runtime/logs/` | 日志 |
 | `autonovelwriter/runtime/projects/<project_id>/materials/` | 项目素材（输入） |
 | `autonovelwriter/runtime/projects/<project_id>/outputs/` | 项目产物（草稿/导出） |
-| `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json` | 项目级小说设置覆盖（如小说语言） |
+| `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json` | 项目级小说设置覆盖（例如小说语言） |
 | `autonovelwriter/runtime/actions/defaults/` | 预置动作库模板（视为不可变） |
-| `autonovelwriter/runtime/actions/user/` | 用户自定义动作库（通过 copy-on-edit 创建） |
-| `/home/lachlan/Documents/VoidAbyss/references/xiyouzhiyuan/input/` | 供写作流水线采集的聊天输入镜像 |
+| `autonovelwriter/runtime/actions/user/` | 用户动作库模板（通过 copy-on-edit 创建） |
+| `/home/lachlan/Documents/VoidAbyss/references/xiyouzhiyuan/input/` | 用于写作流水线采集的聊天输入镜像 |
 
 ## 🧩 Pipeline Script (Canonical Artifact)
 
-流水线在磁盘中的表示是一个格式化脚本：
+流水线在磁盘上的表示是一个格式化脚本：
 - `autonovelwriter/runtime/state/pipeline.script`
 
 后端通过 `GET/POST /api/pipeline` 提供：
@@ -421,52 +420,52 @@ scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 - `pipeline` JSON（派生的扁平列表，用于简单块渲染）
 - `pipeline_ast`（派生的嵌套结构，用于循环 + 缩进 UI）
 
-运行器执行也基于同一 v2 parser/AST 派生的步骤，因此 PWA 展示与实际执行保持一致。
+运行器也基于同一 v2 parser/AST 派生出的步骤执行，因此 PWA 显示与实际执行一致。
 
 运行器控制流支持 v2 容器：
 - `ROUND <n>` 将子节点重复 `n` 次。
 - `FOREACH_TASK` 对当前激活任务列表（`autonovelwriter/runtime/tasks/tasks.json`）的每个任务执行其子节点一次。
 - `FOREACH_ACTION` 对当前任务 `payload.actions` 列表中的每个条目执行其子节点一次（设计上应嵌套于 `FOREACH_TASK` 下）。
 
-可恢复机制：
+可恢复性：
 - 运行器将可恢复执行游标持久化到 `autonovelwriter/runtime/state/runner_state.json`。
-- 仅当某个块成功完成后才前进游标，因此重启不会跳过未完成工作。
+- 只有块成功完成后游标才会前进，因此重启不会跳过未完成工作。
 - 若规范脚本发生变更（hash 不匹配），运行器会停止并要求重启（游标失效）。
-- 运行器将每步 `ActionResult` 持久化到 `autonovelwriter/runtime/state/action_results.jsonl`，并使用确定性的每步 `exec_id` 避免重启后重复提交已入账结果。
-  - 在 `FOREACH_ACTION` 中运行时，ActionResults 包含 `action_index`、`action_id_ref`、`action_key`，变量中还会出现 `prev` 以及显式的 `task.prev` 与 `action.prev` 作用域。
+- 运行器将每步 `ActionResult` 持久化到 `autonovelwriter/runtime/state/action_results.jsonl`，并使用确定性的每步 `exec_id` 避免重启后重复提交已提交结果。
+- 在 `FOREACH_ACTION` 中运行时，ActionResults 包含 `action_index`、`action_id_ref`、`action_key`，变量中还会出现 `prev`，并区分 `task.prev` 与 `action.prev` 的作用域。
 
 Pipeline v2 支持嵌套：
 - `LOOP <n>` 引入循环块
 - `ROUND <n>` 引入轮次容器块
 - `FOREACH_TASK` 引入按任务迭代容器
-- `FOREACH_ACTION` 引入按动作迭代容器（运行器会遍历 `task.payload.actions`）
-- `IF <expr>` 引入条件容器（解析与渲染已支持；当前运行器仅执行 then 分支）
+- `FOREACH_ACTION` 引入按动作迭代容器（运行器遍历 `task.payload.actions`）
+- `IF <expr>` 引入条件容器（解析和渲染已支持；当前运行器仅执行 then 分支）
 - `ELSE` 在 `IF` 下引入可选分支
 - 子节点每层缩进 2 个空格
 
 校验（非持久化）：
-- `POST /api/pipeline/validate` 返回规范预览及 `pipeline_ast`、warnings、errors。
+- `POST /api/pipeline/validate` 返回规范预览及 `pipeline_ast`、warnings 与 errors。
 
 PWA 在文本域中展示脚本（这是权威来源），并基于 `pipeline_ast` 渲染嵌套块。
-若后端验证端点不可达，PWA 会回退到本地解析器，支持相同 v2 动词（`LOOP`、`ROUND`、`FOREACH_TASK`、`FOREACH_ACTION`、`IF`、`ELSE`、`STEP`、`DISABLED`）。
+当后端 validate 端点不可达时，PWA 会回退到本地解析器，支持同一 v2 动词（`LOOP`、`ROUND`、`FOREACH_TASK`、`FOREACH_ACTION`、`IF`、`ELSE`、`STEP`、`DISABLED`）。
 
 Blocks UI 说明：
-- `LOOP` 与 `ROUND` 的重复次数可在块列表中内联编辑；合法编辑会立即同步到规范脚本文本框。
-- Blocks 工具栏可插入 `LOOP`、`ROUND`、`FOREACH_TASK`、`FOREACH_ACTION`、`IF` 容器，无需手工改脚本（会包裹选中的块，或追加一个合法且非空容器）。
-- 可在画布中删除块（每个块有 Delete 按钮；选中块后也可按 `Delete` 键）。删除容器时会提升子节点，编辑器也会强制容器保持非空，以避免脚本非法。
+- `LOOP` 和 `ROUND` 的重复次数可在块列表中内联编辑；合法编辑会立即同步到规范脚本文本域。
+- Blocks 工具栏可插入 `LOOP`、`ROUND`、`FOREACH_TASK`、`FOREACH_ACTION`、`IF` 容器，无需手工改脚本（会包裹选中的块，或追加一个合法且非空的容器）。
+- 可在画布中删除块（每个块有 Delete 按钮；块选中时也可按 `Delete` 键）。删除容器时会提升子节点，编辑器会强制容器保持非空，以避免生成非法脚本。
 - `IF` 块结构在编辑器内始终保持有效：`ELSE` 不会脱离 `IF` 持久化，且 then 分支保持非空。
 - `STEP` 块提供动作库控制：动作选择器、`Customize`（将默认动作复制到用户动作并切换）与 `Edit`（`name/tool/prompt/script` 的动作编辑器弹窗）。
 
 ## 📝 Runner Outputs (Draft Stub)
 
-当流水线包含 `STEP write` 块时，后端运行器会在项目输出目录下创建草稿文件：
+当流水线包含 `STEP write` 块时，后端运行器会在以下位置创建草稿文件：
 - `autonovelwriter/runtime/projects/<project_id>/outputs/`
 
 后端同时会触发：
-- WebSocket 事件 `output_created`（含 `path` 与 `project_rel_path`）
+- WS 事件 `output_created`（含 `path` 与 `project_rel_path`）
 - 一行日志 `[output] created: ...`
 
-PWA 包含最小化的 Outputs 面板，通过 `GET /api/outputs/index` 列出文件，并在 `output_created` 时刷新。
+PWA 包含简化版 Outputs 面板，可通过 `GET /api/outputs/index` 列表文件，并在 `output_created` 时刷新。
 
 ## 📦 Runner Tasks (Batch Stub)
 
@@ -474,15 +473,15 @@ PWA 包含最小化的 Outputs 面板，通过 `GET /api/outputs/index` 列出�
 - `autonovelwriter/runtime/tasks/batches/<batch_id>/`
 
 后端同时会触发：
-- WebSocket 事件 `tasks_batch_created`（含 `batch_dir`、`tasks_jsonl`、`task_count`）
+- WS 事件 `tasks_batch_created`（含 `batch_dir`、`tasks_jsonl`、`task_count`）
 - 一行日志 `[tasks] created batch: ...`
 
-PWA 包含最小化的 Task Batches 面板，通过 `GET /api/tasks/batches/index` 列出批次，并在 `tasks_batch_created` 时刷新。
+PWA 包含简化版 Task Batches 面板，可通过 `GET /api/tasks/batches/index` 列出批次，并在 `tasks_batch_created` 时刷新。
 它还可查看批次详情（`GET /api/tasks/batches/<batch_id>`）并激活某批次作为 `FOREACH_TASK` 的当前任务列表（`POST /api/tasks/batches/<batch_id>/activate`）。
 
 ## 🔐 Agent Settings / Codex Gate
 
-PWA 的设置面板通过 `/api/settings` 将代理设置持久化到 `autonovelwriter/runtime/state/settings.json`。
+PWA 设置面板通过 `/api/settings` 将代理设置持久化到 `autonovelwriter/runtime/state/settings.json`。
 
 出于安全考虑，后端只有在以下条件同时满足时才会启动 `codex` CLI：
 - `settings.agent.enabled=true` 且 `settings.agent.sdk="codex"`
@@ -497,18 +496,18 @@ PWA 内置轻量级 i18n 系统。
 - 强制 UI 语言：在 PWA 地址后追加 `?lang=<code>`（例如 `?lang=ja`）。
 - 浏览器持久化：`localStorage` 键为 `anw_lang`。
 - 支持的 UI 语言：`en`、`zh-Hans`、`zh-Hant`、`ja`、`ko`、`vi`、`ar`（RTL）、`fr`、`es`、`ru`、`de`。
-- 本仓库级 README 多语言版本位于 `i18n/`，并从本文件顶部的单一语言切换行跳转。
+- 本仓库级 README 多语言版本位于 `i18n/`，并从本文件顶部的语言切换行跳转。
 
 | README locale files (`i18n/`) | 状态 |
 |---|---|
-| `README.ar.md`, `README.de.md`, `README.es.md`, `README.fr.md`, `README.ja.md`, `README.ko.md`, `README.ru.md`, `README.vi.md`, `README.zh-Hans.md`, `README.zh-Hant.md` | 已存在 |
+| `README.ar.md`, `README.de.md`, `README.es.md`, `README.fr.md`, `README.ja.md`, `README.ko.md`, `README.ru.md`, `README.vi.md`, `README.zh-Hans.md`, `README.zh-Hant.md` | Present |
 
 ## 🖋️ Novel Settings (Separate From UI Language)
 
 小说写作偏好存储在后端设置中的 `settings.novel.*`：
 - `autonovelwriter/runtime/state/settings.json`
 
-该设置与 PWA UI 语言（`?lang=` / `anw_lang`）有意保持解耦。
+这些设置与 PWA UI 语言（`?lang=` / `anw_lang`）是刻意解耦的。
 
 每个项目的覆盖设置存储于：
 - `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json`
@@ -542,6 +541,25 @@ scripts/run_autonovelwriter_tmux.sh --no-attach
 tmux attach -t autonovelwriter_app
 ```
 
+### Run backend test files directly
+
+```bash
+python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py
+python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py
+```
+
+### Run PWA logic test file directly
+
+```bash
+node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
+```
+
+### Scripted automation helper example
+
+```bash
+bash examples/ralph-wiggum-example.sh
+```
+
 ## 🛠️ Development Notes
 
 ### Driver Workflow (Auto-Dev)
@@ -561,25 +579,25 @@ tmux attach -t autonovelwriter_app
 - 在当前任务完成后停止：`touch references/autonovelwriter_dev/STOP`
 - 重置状态跟踪（保留队列）：`scripts/auto-autonovelwriter-development.sh --reset-state`
 - 开启全新 Codex 会话：`scripts/auto-autonovelwriter-development.sh --new-session`
-- 安全实践：在干净的分支/工作区内运行，并在重启前检查 `references/autonovelwriter_dev/state.tsv`
+- 安全实践：在干净分支/工作树内运行，并在重启前检查 `references/autonovelwriter_dev/state.tsv`
 
 ### Operational assumptions
 
 - 本 README 默认以 Linux/macOS 下本地优先的开发方式为前提，假定已安装 `bash` 与 Python 3.11+。
 - `autonovelwriter/runtime/` 下的运行时状态是可变的，且预计不纳入版本控制。
-- 这里描述的流水线行为以仓库内当前实现为准，主要位于 `autonovelwriter/backend/server.py` 和 `autonovelwriter/pwa/app.js`。
+- 这里描述的流水线行为以仓库当前实现为准，主要位于 `autonovelwriter/backend/server.py` 与 `autonovelwriter/pwa/app.js`。
 
 ## 🧪 Testing Notes
 
-当前仓库没有顶层 `Makefile`/`tox`/`npm test` 编排器。
+当前仓库没有顶层 `Makefile` / `tox` / `npm test` 编排器。
 
 当前可用的测试入口如下：
 
-| 范围 | 入口 |
+| Area | Entry point |
 |---|---|
 | 后端 parser/AST | `python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py` |
 | 后端 foreach-action 语法 | `python3 autonovelwriter/backend/tests/pipeline_foreach_action_roundtrip_test.py` |
-| 后端运行器语义 | `python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py` |
+| 后端 runner 语义 | `python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py` |
 | 后端动作库更新 | `python3 autonovelwriter/backend/tests/actions_library_update_unit_test.py` |
 | PWA AST 删除行为 | `node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js` |
 
@@ -594,61 +612,63 @@ python3 autonovelwriter/backend/tests/actions_library_update_unit_test.py
 node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
 ```
 
-如果你修改了运行器语义、流水线语法或动作库行为，请同步更新测试与 README/API 说明。
+如果你新增或变更 runner 语义、流水线语法或动作库行为，请同步更新测试和 README/API 说明。
 
 ## 📚 Repository Contents
 
-- `docs/autonovelwriter_spec.md`：Scratch 风格控制器的产品规格（聊天 + 文件夹流水线 + start/pause/stop + settings）。
+- `docs/autonovelwriter_spec.md`：Scratch 风格控制器产品规格（聊天 + 文件夹流水线 + start/pause/stop + settings）。
 - `scripts/auto-autonovelwriter-development.sh`：自动开发 AutoNovelWriter 本身（任务循环：`plan -> implement -> debug -> fix -> i18n -> summary -> update_readme -> commit+push`）。
 - `docs/auto-development-guide.md`：双语（EN/ZH）长程可恢复 auto-development 代理的理念与要求。
-- `docs/ORDERING_RATIONALE.md`：截图驱动步骤排序的示例说明。
-- `scripts-legacy/`：保留但不再用于 AutoNovelWriter 的旧脚本。
+- `docs/ORDERING_RATIONALE.md`：截图驱动步骤排序示例。
+- `scripts-legacy/`：保留但不再使用的旧脚本。
 - `examples/ralph-wiggum-example.sh`：Codex CLI 自动化示例脚本。
 
-额外开发说明：
+其他开发说明：
 - 后端测试位于 `autonovelwriter/backend/tests/`。
-- 一个小型 PWA 行为测试在 `autonovelwriter/pwa/tests/`。
-- `i18n/` 下存放本地化仓库 README 文件，UI 的翻译字典内置于 `autonovelwriter/pwa/app.js`。
+- 一个小型 PWA 行为测试位于 `autonovelwriter/pwa/tests/`。
+- `i18n/` 下存放仓库级 README 本地化文件，UI 字典仍内嵌于 `autonovelwriter/pwa/app.js`。
 
 ## 🧯 Troubleshooting
 
-| 现象 | 排查方向 |
+| Symptom | What to check |
 |---|---|
 | `tmux not found in PATH` | 安装 tmux，或改为手动运行后端/静态服务。 |
 | `conda not found in PATH`（在使用 `--env` 脚本时） | 安装 Miniconda/Anaconda，或改用手动 `pip` 安装。 |
 | PWA 无法连接后端 | 检查后端地址/端口和 WebSocket 端点 `ws://<host>:<port>/ws`。 |
 | `POST /api/agent/test` 返回 gated/disabled | 确认同时满足 `settings.agent.enabled=true`、`settings.agent.sdk="codex"` 与环境变量 `AUTONOVELWRITER_ENABLE_CODEX=1`。 |
-| 修改脚本后运行器停止 | 预期行为；规范脚本 hash 变化会使游标失效并要求重启。 |
-| 静态 PWA 在 `:5173` 正常但接口失败 | 确认后端在 `:8787` 运行（或相应调整前端后端地址）。 |
+| 修改脚本后运行器停止 | 这是预期行为；规范脚本 hash 变化会使游标失效并要求重启。 |
+| `:5173` 上的静态 PWA 可用但 API 调用失败 | 确认后端在 `:8787` 运行（或调整前端后端目标设置）。 |
 
 ## 🗺️ Roadmap
 
-- 完成并稳定化剩余 auto-dev 队列任务（见上方自动进度块）。
-- 扩展并持续同步 `i18n/` 下的仓库级 README 多语言版本。
-- 扩大运行器边界场景与 PWA 交互的自动化测试覆盖。
-- 继续改进动作库与任务/动作迭代流程。
+- 完成并稳定其余 auto-dev 队列项（见上方自动进度块）。
+- 扩展并持续同步 `i18n/` 下仓库级 README 的多语言版本。
+- 扩大运行器边界场景和 PWA 交互的自动化测试覆盖。
+- 持续改进 Action Library 与任务/动作迭代流程。
 
 ## 🤝 Contributing
 
 欢迎贡献。
 
-仓库贡献建议：
+实践建议：
 - 先阅读 `docs/autonovelwriter_spec.md` 与 `docs/auto-development-guide.md`。
-- 将运行时变更限制在 `autonovelwriter/runtime/`（该目录内容是 gitignored，不应提交）。
-- 更推荐拆分成可复现的增量 PR。
-- 如更改流水线语义或 API 契约，请同步更新 README 与相关测试。
+- 将运行时变更限制在 `autonovelwriter/runtime/`（该目录内容是 gitignore，不应提交）。
+- 优先采用可复现、可增量的 PR。
+- 若更改流水线语义或 API 契约，请同步更新 README 与相关测试。
 
-备注：当前草稿环境中未发现独立 `CONTRIBUTING.md`。
+备注：当前草稿中未发现仓库根目录独立的 `CONTRIBUTING.md`。
+
+---
 
 ## ❤️ Support
 
 | Donate | PayPal | Stripe |
-|---|---|---|
-| [![Donate](https://img.shields.io/badge/Donate-LazyingArt-0EA5E9?style=for-the-badge&logo=ko-fi&logoColor=white)](https://chat.lazying.art/donate) | [![PayPal](https://img.shields.io/badge/PayPal-RongzhouChen-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/RongzhouChen) | [![Stripe](https://img.shields.io/badge/Stripe-Donate-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
+| --- | --- | --- |
+| [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
 
 ## 📄 License
 
-本仓库根目录当前草稿中未显式声明 License 文件或状态。
+License 文件/状态在仓库根目录中目前未在该版本草稿中显式声明。
 
 假设说明：
-- 如果你计划明确开源发布，请在顶层添加 `LICENSE` 文件并相应更新本节。
+- 如果你计划明确开源发布，请在仓库根目录添加 `LICENSE` 文件并相应更新本节。

@@ -1,6 +1,7 @@
 [English](../README.md) · [العربية](README.ar.md) · [Español](README.es.md) · [Français](README.fr.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Tiếng Việt](README.vi.md) · [中文 (简体)](README.zh-Hans.md) · [中文（繁體）](README.zh-Hant.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
 
+
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
 <div align="center">
@@ -22,6 +23,8 @@ Kho lưu trữ này cũng tích hợp `AutoAppDev/` dưới dạng submodule (c�
 > [!TIP]
 > `README.md` là bản gốc chính. Các bản địa hóa đặt trong `i18n/` và được liên kết bởi một dòng lựa chọn ngôn ngữ duy nhất ở đầu file.
 
+## 🧭 Project Snapshot
+
 | Điều cần biết nhanh | Chi tiết |
 |---|---|
 | Công nghệ chính | Python + Tornado backend, PWA frontend trong trình duyệt |
@@ -29,6 +32,15 @@ Kho lưu trữ này cũng tích hợp `AutoAppDev/` dưới dạng submodule (c�
 | Chế độ chạy | Trình chạy có thể tiếp tục với con trỏ và kết quả action đã lưu |
 | Thời gian thực | Endpoint WebSocket tại `/ws` |
 | Runtime gốc có thể thay đổi | `autonovelwriter/runtime/` (được gitignore) |
+
+## At-a-Glance Navigation
+
+| Cần làm gì ngay | Lệnh / URL |
+|---|---|
+| Mở PWA local | `http://127.0.0.1:8787/` |
+| Kết nối cập nhật trực tiếp | `ws://127.0.0.1:8787/ws` |
+| Khởi động backend nhanh | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
+| Chạy script thiết lập + khởi chạy | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
 
 | Mặc định khởi chạy | Giá trị |
 |---|---|
@@ -42,6 +54,7 @@ Kho lưu trữ này cũng tích hợp `AutoAppDev/` dưới dạng submodule (c�
 - [Features](#-features)
 - [Architecture at a Glance](#-architecture-at-a-glance)
 - [Project Structure](#️-project-structure)
+- [At-a-Glance Navigation](#at-a-glance-navigation)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
 - [Usage](#-usage)
@@ -646,8 +659,8 @@ Note: file `CONTRIBUTING.md` riêng chưa được tìm thấy tại root repo t
 ## ❤️ Support
 
 | Donate | PayPal | Stripe |
-|---|---|---|
-| [![Donate](https://img.shields.io/badge/Donate-LazyingArt-0EA5E9?style=for-the-badge&logo=ko-fi&logoColor=white)](https://chat.lazying.art/donate) | [![PayPal](https://img.shields.io/badge/PayPal-RongzhouChen-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/RongzhouChen) | [![Stripe](https://img.shields.io/badge/Stripe-Donate-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
+| --- | --- | --- |
+| [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
 
 ## 📄 License
 

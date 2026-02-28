@@ -1,6 +1,7 @@
 [English](README.md) · [العربية](i18n/README.ar.md) · [Español](i18n/README.es.md) · [Français](i18n/README.fr.md) · [日本語](i18n/README.ja.md) · [한국어](i18n/README.ko.md) · [Tiếng Việt](i18n/README.vi.md) · [中文 (简体)](i18n/README.zh-Hans.md) · [中文（繁體）](i18n/README.zh-Hant.md) · [Deutsch](i18n/README.de.md) · [Русский](i18n/README.ru.md)
 
 
+
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
 <div align="center">
@@ -14,6 +15,8 @@
     <img alt="Pipeline" src="https://img.shields.io/badge/pipeline-script%20%2B%20AST-2563eb" />
     <img alt="Runtime" src="https://img.shields.io/badge/runtime-local%20state-orange" />
     <img alt="Status" src="https://img.shields.io/badge/status-active%20development-f59e0b" />
+    <img alt="Canonical docs" src="https://img.shields.io/badge/docs-README.md-critical?style=flat" />
+    <img alt="Languages" src="https://img.shields.io/badge/i18n-10%2B%20languages-8b5cf6?style=flat" />
   </p>
 </div>
 
@@ -22,6 +25,8 @@ This repo also vendors `AutoAppDev/` as a submodule (reusable auto-development s
 > [!TIP]
 > `README.md` is the canonical base. Localized variants live in `i18n/` and are linked by the single language-options line at the top.
 
+## 🧭 Project Snapshot
+
 | Quick facts | Details |
 |---|---|
 | Primary stack | Python + Tornado backend, browser PWA frontend |
@@ -29,6 +34,16 @@ This repo also vendors `AutoAppDev/` as a submodule (reusable auto-development s
 | Execution mode | Resumable runner with persisted cursor and action results |
 | Realtime | WebSocket endpoint at `/ws` |
 | Mutable runtime root | `autonovelwriter/runtime/` (gitignored) |
+## At-a-Glance Navigation
+
+| 🎯 What to use now | 🔧 Command / URL |
+|---|---|
+| Open the local PWA | `http://127.0.0.1:8787/` |
+| Connect live updates | `ws://127.0.0.1:8787/ws` |
+| Start backend quickly | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
+| Run scripted setup + start | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
+
+## 🔌 Launch defaults
 
 | Launch defaults | Value |
 |---|---|
@@ -42,6 +57,7 @@ This repo also vendors `AutoAppDev/` as a submodule (reusable auto-development s
 - [Features](#-features)
 - [Architecture at a Glance](#-architecture-at-a-glance)
 - [Project Structure](#️-project-structure)
+- [At-a-Glance Navigation](#at-a-glance-navigation)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
 - [Usage](#-usage)
@@ -646,8 +662,8 @@ Note: a dedicated `CONTRIBUTING.md` was not found at repository root at the time
 ## ❤️ Support
 
 | Donate | PayPal | Stripe |
-|---|---|---|
-| [![Donate](https://img.shields.io/badge/Donate-LazyingArt-0EA5E9?style=for-the-badge&logo=ko-fi&logoColor=white)](https://chat.lazying.art/donate) | [![PayPal](https://img.shields.io/badge/PayPal-RongzhouChen-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/RongzhouChen) | [![Stripe](https://img.shields.io/badge/Stripe-Donate-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
+| --- | --- | --- |
+| [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
 
 ## 📄 License
 

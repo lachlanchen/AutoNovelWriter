@@ -1,51 +1,122 @@
 [English](../README.md) · [العربية](README.ar.md) · [Español](README.es.md) · [Français](README.fr.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Tiếng Việt](README.vi.md) · [中文 (简体)](README.zh-Hans.md) · [中文（繁體）](README.zh-Hant.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/lachlanchen/lachlanchen/main/figs/banner.png" alt="LazyingArt banner" />
-</p>
+[![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
-# AutoNovelWriter
+<div align="center">
+  <h1>AutoNovelWriter</h1>
+  <p><strong>Scratch-подобная PWA и backend на Tornado для управления автоматизированным конвейером написания романов (и разработки приложений).</strong></p>
+  <p>
+    <img alt="Python" src="https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white" />
+    <img alt="Backend" src="https://img.shields.io/badge/backend-Tornado%206.4%2B-0ea5e9" />
+    <img alt="Frontend" src="https://img.shields.io/badge/frontend-PWA-10b981" />
+    <img alt="Realtime" src="https://img.shields.io/badge/realtime-WebSocket-06b6d4" />
+    <img alt="Pipeline" src="https://img.shields.io/badge/pipeline-script%20%2B%20AST-2563eb" />
+    <img alt="Runtime" src="https://img.shields.io/badge/runtime-local%20state-orange" />
+    <img alt="Status" src="https://img.shields.io/badge/status-active%20development-f59e0b" />
+  </p>
+</div>
 
+В этом репозитории также используется `AutoAppDev/` как submodule (повторно используемые скрипты авторазработки).
 
-![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
-![Backend](https://img.shields.io/badge/backend-Tornado%206.4%2B-0ea5e9)
-![Frontend](https://img.shields.io/badge/frontend-PWA-10b981)
-![Runtime](https://img.shields.io/badge/runtime-local%20state-orange)
-![Status](https://img.shields.io/badge/status-active%20development-f59e0b)
+> [!TIP]
+> `README.md` — каноническая база. Локализованные версии лежат в `i18n/` и подключаются через единственную строку выбора языка в начале файла.
 
-Scratch-подобная PWA + backend на Tornado для управления автоматизированным конвейером написания романов (и разработки приложений).
-
-Этот репозиторий также подключает `AutoAppDev/` как submodule (переиспользуемые скрипты авторазработки).
-
-## Обзор
-
-AutoNovelWriter предоставляет локальный оркестрационный слой для:
-- Редактирования канонического скрипта конвейера (`pipeline.script`) и через исходный текст, и через блочный UI.
-- Запуска возобновляемого backend-исполнения с сохранением курсора и результатов действий.
-- Управления проектами, материалами, выходами, пакетами задач и шаблонами действий.
-- Потоковой передачи live-обновлений через WebSocket (`/ws`) в PWA.
-
-Канонический изменяемый runtime: `autonovelwriter/runtime/` (игнорируется git).
-
-| Область | Что делает |
+| Коротко | Подробности |
 |---|---|
-| Авторинг конвейера | Редактирование канонического скрипта + вложенного блочного UI из одного общего source of truth |
-| Исполнение | Возобновляемый runner с сохранением курсора и результатов действий |
-| Операции проекта | Материалы, выходы, настройки и активация пакетов задач в рамках проекта |
-| UX в реальном времени | События `/ws` для обновлений статуса/логов/выходов/задач/действий |
+| Основной стек | Python + backend Tornado, frontend PWA в браузере |
+| Базовый UX | Редактор скриптов и блоков на одной общей канонической source-of-truth |
+| Режим выполнения | Возобновляемый runner с сохранением курсора и результатов действий |
+| Realtime | WebSocket endpoint по адресу `/ws` |
+| Изменяемая runtime root | `autonovelwriter/runtime/` (игнорируется Git) |
 
-## Возможности
+| Значения по умолчанию | Значение |
+|---|---|
+| PWA URL | `http://127.0.0.1:8787/` |
+| WebSocket URL | `ws://127.0.0.1:8787/ws` |
+| Backend host/port | `127.0.0.1:8787` |
 
-- Scratch-подобный редактор конвейера на основе канонического скрипта + parser/AST.
+## Содержание
+
+- [Обзор](#-обзор)
+- [Возможности](#-возможности)
+- [Архитектура с первого взгляда](#-архитектура-с-первого-взгляда)
+- [Структура проекта](#️-структура-проекта)
+- [Требования](#-требования)
+- [Установка](#-установка)
+- [Использование](#-использование)
+- [Конфигурация](#️-конфигурация)
+- [Ключевые backend API](#-ключевые-backend-api)
+- [Пути runtime](#-пути-runtime)
+- [Pipeline script (канонический артефакт)](#-pipeline-script-канонический-артефакт)
+- [Runner outputs (черновик)](#-runner-outputs-черновик)
+- [Runner tasks (batch-черновик)](#-runner-tasks-batch-черновик)
+- [Настройки агента / Codex Gate](#-настройки-агента--codex-gate)
+- [PWA I18N (язык интерфейса)](#-pwa-i18n-язык-интерфейса)
+- [Настройки романа (отдельно от языка UI)](#️-настройки-романа-отдельно-от-языка-ui)
+- [Примеры](#-примеры)
+- [Заметки по разработке](#️-заметки-по-разработке)
+- [Заметки по тестированию](#-заметки-по-тестированию)
+- [Содержимое репозитория](#-содержимое-репозитория)
+- [Устранение неполадок](#-устранение-неполадок)
+- [Roadmap](#️-roadmap)
+- [Как помочь проекту](#-как-помочь-проекту)
+- [Support](#-support)
+- [Лицензия](#-лицензия)
+
+## 📌 Обзор
+
+AutoNovelWriter предоставляет локальный слой оркестрации для:
+- Редактирования канонического pipeline-скрипта (`pipeline.script`) как в текстовом виде, так и через интерфейс блоков.
+- Запуска возобновляемого выполнения в backend с сохранением курсора и результатов действий.
+- Управления проектами, материалами, выходными файлами, партиями задач и шаблонами действий.
+- Отправки live-обновлений через WebSocket (`/ws`) в PWA.
+
+Каноническая изменяемая runtime — `autonovelwriter/runtime/` (содержимое игнорируется Git).
+
+| Область | Назначение |
+|---|---|
+| Авторинг pipeline | Редактирование канонического скрипта + вложенного UI блоков из одного источника истины |
+| Выполнение | Возобновляемый runner с сохраненным курсором и результатами действий |
+| Операции с проектами | Проектные материалы, выходы, настройки и активация партий задач |
+| Realtime UX | События `/ws` для обновлений статуса, логов, выходов, задач и действий |
+
+## ✨ Возможности
+
+- Scratch-подобный редактор pipeline на основе канонического скрипта + parser/AST.
 - API управления runner (`start/pause/resume/stop`) с возобновляемым состоянием.
-- Контейнеры управления потоком: `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF/ELSE`.
-- Action Library с шаблонами по умолчанию + пользовательскими override по схеме copy-on-edit.
-- Переопределения настроек романа на уровне проекта с семантикой наследования.
-- Поток генерации/индексации/деталей/активации пакетов задач для `FOREACH_TASK`.
+- Control-flow контейнеры: `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF/ELSE`.
+- Библиотека действий с шаблонами по умолчанию + пользовательские override по модели copy-on-edit.
+- Настройки романа на уровне проекта с семантикой наследования.
+- Поток генерации/индекса/деталей/активации партий для `FOREACH_TASK`.
 - Индексация выходов и endpoint предпросмотра последнего PDF романа.
-- Встроенные словари i18n для PWA (`en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`).
-- Вспомогательные скрипты tmux и возобновляемый Codex auto-dev driver.
+- Встроенные i18n-словарные файлы для PWA (`en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`).
+- Служебные скрипты tmux и возобновляемый драйвер Codex auto-dev.
+
+## 🧭 Архитектура с первого взгляда
+
+```text
+Browser (PWA)
+  ├─ pipeline editor (скрипт + blocks)
+  ├─ panels: settings / projects / actions / tasks / outputs
+  └─ WebSocket client (/ws)
+          │
+          ▼
+Tornado backend (autonovelwriter/backend/server.py)
+  ├─ REST APIs (/api/*)
+  ├─ WebSocket broadcast hub
+  ├─ parser + AST + persistence канонического скрипта
+  ├─ resumable runner + журнал коммитов результатов действий
+  └─ runtime bootstrap (dirs + defaults)
+          │
+          ▼
+autonovelwriter/runtime/ (mutable, local-first)
+  ├─ state/ (pipeline, settings, runner, chat)
+  ├─ projects/<id>/ (materials, outputs, project settings)
+  ├─ tasks/ (active list + generated batches)
+  ├─ actions/ (defaults + user overrides)
+  └─ logs/ (runner.log)
+```
 
 ## 🗂️ Структура проекта
 
@@ -57,19 +128,19 @@ AutoNovelWriter/
 ├── .gitmodules                     # объявление submodule AutoAppDev
 ├── autonovelwriter/
 │   ├── backend/
-│   │   ├── server.py              # основной entrypoint backend + API/WS handlers + логика runner
+│   │   ├── server.py              # main backend entrypoint + API/WS handlers + runner logic
 │   │   ├── requirements.txt       # tornado>=6.4
 │   │   ├── .env.example
-│   │   └── tests/                 # unit-тесты backend
+│   │   └── tests/                 # backend unit tests
 │   ├── pwa/
 │   │   ├── index.html
-│   │   ├── app.js                 # логика UI + встроенные словари i18n
+│   │   ├── app.js                 # логика UI + встроенные i18n dictionaries
 │   │   ├── app.css
 │   │   ├── manifest.webmanifest
 │   │   ├── service_worker.js
 │   │   ├── icons/
 │   │   └── tests/
-│   └── runtime/                   # изменяемое состояние/IO (игнорируется git)
+│   └── runtime/                   # mutable state/IO (gitignored)
 ├── scripts/
 │   ├── run_autonovelwriter_tmux.sh
 │   ├── setup_conda_env.sh
@@ -85,74 +156,116 @@ AutoNovelWriter/
 │   └── autonovelwriter_dev/
 ├── examples/
 │   └── ralph-wiggum-example.sh
-├── i18n/                          # присутствует (пока без файлов)
-└── AutoAppDev/                    # связанный companion-проект
+├── i18n/
+│   ├── README.ar.md
+│   ├── README.de.md
+│   ├── README.es.md
+│   ├── README.fr.md
+│   ├── README.ja.md
+│   ├── README.ko.md
+│   ├── README.ru.md
+│   ├── README.vi.md
+│   ├── README.zh-Hans.md
+│   └── README.zh-Hant.md
+└── AutoAppDev/                    # git submodule (git@github.com:lachlanchen/AutoAppDev.git)
 ```
 
-## ✅ Предварительные требования
+## ✅ Требования
 
-| Dependency | Обязательно | Примечания |
+| Зависимость | Обязательно | Примечание |
 |---|---|---|
 | Python `3.11+` | Да | Рекомендуемая базовая версия |
-| `pip` | Да | Установка зависимостей backend |
+| `pip` | Да | Для установки зависимостей backend |
 | `tmux` | Нет | Нужен для скрипта запуска с несколькими панелями |
-| `conda` | Нет | Необязательные вспомогательные скрипты |
-| `node` | Нет | Необязательно для прямого запуска тестового файла PWA |
+| `conda` | Нет | Опционально, для вспомогательных скриптов |
+| `node` | Нет | Опционально для прямого запуска PWA-теста |
 
-## ⚙️ Установка
+## 🚀 Установка
 
-### Вариант A: helper для Conda (рекомендуется для этого репозитория)
+| Путь | Когда использовать | Команда |
+|---|---|---|
+| Option A | Вы используете conda и хотите конфигурацию из репозитория | `scripts/setup_conda_env.sh --name autonovelwriter` |
+| Option B | Нужен setup + запуск в одной команде | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
+| Option C | Предпочитаете ручное управление pip | `python3 -m pip install -r autonovelwriter/backend/requirements.txt` |
+
+### Option A: Помощник conda (рекомендуется для этого репозитория)
 
 ```bash
 scripts/setup_conda_env.sh --name autonovelwriter
 ```
 
-Затем запуск через tmux:
+Затем запустите через tmux:
 
 ```bash
 scripts/run_autonovelwriter_tmux.sh --env autonovelwriter
 ```
 
-### Вариант B: одношаговая настройка + запуск
+### Option B: Однокомандный setup + run
 
 ```bash
 scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 ```
 
-### Вариант C: ручная установка через pip
+### Option C: Ручная установка pip
 
 ```bash
 python3 -m pip install --upgrade pip
 python3 -m pip install -r autonovelwriter/backend/requirements.txt
 ```
 
-## 🚀 Использование
+### Опционально: инициализация submodule
 
-## Dev Run (Backend + PWA)
-
-Backend (Tornado):
 ```bash
-python3 autonovelwriter/backend/server.py --port 8787
+git submodule update --init --recursive
 ```
 
-Backend также по умолчанию раздает статические ресурсы PWA из `autonovelwriter/pwa/`, поэтому можно открыть:
+## 🧪 Использование
+
+| Этап | Команда / URL |
+|---|---|
+| Запуск backend | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
+| Открыть приложение | `http://127.0.0.1:8787/` |
+| WebSocket endpoint | `ws://127.0.0.1:8787/ws` |
+| Optional static PWA | `python3 -m http.server 5173 --bind 127.0.0.1 --directory autonovelwriter/pwa` |
+| tmux launcher | `scripts/run_autonovelwriter_tmux.sh --no-attach` |
+
+### Быстрый старт (без tmux)
+
+```bash
+python3 -m pip install -r autonovelwriter/backend/requirements.txt
+python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
+# open http://127.0.0.1:8787/
+```
+
+### Dev Run (Backend + PWA)
+
+Backend (Tornado):
+
+```bash
+python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
+```
+
+По умолчанию backend также отдает статические assets PWA из `autonovelwriter/pwa/`, поэтому можно открыть:
 - `http://127.0.0.1:8787/` (PWA)
 - WebSocket: `ws://127.0.0.1:8787/ws`
 
-Опционально: PWA (отдельный static dev server):
+Опционально: PWA на отдельном static dev-server:
+
 ```bash
-python3 -m http.server 5173 --directory autonovelwriter/pwa
+python3 -m http.server 5173 --bind 127.0.0.1 --directory autonovelwriter/pwa
 ```
 
 Откройте PWA по адресу `http://127.0.0.1:5173` и укажите backend (по умолчанию `ws://127.0.0.1:8787/ws`).
 
-tmux (запуск обеих панелей + tail логов):
+tmux (запуск двух панелей + tail логов):
+
 ```bash
 scripts/run_autonovelwriter_tmux.sh --no-attach
 tmux attach -t autonovelwriter_app
 ```
 
-Helper для Conda env:
+Conda env helper:
+
 ```bash
 scripts/setup_conda_env.sh --name autonovelwriter
 scripts/run_autonovelwriter_tmux.sh --env autonovelwriter
@@ -160,84 +273,18 @@ scripts/run_autonovelwriter_tmux.sh --env autonovelwriter
 scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 ```
 
-Driver-скрипт репозитория (`scripts/auto-autonovelwriter-development.sh`) также может запускать tmux-сессию во время auto-dev.
+Скрипт проекта (`scripts/auto-autonovelwriter-development.sh`) также может запускать tmux-сессию в ходе auto-dev.
 
-### Типичный workflow
+### Типовой workflow
 
 1. Запустите backend (или helper через tmux).
 2. Откройте PWA.
-3. Редактируйте pipeline через Blocks и/или textarea скрипта.
+3. Отредактируйте pipeline в Blocks и/или textarea скрипта.
 4. Проверьте/сохраните pipeline.
-5. Запустите runner и отслеживайте логи/статус/события.
-6. Проверьте сгенерированные выходы/пакеты задач.
+5. Запустите runner и отслеживайте логи, статус и события.
+6. Просмотрите сгенерированные outputs/task batches.
 
-## 🧠 Пути runtime
-
-Все изменяемое состояние и IO находятся в `autonovelwriter/runtime/` (игнорируется git):
-
-| Path | Назначение |
-|---|---|
-| `autonovelwriter/runtime/io/inbox/` | user -> system (помещайте `.txt`/`.md`) |
-| `autonovelwriter/runtime/io/outbox/` | system -> user (backend записывает chat-сообщения) |
-| `autonovelwriter/runtime/state/` | сохраненное JSON-состояние (settings, pipeline, runner, chat) |
-| `autonovelwriter/runtime/state/chat.sqlite3` | sqlite-зеркало чата (дополнительно к chat.jsonl) |
-| `autonovelwriter/runtime/state/active_project.json` | сохраненный указатель «активного проекта» |
-| `autonovelwriter/runtime/tasks/` | файлы очереди задач |
-| `autonovelwriter/runtime/tasks/batches/<batch_id>/` | сгенерированные пакеты задач (например, из `meta_tasks_generate`) |
-| `autonovelwriter/runtime/logs/` | логи |
-| `autonovelwriter/runtime/projects/<project_id>/materials/` | материалы проекта (входные данные) |
-| `autonovelwriter/runtime/projects/<project_id>/outputs/` | выходы проекта (черновики/экспорты) |
-| `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json` | переопределения настроек написания романа на уровне проекта (например, язык романа) |
-| `autonovelwriter/runtime/actions/defaults/` | шаблоны Action Library по умолчанию (считаются неизменяемыми) |
-| `autonovelwriter/runtime/actions/user/` | пользовательские шаблоны Action Library (создаются через copy-on-edit) |
-| `/home/lachlan/Documents/VoidAbyss/references/xiyouzhiyuan/input/` | зеркалируемые входы чата для ingestion в writer pipeline |
-
-## 🧩 Pipeline Script (канонический артефакт)
-
-Pipeline представлен на диске как форматированный скрипт:
-- `autonovelwriter/runtime/state/pipeline.script`
-
-Backend отдает его через `GET/POST /api/pipeline` как:
-- `script` (канонический shell-подобный формат с строками `STEP <type>` / `DISABLED <type>`)
-- JSON `pipeline` (производный, уплощенный список для простого рендера блоков)
-- `pipeline_ast` (производная вложенная структура для UI циклов + отступов)
-
-Runner исполняет шаги, полученные из того же parser/AST v2, поэтому отображение в PWA совпадает с исполняемым.
-Управление потоком в runner поддерживает контейнеры v2:
-- `ROUND <n>` повторяет своих потомков `n` раз.
-- `FOREACH_TASK` запускает потомков один раз на каждую задачу в активном списке задач (`autonovelwriter/runtime/tasks/tasks.json`).
-- `FOREACH_ACTION` запускает потомков один раз на каждый элемент в списке `payload.actions` текущей задачи (предполагается вложение под `FOREACH_TASK`).
-
-Возобновляемость:
-- Runner сохраняет возобновляемый курсор исполнения в `autonovelwriter/runtime/state/runner_state.json`.
-- Курсор продвигается только после успешного завершения блока (чтобы перезапуск не пропускал незавершенную работу).
-- Если канонический скрипт pipeline изменился (несовпадение hash), runner останавливается и требует перезапуска (курсор инвалидируется).
-- Runner сохраняет записи `ActionResult` по шагам в `autonovelwriter/runtime/state/action_results.jsonl` и использует детерминированный `exec_id` на шаг, чтобы не дублировать уже зафиксированные результаты при перезапуске.
-  - При запуске внутри `FOREACH_ACTION` в ActionResults включаются `action_index`, `action_id_ref` и `action_key`, а vars содержат `prev` плюс явные области `task.prev` и `action.prev`.
-
-Pipeline script v2 поддерживает вложенность:
-- `LOOP <n>` вводит блок цикла
-- `ROUND <n>` вводит контейнер «раундов»
-- `FOREACH_TASK` вводит контейнер «на каждую задачу»
-- `FOREACH_ACTION` вводит контейнер «на каждое действие» (runner итерирует `task.payload.actions`)
-- `IF <expr>` вводит контейнер условия (parse/render; в runner пока выполняется только then-ветка)
-- `ELSE` вводит опциональную альтернативную ветку под блоком `IF`
-- дочерние элементы имеют отступ 2 пробела на уровень
-
-Валидация (без сохранения):
-- `POST /api/pipeline/validate` возвращает канонический preview плюс `pipeline_ast`, warnings и errors.
-
-PWA показывает скрипт в textarea (source of truth) и рендерит вложенные блоки из `pipeline_ast`.
-Если endpoint валидации backend недоступен, PWA откатывается на локальный parser, который поддерживает те же глаголы v2 (`LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF`, `ELSE`, `STEP`, `DISABLED`).
-
-Примечания по Blocks UI:
-- Счетчики повторов `LOOP` и `ROUND` редактируются прямо в списке блоков; корректные правки сразу обновляют textarea канонического скрипта.
-- Toolbar в Blocks может вставлять контейнеры `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION` и `IF` без ручного редактирования скрипта (оборачивает выбранный блок или добавляет корректный непустой контейнер).
-- Блоки можно удалять с canvas (кнопка Delete у блока; клавиша `Delete`, когда блок выбран). При удалении контейнера потомки поднимаются на уровень выше, а редактор сохраняет непустые контейнеры, чтобы избежать невалидных скриптов.
-- Блоки `IF` в редакторе поддерживаются структурно валидными: `ELSE` не может сохраниться вне `IF`, а then-ветка остается непустой.
-- Блоки `STEP` показывают элементы управления Action Library: селектор действия, `Customize` (копирует default action в user action и переключает на него) и `Edit` (модальное окно Action Editor для `name/tool/prompt/script`).
-
-## 🔧 Конфигурация
+## ⚙️ Конфигурация
 
 ### Переменные окружения
 
@@ -246,36 +293,76 @@ PWA показывает скрипт в textarea (source of truth) и ренд�
 - `AUTONOVELWRITER_RUNTIME_ROOT` (по умолчанию `autonovelwriter/runtime`)
 - `AUTONOVELWRITER_PWA_ROOT` (по умолчанию `autonovelwriter/pwa`)
 - `AUTONOVELWRITER_HOST` (по умолчанию `127.0.0.1`)
-- `AUTONOVELWRITER_PORT` (по умолчанию `8787`)
-- `AUTONOVELWRITER_WORKSPACE_ROOT` (по умолчанию: родитель директории корня репозитория)
+- `AUTONOVELWRITER_PORT` (по умолчанию CLI: `8787`)
+- `AUTONOVELWRITER_WORKSPACE_ROOT` (по умолчанию: родительский каталог корня репозитория)
 - `AUTONOVELWRITER_WRITER_SCRIPT` (по умолчанию `${WORKSPACE_ROOT}/scripts/auto-xiyouzhiyuan-writer.sh`)
 - `AUTONOVELWRITER_XIYOU_INPUT_DIR` (по умолчанию `${WORKSPACE_ROOT}/references/xiyouzhiyuan/input`)
 - `AUTONOVELWRITER_NOVELS_ROOT` (по умолчанию `${WORKSPACE_ROOT}/auto-novels`)
 - `AUTONOVELWRITER_ENABLE_CODEX` (gate выполнения агента, по умолчанию отключен)
-- `AUTONOVELWRITER_CODEX_CLI_PATH` (опциональное переопределение бинарника codex)
+- `AUTONOVELWRITER_CODEX_CLI_PATH` (опциональный override пути к бинарнику codex)
 
-## 🌐 Ключевые Backend API
+### Параметры CLI скриптов
+
+`run_autonovelwriter_tmux.sh`:
+- `--session <name>`
+- `--backend-port <n>`
+- `--pwa-port <n>`
+- `--host <ip>`
+- `--env <conda_env>`
+- `--debug`
+- `--kill`
+- `--no-attach`
+
+`setup_conda_env.sh`:
+- `--name <env>`
+- `--python <ver>`
+- `--force-recreate`
+
+`setup_and_run_autonovelwriter.sh`:
+- `--env <name>`
+- `--python <ver>`
+- `--session <name>`
+- `--backend-port <n>`
+- `--pwa-port <n>`
+- `--host <ip>`
+- `--force-recreate`
+- `--debug`
+- `--kill`
+- `--no-attach`
+
+## 🔌 Ключевые backend API
+
+| Группа API | Основные endpoints |
+|---|---|
+| Health & settings | `/api/health`, `/api/settings` |
+| Проекты и проектные настройки | `/api/projects`, `/api/projects/active`, `/api/projects/settings` |
+| Pipeline | `/api/pipeline`, `/api/pipeline/validate`, `/api/pipeline/reference_writer*` |
+| Tasks | `/api/tasks/batches/index`, `/api/tasks/batches/<batch_id>`, `/api/tasks/batches/<batch_id>/activate` |
+| Actions | `/api/actions`, `/api/actions/<action_id>`, `/api/actions/<action_id>/copy` |
+| Runner | `/api/run/start|pause|resume|stop`, `/api/run/status` |
+| Outputs & preview романа | `/api/outputs/index`, `/api/novel/latest`, `/api/novel/latest/pdf` |
+| Realtime | `/ws` |
 
 ### HTTP API
 
 - Health: `GET /api/health`
 - Settings: `GET/POST /api/settings`
 - Projects: `GET /api/projects`, `POST /api/projects/active`
-- Project settings (активный проект): `GET/POST /api/projects/settings` (переопределения на уровне проекта с семантикой наследования: `novel_language`, `novel_tone`, `novel_target_length_words`)
-- Materials index (активный проект): `GET /api/materials/index`
-- Outputs index (активный проект): `GET /api/outputs/index`
-- Task batches index: `GET /api/tasks/batches/index` (опционально: `?project=<project_id>`)
+- Project settings (active project): `GET/POST /api/projects/settings` (project overrides with inherit semantics: `novel_language`, `novel_tone`, `novel_target_length_words`)
+- Materials index (active project): `GET /api/materials/index`
+- Outputs index (active project): `GET /api/outputs/index`
+- Task batches index: `GET /api/tasks/batches/index` (optional: `?project=<project_id>`)
 - Task batch details: `GET /api/tasks/batches/<batch_id>`
-- Task batch activate: `POST /api/tasks/batches/<batch_id>/activate` (записывает `runtime/tasks/tasks.json` и проектный `active_tasks.json`)
-- Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`, `PUT /api/actions/<action_id>` (обновление defaults по схеме copy-on-edit)
-- Pipeline (канонический скрипт + производный JSON): `GET/POST /api/pipeline`
+- Task batch activate: `POST /api/tasks/batches/<batch_id>/activate` (записывает `runtime/tasks/tasks.json` и project-level `active_tasks.json`)
+- Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`, `PUT /api/actions/<action_id>` (copy-on-edit update для defaults)
+- Pipeline (канонический скрипт + derived JSON): `GET/POST /api/pipeline`
 - Pipeline validate (только preview): `POST /api/pipeline/validate`
-- Preview/load reference writer pipeline:
+- Reference writer pipeline preview/load:
   - `GET /api/pipeline/reference_writer` (читает и парсит `../scripts/auto-xiyouzhiyuan-writer.sh` как reference)
-  - `POST /api/pipeline/reference_writer/load` (загружает результат парсинга в runtime pipeline; исходный скрипт никогда не редактируется)
+  - `POST /api/pipeline/reference_writer/load` (загружает распарсенный результат в runtime pipeline; source script не изменяется)
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
-- Последний PDF романа:
-  - `GET /api/novel/latest` (метаданные)
+- Latest novel PDF:
+  - `GET /api/novel/latest` (metadata)
   - `GET /api/novel/latest/pdf` (inline PDF stream для viewer)
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
 - Agent test (gated): `POST /api/agent/test` (запускает `codex --version` только при включении + env gate)
@@ -283,73 +370,145 @@ PWA показывает скрипт в textarea (source of truth) и ренд�
 ### WebSocket
 
 - Endpoint: `/ws`
-- События broadcast: `hello`, `chat`, `outbox_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_updated`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`, `project_active_changed`, `project_settings_updated`
+- Broadcast events: `hello`, `chat`, `outbox_written`, `input_mirror_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_updated`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`, `project_active_changed`, `project_settings_updated`, `echo`
 
-## 📝 Выходы runner (черновая заглушка)
+## 📁 Пути runtime
 
-Когда pipeline содержит блок `STEP write`, backend runner создаст черновой файл в:
+Все изменяемые state и IO хранятся под `autonovelwriter/runtime/`:
+
+| Путь | Назначение |
+|---|---|
+| `autonovelwriter/runtime/io/inbox/` | user -> system (place `.txt`/`.md`) |
+| `autonovelwriter/runtime/io/outbox/` | system -> user (backend пишет chat-сообщения) |
+| `autonovelwriter/runtime/state/` | сохраненные JSON-состояния (settings, pipeline, runner, chat) |
+| `autonovelwriter/runtime/state/chat.sqlite3` | SQLite-«зеркало» чата (в дополнение к chat.jsonl) |
+| `autonovelwriter/runtime/state/active_project.json` | сохраненный pointer активного проекта |
+| `autonovelwriter/runtime/tasks/` | файлы очереди задач |
+| `autonovelwriter/runtime/tasks/batches/<batch_id>/` | сгенерированные task batches (например из `meta_tasks_generate`) |
+| `autonovelwriter/runtime/logs/` | логи |
+| `autonovelwriter/runtime/projects/<project_id>/materials/` | материалы проекта (inputs) |
+| `autonovelwriter/runtime/projects/<project_id>/outputs/` | выходы проекта (черновики/экспорты) |
+| `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json` | проектные overrides настроек написания романа (например, язык романа) |
+| `autonovelwriter/runtime/actions/defaults/` | seeded шаблоны Action Library (трактуются как immutable) |
+| `autonovelwriter/runtime/actions/user/` | пользовательские шаблоны Action Library (создаваемые через copy-on-edit) |
+| `/home/lachlan/Documents/VoidAbyss/references/xiyouzhiyuan/input/` | mirrored chat inputs для ingestion writer pipeline |
+
+## 🧩 Pipeline Script (Канонический артефакт)
+
+Pipeline хранится как отформатированный скрипт на диске:
+- `autonovelwriter/runtime/state/pipeline.script`
+
+Backend отдает его через `GET/POST /api/pipeline` как:
+- `script` (канонический shell-подобный формат с строками `STEP <type>` / `DISABLED <type>`)
+- `pipeline` JSON (derived, flattened list для простого render blocks)
+- `pipeline_ast` (derived, nested структура для loops + UI отступов)
+
+Runner исполняет шаги, полученные тем же parser/AST v2, поэтому то, что видит PWA, совпадает с тем, что выполняется.
+
+Runner control flow поддерживает v2 контейнеры:
+- `ROUND <n>` повторяет своих children `n` раз.
+- `FOREACH_TASK` выполняет children по одной на каждую задачу в active task list (`autonovelwriter/runtime/tasks/tasks.json`).
+- `FOREACH_ACTION` выполняет children по одной на каждый entry из `payload.actions` текущей задачи (предполагается вложенность под `FOREACH_TASK`).
+
+Возобновляемость:
+- Runner сохраняет resumable execution cursor в `autonovelwriter/runtime/state/runner_state.json`.
+- Курсор продвигается только после успешного завершения блока (чтобы рестарт не пропускал незавершенную работу).
+- Если канонический pipeline script меняется (hash mismatch), runner останавливается и требует рестарт (cursor invalidated).
+- Runner сохраняет `ActionResult` по шагам в `autonovelwriter/runtime/state/action_results.jsonl` и использует детерминированный `exec_id` для шага, чтобы не дублировать уже зафиксированные результаты при рестарте.
+- Во время `FOREACH_ACTION` в ActionResults попадают `action_index`, `action_id_ref` и `action_key`, а переменные включают `prev`, а также явные scope `task.prev` и `action.prev`.
+
+Pipeline script v2 поддерживает вложенность:
+- `LOOP <n>` вводит loop block.
+- `ROUND <n>` вводит round container block.
+- `FOREACH_TASK` вводит per-task container block.
+- `FOREACH_ACTION` вводит per-action container block (runner итерирует `task.payload.actions`).
+- `IF <expr>` вводит условный container block (parse/render; пока runner выполняет только then-ветку).
+- `ELSE` вводит optional alternate branch под `IF`.
+- Дочерние элементы отступают на 2 пробела на уровень.
+
+Валидация (без сохранения):
+- `POST /api/pipeline/validate` возвращает canonical preview вместе с `pipeline_ast`, warnings и errors.
+
+PWA показывает скрипт в textarea (source of truth) и рендерит вложенные блоки из `pipeline_ast`.
+Если backend validate endpoint недоступен, PWA переключается на local parser, который поддерживает те же v2-глаголы (`LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF`, `ELSE`, `STEP`, `DISABLED`).
+
+Примечания по Blocks UI:
+- Значения повторов `LOOP` и `ROUND` редактируются прямо в списке блоков; корректные изменения сразу обновляют каноническую script textarea.
+- Панель Blocks может вставлять `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION` и `IF` без ручного редактирования скрипта (оборачивает выделенный блок или добавляет валидный непустой контейнер).
+- Блоки можно удалять с canvas (кнопка Delete у блока; клавиша `Delete`, когда блок выделен). При удалении контейнеров дети поднимаются вверх, и редактор удерживает контейнeры непустыми, чтобы не создавать невалидные скрипты.
+- Блоки `IF` остаются структурно валидными: `ELSE` не может существовать вне `IF`, а then-ветка всегда остается непустой.
+- `STEP` блоки показывают управление Action Library: селектор действия, `Customize` (копирует default action в user action и переключает), `Edit` (модальное окно Action Editor для `name/tool/prompt/script`).
+
+## 📝 Runner outputs (черновой stub)
+
+Когда в pipeline есть блок `STEP write`, backend runner создаст черновой draft-файл в:
 - `autonovelwriter/runtime/projects/<project_id>/outputs/`
 
-Backend также отправляет:
-- WS-событие `output_created` с `path` и `project_rel_path`
-- строку `log` `[output] created: ...`
+Backend также отсылает:
+- WS event `output_created` с `path` и `project_rel_path`
+- Строку `log`: `[output] created: ...`
 
-PWA включает минимальную панель Outputs, которая выводит файлы через `GET /api/outputs/index` и обновляется по `output_created`.
+В PWA есть минимальная Outputs panel, которая перечисляет файлы через `GET /api/outputs/index` и обновляется по `output_created`.
 
-## 📦 Задачи runner (черновая заглушка пакетов)
+## 📦 Runner tasks (batch stub)
 
-Когда pipeline содержит блок `STEP meta_tasks_generate`, backend runner создаст черновой пакет задач в:
+Когда в pipeline есть блок `STEP meta_tasks_generate`, backend runner создаст черновой task batch в:
 - `autonovelwriter/runtime/tasks/batches/<batch_id>/`
 
-Backend отправляет:
-- WS-событие `tasks_batch_created` с `batch_dir`, `tasks_jsonl` и `task_count`
-- строку `log` `[tasks] created batch: ...`
+Backend также отсылает:
+- WS event `tasks_batch_created` с `batch_dir`, `tasks_jsonl` и `task_count`
+- Строку `log`: `[tasks] created batch: ...`
 
-PWA включает минимальную панель Task Batches, которая выводит пакеты через `GET /api/tasks/batches/index` и обновляется по `tasks_batch_created`.
-Она также может показывать детали пакета (`GET /api/tasks/batches/<batch_id>`) и активировать пакет как текущий список задач для `FOREACH_TASK` (`POST /api/tasks/batches/<batch_id>/activate`).
+В PWA есть минимальная панель Task Batches, которая выводит batches через `GET /api/tasks/batches/index` и обновляется по `tasks_batch_created`.
+Она также показывает детали batch (`GET /api/tasks/batches/<batch_id>`) и активирует batch как текущий список задач для `FOREACH_TASK` (`POST /api/tasks/batches/<batch_id>/activate`).
 
-## 🤖 Настройки агента / Codex Gate
+## 🔐 Настройки агента / Codex Gate
 
-Панель Settings в PWA сохраняет настройки агента через `/api/settings` в `autonovelwriter/runtime/state/settings.json`.
+Панель Settings в PWA хранит настройки агента через `/api/settings` в `autonovelwriter/runtime/state/settings.json`.
 
-Для безопасности backend не будет запускать CLI `codex`, если не выполнены оба условия:
+Для безопасности backend не запускает CLI `codex`, пока не соблюдены оба условия:
 - `settings.agent.enabled=true` и `settings.agent.sdk="codex"`
-- в окружении установлено `AUTONOVELWRITER_ENABLE_CODEX=1`
+- в env выставлен `AUTONOVELWRITER_ENABLE_CODEX=1`
 
 Никогда не коммитьте секреты. Используйте `autonovelwriter/backend/.env.example` как шаблон локальных env vars.
 
-## 🌍 PWA I18N (язык интерфейса)
+## 🌐 PWA I18N (язык UI)
 
-В PWA есть легковесная встроенная система i18n.
+У PWA есть легковесная встроенная система i18n.
 
-- Принудительный язык UI: добавьте `?lang=<code>` к URL PWA (например, `?lang=ja`).
-- Сохраняется отдельно для каждого браузера в localStorage: `anw_lang`.
-- Поддерживаемые языки UI: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar` (RTL), `fr`, `es`, `ru`, `de`.
+- Принудительно указать язык UI: добавить `?lang=<code>` в URL PWA (например, `?lang=ja`).
+- Устанавливается в localStorage браузера как `anw_lang`.
+- Поддерживаемые UI-языки: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar` (RTL), `fr`, `es`, `ru`, `de`.
+- Локализованные README репозитория в `i18n/` и связаны в единственной строке выбора языка сверху.
 
-## 📚 Настройки романа (отдельно от языка UI)
+| Файлы README локали (`i18n/`) | Статус |
+|---|---|
+| `README.ar.md`, `README.de.md`, `README.es.md`, `README.fr.md`, `README.ja.md`, `README.ko.md`, `README.ru.md`, `README.vi.md`, `README.zh-Hans.md`, `README.zh-Hant.md` | Present |
 
-Параметры написания романа сохраняются в настройках backend под `settings.novel.*` в:
+## 🖋️ Настройки романа (отдельно от языка UI)
+
+Параметры написания романа хранятся в backend-настройках под `settings.novel.*` в:
 - `autonovelwriter/runtime/state/settings.json`
 
-Они намеренно **отделены** от языка UI PWA (`?lang=` / `anw_lang`).
+Они намеренно **отделены** от языка интерфейса PWA (`?lang=` / `anw_lang`).
 
-Переопределения на уровне проекта хранятся в:
+Project-level overrides лежат в:
 - `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json`
 
-Текущие поля (редактируются в модальном окне Settings в PWA):
-- `settings.novel.language` (коды в стиле BCP-47, например `en`, `ja`, `zh-Hans` и т.д.)
+Текущие глобальные поля (редактируются в Settings modal в PWA):
+- `settings.novel.language` (BCP-47-like коды вроде `en`, `ja`, `zh-Hans` и т.д.)
 - `settings.novel.tone`
 - `settings.novel.target_length_words`
 - `settings.novel.pov`
 - `settings.novel.tense`
 - `settings.novel.chapter_count_target`
 
-Текущие поля project-level override (пусто/не задано = наследование глобального):
+Текущие project-level override fields (empty/unset = inherit global):
 - `project_settings.novel_language`
 - `project_settings.novel_tone`
 - `project_settings.novel_target_length_words`
 
-## 💡 Примеры
+## 🧰 Примеры
 
 ### Минимальный локальный запуск
 
@@ -358,21 +517,21 @@ python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
 # then open http://127.0.0.1:8787/
 ```
 
-### Запуск tmux без auto-attach
+### tmux запуск без auto-attach
 
 ```bash
 scripts/run_autonovelwriter_tmux.sh --no-attach
 tmux attach -t autonovelwriter_app
 ```
 
-### Запуск файлов backend-тестов напрямую
+### Запуск backend тестов напрямую
 
 ```bash
 python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py
 python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py
 ```
 
-### Запуск файла тестов логики PWA напрямую
+### Прямой запуск файла теста PWA логики
 
 ```bash
 node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
@@ -397,71 +556,100 @@ bash examples/ralph-wiggum-example.sh
 - autoappdev_head: 8bc23a5
 <!-- AUTO_DEV_PROGRESS_END -->
 
-`scripts/auto-autonovelwriter-development.sh` запускает возобновляемый цикл на Codex по задачам из `references/autonovelwriter_dev/` и **будет делать commit/push после каждого этапа** (plan/implement/debug/fix/i18n/summary/update_readme).
+`scripts/auto-autonovelwriter-development.sh` выполняет резюмируемый цикл Codex по tasks из `references/autonovelwriter_dev/` и будет commit/push после каждой стадии (`plan -> implement -> debug -> fix -> i18n -> summary -> update_readme`).
 
-Полезные элементы управления:
+Полезные команды:
 - Остановиться после текущей задачи: `touch references/autonovelwriter_dev/STOP`
-- Сбросить отслеживание состояния (очередь сохраняется): `scripts/auto-autonovelwriter-development.sh --reset-state`
-- Начать новую сессию Codex: `scripts/auto-autonovelwriter-development.sh --new-session`
-- Безопасная практика: запускайте в чистой branch/worktree и проверяйте `references/autonovelwriter_dev/state.tsv` перед перезапуском.
+- Сбросить state tracking (очередь сохраняется): `scripts/auto-autonovelwriter-development.sh --reset-state`
+- Запустить новую сессию Codex: `scripts/auto-autonovelwriter-development.sh --new-session`
+- Безопасная практика: работайте в чистой branch/worktree и смотрите `references/autonovelwriter_dev/state.tsv` перед рестартом.
 
-## 📚 Содержимое
+### Операционные предположения
 
-- `docs/autonovelwriter_spec.md`: спецификация продукта для Scratch-подобного контроллера (chat + папочный pipe + start/pause/stop + settings).
-- `scripts/auto-autonovelwriter-development.sh`: авторазработка самого приложения AutoNovelWriter (цикл задач: plan -> implement -> debug -> fix -> i18n -> summary -> update_readme -> commit+push).
-- `docs/auto-development-guide.md`: двуязычная (EN/ZH) философия и требования для долгоживущего возобновляемого агента авторазработки.
-- `docs/ORDERING_RATIONALE.md`: пример обоснования порядка для шагов, управляемых скриншотами.
-- `scripts-legacy/`: старые скрипты автоматизации, сохраненные для справки, но не используемые AutoNovelWriter.
-- `examples/ralph-wiggum-example.sh`: пример helper для автоматизации через Codex CLI.
+- Эта README предполагает локальную разработку на Linux/macOS с `bash` и Python 3.11+.
+- Runtime-состояние внутри `autonovelwriter/runtime/` изменяемое и ожидаемо untracked.
+- Описанное поведение pipeline отражает текущую реализацию в `autonovelwriter/backend/server.py` и `autonovelwriter/pwa/app.js`.
 
-### Дополнительные заметки для разработчиков
+## 🧪 Заметки по тестированию
 
-- Backend-тесты находятся в `autonovelwriter/backend/tests/`.
-- Небольшой тест поведения PWA находится в `autonovelwriter/pwa/tests/`.
-- Корневая директория `i18n/` существует, но сейчас пуста; переводы UI сейчас встроены в `autonovelwriter/pwa/app.js`.
+В репозитории на момент написания нет top-level оркестратора `Makefile`/`tox`/`npm test`.
+
+Текущие практические точки входа в тесты:
+
+| Область | Точка входа |
+|---|---|
+| Backend parser/AST | `python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py` |
+| Backend foreach-action syntax | `python3 autonovelwriter/backend/tests/pipeline_foreach_action_roundtrip_test.py` |
+| Backend runner semantics | `python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py` |
+| Backend action library update | `python3 autonovelwriter/backend/tests/actions_library_update_unit_test.py` |
+| PWA AST delete behavior | `node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js` |
+
+```bash
+# backend (run individual test files)
+python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py
+python3 autonovelwriter/backend/tests/pipeline_foreach_action_roundtrip_test.py
+python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py
+python3 autonovelwriter/backend/tests/actions_library_update_unit_test.py
+
+# pwa logic test
+node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
+```
+
+Если вы меняете runner-семантику, синтаксис pipeline или поведение action-library, обновляйте тесты и notes по README/API в одном change.
+
+## 📚 Содержимое репозитория
+
+- `docs/autonovelwriter_spec.md`: product spec для Scratch-like controller (chat + folder pipe + start/pause/stop + settings).
+- `scripts/auto-autonovelwriter-development.sh`: автоматическая разработка самого AutoNovelWriter (task loop: `plan -> implement -> debug -> fix -> i18n -> summary -> update_readme -> commit+push`).
+- `docs/auto-development-guide.md`: двуязычный (EN/ZH) philosophy и требования к долгоживущему резюмируемому auto-dev agent.
+- `docs/ORDERING_RATIONALE.md`: пример rationale для последовательности screenshot-driven шагов.
+- `scripts-legacy/`: старые скрипты автоматизации, сохраненные для справки, не используются AutoNovelWriter.
+- `examples/ralph-wiggum-example.sh`: пример скриптового automation helper.
+
+Дополнительные заметки:
+- Backend tests в `autonovelwriter/backend/tests/`.
+- Небольшой тест поведения PWA в `autonovelwriter/pwa/tests/`.
+- `i18n/` заполнен локализованными README репозитория, тогда как UI dictionaries хранятся встроенно в `autonovelwriter/pwa/app.js`.
 
 ## 🧯 Устранение неполадок
 
-- `tmux not found in PATH`:
-  - Установите tmux или запускайте backend/static server вручную.
-- `conda not found in PATH` при использовании скриптов с `--env`:
-  - Установите Miniconda/Anaconda или пропустите conda и используйте ручную установку через `pip`.
-- PWA не может подключиться к backend:
-  - Проверьте адрес/порт backend и endpoint WebSocket `ws://<host>:<port>/ws`.
-- `POST /api/agent/test` возвращает gated/disabled:
-  - Убедитесь, что выполнены `settings.agent.enabled=true`, `settings.agent.sdk="codex"` и переменная окружения `AUTONOVELWRITER_ENABLE_CODEX=1`.
-- Pipeline runner останавливается после правки скрипта:
-  - Это ожидаемое поведение; курсор инвалидируется при несовпадении hash скрипта pipeline и требуется перезапуск.
+| Симптом | Что проверить |
+|---|---|
+| `tmux not found in PATH` | Установите tmux или запускайте backend/static-сервер вручную. |
+| `conda not found in PATH` при использовании `--env` scripts | Установите Miniconda/Anaconda, либо пропустите conda и используйте manual `pip` install. |
+| PWA не подключается к backend | Проверьте backend address/port и WebSocket endpoint `ws://<host>:<port>/ws`. |
+| `POST /api/agent/test` возвращает gated/disabled | Убедитесь, что `settings.agent.enabled=true`, `settings.agent.sdk="codex"` и `AUTONOVELWRITER_ENABLE_CODEX=1` в env. |
+| Pipeline runner останавливается после правки скрипта | Это ожидаемо; курсор инвалидируется при несоответствии hash скрипта и требует перезапуска. |
+| Static PWA на `:5173` работает, но API fails | Убедитесь, что backend запущен на `:8787` (или корректно обновите target settings для app/backend). |
 
-## 🧭 Дорожная карта
+## 🗺️ Roadmap
 
-- Завершить и стабилизировать оставшиеся элементы очереди auto-dev (см. сгенерированный блок прогресса выше).
-- Расширить внешние ресурсы i18n на уровне репозитория в `i18n/` (сейчас директория присутствует, но пуста).
-- Расширить покрытие автоматических тестов для edge-case сценариев runner и взаимодействий PWA.
-- Продолжать улучшать Action Library и workflow итераций задач/действий.
+- Завершить и стабилизировать оставшиеся элементы очереди auto-dev (см. generated progress выше).
+- Расширять и синхронизировать i18n README variants в `i18n/`.
+- Расширять автоматическое покрытие runner edge cases и PWA interactions.
+- Продолжать улучшать Action Library и рабочие процессы task/action итерации.
 
-## 🤝 Участие в разработке
+## 🤝 Как помочь проекту
 
-Контрибьюции приветствуются.
+Вклад приветствуется.
 
-Практические рекомендации для этого репозитория:
+Практические рекомендации:
 - Начинайте с `docs/autonovelwriter_spec.md` и `docs/auto-development-guide.md`.
-- Держите изменения runtime в `autonovelwriter/runtime/` (игнорируется git), а не в отслеживаемых файлах.
-- Предпочитайте инкрементальные PR с воспроизводимыми командами запуска/тестов.
-- Если меняете семантику pipeline или API-контракты, обновляйте README и соответствующие тесты вместе.
+- Храните mutations runtime в `autonovelwriter/runtime/` (содержимое gitignored), а не в tracked файлах.
+- Предпочитайте небольшие incremental PR с reproducible commands run/test.
+- При изменениях pipeline semantics или API contracts обновляйте README и соответствующие тесты вместе.
 
-Примечание: на момент этого черновика отдельный `CONTRIBUTING.md` в корне репозитория не найден.
+Note: в текущем черновике отдельный `CONTRIBUTING.md` в корне не найден.
 
-## ❤️ Sponsor & Donate
+## ❤️ Support
 
-- GitHub Sponsors: https://github.com/sponsors/lachlanchen
-- Donate: https://chat.lazying.art/donate
-- PayPal: https://paypal.me/RongzhouChen
-- Stripe: https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400
+| Donate | PayPal | Stripe |
+|---|---|---|
+| [![Donate](https://img.shields.io/badge/Donate-LazyingArt-0EA5E9?style=for-the-badge&logo=ko-fi&logoColor=white)](https://chat.lazying.art/donate) | [![PayPal](https://img.shields.io/badge/PayPal-RongzhouChen-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/RongzhouChen) | [![Stripe](https://img.shields.io/badge/Stripe-Donate-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
 
 ## 📄 Лицензия
 
-Файл/статус лицензии в текущем контексте черновика явно не указан в корне репозитория.
+Статус лицензии/файл `LICENSE` в корне репозитория в текущем черновике явно не указан.
 
-Примечание о допущении:
-- Если планируется четко оформить open-source распространение, добавьте файл `LICENSE` в корень и обновите этот раздел соответствующим образом.
+Примечание:
+- Если планируется явно открытое распространение проекта, добавьте top-level файл `LICENSE` и обновите этот раздел.

@@ -1,663 +1,677 @@
 [English](../README.md) · [العربية](README.ar.md) · [Español](README.es.md) · [Français](README.fr.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Tiếng Việt](README.vi.md) · [中文 (简体)](README.zh-Hans.md) · [中文（繁體）](README.zh-Hant.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
+
+
+
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
-# AutoAppDev 🚀
+<div align="center">
+  <h1>AutoNovelWriter</h1>
+  <p><strong>واجهة PWA على نمط Scratch + backend مبني على Tornado للتحكم في خط أنابيب تلقائي لكتابة الروايات (وتطوير التطبيقات).</strong></p>
+  <p>
+    <img alt="Python" src="https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white" />
+    <img alt="Backend" src="https://img.shields.io/badge/backend-Tornado%206.4%2B-0ea5e9" />
+    <img alt="Frontend" src="https://img.shields.io/badge/frontend-PWA-10b981" />
+    <img alt="Realtime" src="https://img.shields.io/badge/realtime-WebSocket-06b6d4" />
+    <img alt="Pipeline" src="https://img.shields.io/badge/pipeline-script%20%2B%20AST-2563eb" />
+    <img alt="Runtime" src="https://img.shields.io/badge/runtime-local%20state-orange" />
+    <img alt="Status" src="https://img.shields.io/badge/status-active%20development-f59e0b" />
+    <img alt="Canonical docs" src="https://img.shields.io/badge/docs-README.md-critical?style=flat" />
+    <img alt="Languages" src="https://img.shields.io/badge/i18n-10%2B%20languages-8b5cf6?style=flat" />
+  </p>
+</div>
 
-![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
-![Backend](https://img.shields.io/badge/Backend-Tornado-222222)
-![Frontend](https://img.shields.io/badge/Frontend-PWA-0A7EA4)
-![Database](https://img.shields.io/badge/Database-PostgreSQL-4169E1?logo=postgresql&logoColor=white)
-![Status](https://img.shields.io/badge/Self--Dev-51%2F55%20tasks%20done-2E8B57)
-![i18n](https://img.shields.io/badge/i18n-11%20languages-1f6feb)
-![Pipeline](https://img.shields.io/badge/Pipeline-Resumable-ff6b35)
-![Docs](https://img.shields.io/badge/Docs-Workflow%20First-0e9f6e)
-![Automation](https://img.shields.io/badge/Automation-README%20Pipeline-f97316)
-![API](https://img.shields.io/badge/API-JSON%20HTTP-0ea5e9)
-![State Machine](https://img.shields.io/badge/Lifecycle-start%2Fpause%2Fresume%2Fstop-f59e0b)
-![Control Flow](https://img.shields.io/badge/Control%20Flow-Plan%20%E2%86%92%20Work%20%E2%86%92%20Verify%20%E2%86%92%20Summary-0f766e)
-![GitHub stars](https://img.shields.io/github/stars/lachlanchen/AutoAppDev?style=flat&logo=github&logoColor=white&color=%231DA1F2)
-![GitHub forks](https://img.shields.io/github/forks/lachlanchen/AutoAppDev?style=flat&logo=github&logoColor=white&color=%2300A4A6)
-![GitHub issues](https://img.shields.io/github/issues/lachlanchen/AutoAppDev?style=flat&logo=github&logoColor=white&color=%23ef4444)
+هذا المستودع يضم أيضًا `AutoAppDev/` كوحدة فرعية (سكربتات تطوير آلي قابلة لإعادة الاستخدام).
 
----
+> [!TIP]
+> `README.md` هو المرجع القياسي. الإصدارات المحلية توجد في `i18n/` ومربوطة بسطر واحد لاختيار اللغة في الأعلى.
 
-مجموعة سكربتات قابلة لإعادة الاستخدام مع أدلة لبناء التطبيقات خطوة بخطوة من لقطات الشاشة/الـ markdown باستخدام Codex كأداة غير تفاعلية.
+## 🧭 لمحة المشروع
 
-> 🎯 **المهمة:** جعل خطوط تطوير التطبيقات حتمية، قابلة للاستئناف، ومعتمدة على المخرجات.
->
-> 🧩 **مبدأ التصميم:** Plan -> Work -> Verify -> Summary -> Commit/Push.
+| حقائق سريعة | التفاصيل |
+|---|---|
+| المكدس الأساسي | Python + backend Tornado، واجهة PWA داخل المتصفح |
+| تجربة المستخدم الأساسية | محرر سكربت + محرر كتل يعتمد على مصدر واحد موحد للخط |
+| نمط التنفيذ | مشغل قابل للاستئناف مع مؤشر التنفيذ ونتائج الإجراءات المحفوظة |
+| الوقت الفعلي | نقطة نهاية WebSocket على `/ws` |
+| جذر زمن التشغيل القابل للتعديل | `autonovelwriter/runtime/` (غير متتبع في git) |
+## نظرة سريعة على التنقل
 
----
+| 🎯 ماذا تستخدم الآن | 🔧 الأمر / الرابط |
+|---|---|
+| افتح PWA محليًا | `http://127.0.0.1:8787/` |
+| فعّل التحديثات المباشرة | `ws://127.0.0.1:8787/ws` |
+| ابدأ الـ backend بسرعة | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
+| نفّذ الإعداد والتشغيل معًا | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
 
-### 🎛️ إشارات المشروع
+> [!TIP]
+> أسرع طريقة بدء محلية:
+> 1. `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill`
+> 2. افتح `http://127.0.0.1:8787/`
+> 3. فعّل تحديثات WebSocket عبر `ws://127.0.0.1:8787/ws`
 
-| الإشارة | الاتجاه الحالي |
-| --- | --- |
-| نموذج التشغيل | Tornado backend + static PWA controller |
-| تنفيذ الـ Pipeline | حتمي وقابل للاستئناف (`start/pause/resume/stop`) |
-| استراتيجية التخزين | PostgreSQL-first مع سلوك توافق احتياطي |
-| تدفق التوثيق | README رئيسي كمرجع + نسخ `i18n/` مؤتمتة |
+## 🔌 قيم الإطلاق الافتراضية
 
-### 🔗 تنقل سريع
+| قيم الإطلاق | القيمة |
+|---|---|
+| رابط PWA | `http://127.0.0.1:8787/` |
+| رابط WebSocket | `ws://127.0.0.1:8787/ws` |
+| منفذ/مضيف backend | `127.0.0.1:8787` |
 
-| تحتاج | اذهب إلى |
-| --- | --- |
-| أول تشغيل محلي | [⚡ البدء السريع](#-البدء-السريع) |
-| البيئة والمتغيرات المطلوبة | [⚙️ الإعداد](#-الإعداد) |
-| واجهات API | [📡 لمحة API](#-لمحة-api) |
-| أدلة التشغيل/التصحيح | [🧭 أدلة التشغيل](#-أدلة-التشغيل) |
-| قواعد توليد README/i18n | [🌐 سير عمل README و i18n](#-سير-عمل-readme-و-i18n) |
-| مصفوفة حل المشكلات | [🔧 استكشاف الأخطاء وإصلاحها](#-استكشاف-الأخطاء-وإصلاحها) |
+## جدول المحتويات
 
-<!-- AUTOAPPDEV:STATUS:BEGIN -->
-## حالة التطوير الذاتي (تحديث تلقائي)
+- [نظرة عامة](#-نظرة-عامة)
+- [الميزات](#-الميزات)
+- [نظرة تقنية سريعة](#-نظرة-تقنية-سريعة)
+- [هيكل المشروع](#️-هيكل-المشروع)
+- [المسارات السريعة للتنقل](#-المسارات-السريعة-للتنقل)
+- [المتطلبات المسبقة](#-المتطلبات-المسبقة)
+- [التثبيت](#-التثبيت)
+- [الاستخدام](#-الاستخدام)
+- [الإعدادات](#️-الإعدادات)
+- [واجهات backend الأساسية](#-واجهات-backend-الأساسية)
+- [مسارات زمن التشغيل](#-مسارات-زمن-التشغيل)
+- [سكربت خط الأنابيب (الأصل المرجعي)](#-سكربت-خط-الأنابيب-الأصل-المرجعي)
+- [مخرجات المشغّل (مسودة)](#-مخرجات-المشغل-مسودة)
+- [مهام المشغّل (دفعات)](#-مهام-المشغل-دفعات)
+- [إعدادات الوكيل / بوابة Codex](#-إعدادات-الوكيل--بوابة-codex)
+- [I18N واجهة PWA](#-i18n-واجهة-pwa)
+- [إعدادات الرواية (منفصلة عن لغة الواجهة)](#️-إعدادات-الرواية-منفصلة-عن-لغة-الواجهة)
+- [أمثلة](#-أمثلة)
+- [ملاحظات التطوير](#️-ملاحظات-التطوير)
+- [ملاحظات الاختبار](#-ملاحظات-الاختبار)
+- [محتويات المستودع](#-محتويات-المستودع)
+- [استكشاف الأخطاء وإصلاحها](#-استكشاف-الأخطاء-وإصلاحها)
+- [خريطة الطريق](#️-خريطة-الطريق)
+- [المساهمة](#-المساهمة)
+- [الدعم](#-support)
+- [الترخيص](#-ترخيص)
 
-- Updated: 2026-02-16T00:27:20Z
-- Phase commit: `Selfdev: 52 pwa_action_palette_dynamic_and_editable_blocks summary`
-- Progress: 51 / 55 tasks done
-- Codex session: `019c6056-f33a-7f31-b08f-0ca40c365351`
-- Philosophy: Plan -> Work -> Verify -> Summary -> Commit/Push (linear, resumable)
+## 📌 نظرة عامة
 
-يتم تحديث هذا القسم بواسطة `scripts/auto-autoappdev-development.sh`.
-لا تعدل المحتوى بين العلامتين.
+يوفّر AutoNovelWriter طبقة تنسيق محلية لـ:
+- تعديل سطور خط الأنابيب المرجعي (`pipeline.script`) عبر النص المصدري وواجهة الكتل.
+- تشغيل backend قابل للاستئناف مع مؤشر تنفيذ ونتائج إجراءات محفوظة.
+- إدارة المشاريع، والمواد، والمخرجات، ودفعات المهام، وقوالب الإجراءات.
+- بث التحديثات المباشرة عبر WebSocket (`/ws`) إلى PWA.
 
-<!-- AUTOAPPDEV:STATUS:END -->
+الـ runtime المحلي القابل للتعديل هو `autonovelwriter/runtime/` (المحتوى فيه غير مُتتبع في Git).
 
-## 🗂️ جدول المحتويات
-- [🚀 نظرة عامة](#-نظرة-عامة)
-- [🧭 لمحة عن المستودع](#-لمحة-عن-المستودع)
-- [🧭 الفلسفة](#-الفلسفة)
-- [✨ الميزات](#-الميزات)
-- [📌 لمحة سريعة](#-لمحة-سريعة)
-- [🏗️ المعمارية](#-المعمارية)
-- [📚 المحتويات](#-المحتويات)
-- [🗂️ بنية المشروع](#-بنية-المشروع)
-- [✅ المتطلبات المسبقة](#-المتطلبات-المسبقة)
-- [🧩 التوافق والافتراضات](#-التوافق-والافتراضات)
-- [🛠️ التثبيت](#-التثبيت)
-- [⚡ البدء السريع](#-البدء-السريع)
-- [⚙️ الإعداد](#-الإعداد)
-- [▶️ الاستخدام](#-الاستخدام)
-- [🧭 أدلة التشغيل](#-أدلة-التشغيل)
-- [📡 لمحة API](#-لمحة-api)
-- [🧪 أمثلة](#-أمثلة)
-- [🧱 ملاحظات التطوير](#-ملاحظات-التطوير)
-- [🔐 ملاحظات الأمان](#-ملاحظات-الأمان)
-- [🔧 استكشاف الأخطاء وإصلاحها](#-استكشاف-الأخطاء-وإصلاحها)
-- [🌐 سير عمل README و i18n](#-سير-عمل-readme-و-i18n)
-- [📘 سياق توليد Readme](#-سياق-توليد-readme)
-- [❓ الأسئلة الشائعة](#-الأسئلة-الشائعة)
-- [🗺️ خارطة الطريق](#-خارطة-الطريق)
-- [🤝 المساهمة](#-المساهمة)
-- [❤️ Support](#-support)
-- [📄 الترخيص](#-الترخيص)
-
-## 🧭 لمحة عن المستودع
-
-| المحور | الإعداد الحالي |
-| --- | --- |
-| الحلقة الأساسية | Plan → Work → Debug → Fix → Summary → Commit/Push |
-| نموذج التشغيل | Tornado backend + static PWA controller |
-| آلة الحالات | `start` / `pause` / `resume` / `stop` |
-| التخزين | PostgreSQL-first مع توافق JSON احتياطي |
-| التوثيق | `README.md` رئيسي مع مخرجات متعددة اللغات في `i18n/` |
-
-## 🚀 نظرة عامة
-AutoAppDev هو مشروع تحكم لخطوط تطوير تطبيقات طويلة التشغيل وقابلة للاستئناف. يجمع بين:
-
-1. واجهة Tornado backend API مع تخزين مدعوم بـ PostgreSQL (إضافةً إلى سلوك احتياطي JSON محلي في كود التخزين).
-2. واجهة تحكم static PWA شبيهة بـ Scratch.
-3. سكربتات ووثائق لتأليف الـ pipeline، توليد الكود الحتمي، حلقات التطوير الذاتي، وأتمتة README.
-
-المشروع محسّن لتنفيذ الوكلاء بشكل متوقع مع تسلسل صارم وسجل عمل قائم على المخرجات.
-
-### 🎨 لماذا يوجد هذا المستودع
-
-| المحور | ما يعنيه عمليًا |
-| --- | --- |
-| الحتمية | سير عمل canonical pipeline IR + parser/import/codegen مصمم للتكرار |
-| قابلية الاستئناف | آلة حالات lifecycle صريحة (`start/pause/resume/stop`) للتشغيل طويل المدى |
-| قابلية التشغيل | سجلات تشغيل، وقنوات inbox/outbox، وحلقات تحقق تعتمد السكربتات |
-| التوثيق أولًا | العقود/المواصفات/الأمثلة موجودة في `docs/` مع تدفق README متعدد اللغات مؤتمت |
-
-## 🧭 الفلسفة
-يتعامل AutoAppDev مع الوكلاء كأدوات ويحافظ على استقرار العمل عبر حلقة صارمة وقابلة للاستئناف:
-
-1. التخطيط
-2. التنفيذ
-3. التصحيح/التحقق (مع مهلات زمنية)
-4. الإصلاح
-5. التلخيص + التسجيل
-6. Commit + push
-
-يهدف تطبيق المتحكم إلى تجسيد نفس المفاهيم ككتل/إجراءات شبيهة بـ Scratch (بما في ذلك إجراء `update_readme` المشترك) حتى تبقى كل مساحة عمل محدثة وقابلة لإعادة الإنتاج.
-
-### 🔁 هدف حالات دورة الحياة
-
-| انتقال الحالة | الهدف التشغيلي |
-| --- | --- |
-| `start` | بدء pipeline من حالة stopped/ready |
-| `pause` | إيقاف التنفيذ الطويل بأمان دون فقدان السياق |
-| `resume` | المتابعة من حالة/مخرجات التشغيل المحفوظة |
-| `stop` | إنهاء التنفيذ والرجوع إلى حالة غير تشغيلية |
+| المجال | ما يفعله |
+|---|---|
+| تأليف خط الأنابيب | تعديل السكربت المرجعي + واجهة الكتل المتداخلة من مصدر حقيقة موحد |
+| التنفيذ | مشغل قابل للاستئناف مع مؤشر تنفيذ ونتائج محفوظة |
+| عمليات المشروع | إدارة الملفات/المخرجات/الإعدادات على مستوى المشروع وتفعيل دفعات المهام |
+| تجربة الوقت الفعلي | أحداث `/ws` للحالة/السجل/المخرجات/المهام/الإجراءات |
 
 ## ✨ الميزات
-- تحكم قابل للاستئناف في دورة حياة الـ pipeline: start و pause و resume و stop.
-- واجهات مكتبة سكربتات AAPS (`.aaps`) و canonical IR (`autoappdev_ir` v1).
-- خط parser/import حتمي:
-  - تحليل سكربتات AAPS المنسقة.
-  - استيراد shell موضح عبر تعليقات `# AAPS:`.
-  - خيار parse احتياطي بمساعدة Codex (`AUTOAPPDEV_ENABLE_LLM_PARSE=1`).
-- سجل إجراءات مع إجراءات مدمجة + إجراءات قابلة للتحرير/مخصصة (تدفق clone/edit للإجراءات المدمجة للقراءة فقط).
-- كتل PWA شبيهة بـ Scratch ولوحة إجراءات محملة أثناء التشغيل (`GET /api/actions`).
-- قنوات رسائل التشغيل:
-  - Inbox (`/api/inbox`) لتوجيهات المشغل -> pipeline.
-  - Outbox (`/api/outbox`) تتضمن إدخال طابور ملفات من `runtime/outbox`.
-- بث تدريجي للسجلات من backend وسجلات pipeline (`/api/logs`, `/api/logs/tail`).
-- توليد runner حتمي من canonical IR (`scripts/pipeline_codegen/generate_runner_from_ir.py`).
-- مشغل تطوير ذاتي لتطور المستودع بشكل تكراري (`scripts/auto-autoappdev-development.sh`).
-- خط أتمتة README مع هيكل توليد متعدد اللغات تحت `i18n/`.
 
-## 📌 لمحة سريعة
+- محرر pipeline بنمط Scratch مع سكربت مرجعي + parser/AST.
+- واجهات تحكم المشغّل (`start/pause/resume/stop`) مع حالة قابلة للاستئناف.
+- حاويات منطق التحكم: `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF/ELSE`.
+- مكتبة إجراءات بقوالب افتراضية + تجاوزات المستخدم عبر آلية copy-on-edit.
+- إعدادات كتابة الرواية قابلة للتجاوز على مستوى المشروع مع منطق الوراثة.
+- توليد وفهرسة وتفاصيل وتفعيل دفعات المهام لـ `FOREACH_TASK`.
+- فهرسة المخرجات ونقاط نهاية لمعـاينة أحدث PDF للرواية.
+- قواميس i18n مدمجة في الواجهة (`en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`).
+- سكربتات مساعدة لـ tmux وسائق Codex Auto-Dev قابل للاستئناف.
 
-| المجال | التفاصيل |
-| --- | --- |
-| وقت التشغيل الأساسي | Tornado backend + static PWA frontend |
-| التخزين | PostgreSQL-first مع سلوك توافق في `backend/storage.py` |
-| نموذج pipeline | Canonical IR (`autoappdev_ir` v1) وتنسيق سكربتات AAPS |
-| تدفق التحكم | Start / Pause / Resume / Stop lifecycle |
-| نمط التطوير | حلقة تطوير ذاتي قابلة للاستئناف + سير سكربت/codegen حتمي |
-| README/i18n | خط README مؤتمت مع هيكل `i18n/` |
-
-## 🏗️ المعمارية
+## 🧭 مخطط معماري سريع
 
 ```text
-Operator / Developer
-        |
-        v
-   PWA (static files, pwa/)
-        |
-        | HTTP JSON API
-        v
-Tornado backend (backend/app.py)
-        |
-        +--> Postgres (DATABASE_URL)
-        +--> runtime/ (logs, outbox, llm_parse artifacts)
-        +--> scripts/ (pipeline runner + codegen helpers)
+Browser (PWA)
+  ├─ pipeline editor (script + blocks)
+  ├─ settings / projects / actions / tasks / outputs panels
+  └─ WebSocket client (/ws)
+          │
+          ▼
+Tornado backend (autonovelwriter/backend/server.py)
+  ├─ REST APIs (/api/*)
+  ├─ WebSocket broadcast hub
+  ├─ parser + AST + canonical script persistence
+  ├─ resumable runner + action result commit log
+  └─ runtime bootstrap (dirs + defaults)
+          │
+          ▼
+autonovelwriter/runtime/ (mutable, local-first)
+  ├─ state/ (pipeline, settings, runner, chat)
+  ├─ projects/<id>/ (materials, outputs, project settings)
+  ├─ tasks/ (active list + generated batches)
+  ├─ actions/ (defaults + user overrides)
+  └─ logs/ (runner.log)
 ```
 
-### مسؤوليات الواجهة الخلفية
-- إتاحة APIs للمتحكم خاصة بالسكربتات، الإجراءات، الخطة، دورة حياة الـ pipeline، السجلات، inbox/outbox، وإعداد مساحة العمل.
-- التحقق من أصول سكربتات pipeline وتخزينها.
-- تنسيق حالة تنفيذ الـ pipeline وانتقالات الحالة.
-- توفير سلوك احتياطي حتمي عندما لا يتوفر مجمع اتصال قاعدة البيانات.
+## 🗂️ هيكل المشروع
 
-### مسؤوليات الواجهة الأمامية
-- عرض واجهة الكتل الشبيهة بـ Scratch وتدفق تحرير الـ pipeline.
-- تحميل لوحة الإجراءات ديناميكيًا من سجل الواجهة الخلفية.
-- إدارة عناصر التحكم في دورة الحياة ومراقبة الحالة/السجلات/الرسائل.
-
-## 📚 المحتويات
-خريطة مرجعية لأكثر الوثائق والسكربتات والأمثلة استخدامًا:
-
-- `docs/auto-development-guide.md`: فلسفة ومتطلبات ثنائية اللغة (EN/ZH) لوكيل تطوير تلقائي طويل التشغيل وقابل للاستئناف.
-- `docs/ORDERING_RATIONALE.md`: مثال مبررات لتسلسل خطوات تعتمد على لقطات الشاشة.
-- `docs/controller-mvp-scope.md`: نطاق MVP للمتحكم (الشاشات + أقل APIs).
-- `docs/end-to-end-demo-checklist.md`: قائمة تحقق عرض توضيحي يدوي حتمي من طرف إلى طرف (backend + PWA happy path).
-- `docs/env.md`: اتفاقيات متغيرات البيئة (`.env`).
-- `docs/api-contracts.md`: عقود الطلب/الاستجابة لواجهات المتحكم.
-- `docs/pipeline-formatted-script-spec.md`: تنسيق سكربت pipeline القياسي (AAPS) ومخطط canonical IR ‏(TASK -> STEP -> ACTION).
-- `docs/pipeline-runner-codegen.md`: مولد حتمي لإنتاج bash pipeline runners قابلة للتشغيل من canonical IR.
-- `docs/common-actions.md`: عقود/مواصفات الإجراءات الشائعة (يتضمن `update_readme`).
-- `docs/workspace-layout.md`: مجلدات مساحة العمل القياسية + العقود (`materials/interactions/outputs/docs/references/scripts/tools/logs/auto-apps`).
-- `scripts/run_autoappdev_tmux.sh`: تشغيل تطبيق AutoAppDev ‏(backend + PWA) عبر tmux.
-- `scripts/run_autoappdev_selfdev_tmux.sh`: تشغيل مشغل التطوير الذاتي لـ AutoAppDev عبر tmux.
-- `scripts/app-auto-development.sh`: مشغل pipeline خطي (`plan -> backend -> PWA -> Android -> iOS -> review -> summary`) مع دعم الاستئناف/الحالة.
-- `scripts/generate_screenshot_docs.sh`: مولد وصف markdown من لقطات الشاشة (مدعوم Codex).
-- `scripts/setup_autoappdev_env.sh`: سكربت تهيئة conda الأساسي للتشغيل المحلي.
-- `scripts/setup_backend_env.sh`: سكربت مساعد بيئة backend.
-- `examples/ralph-wiggum-example.sh`: مساعد أتمتة Codex CLI كمثال.
-
-## 🗂️ بنية المشروع
 ```text
-AutoAppDev/
+AutoNovelWriter/
 ├── README.md
-├── .env.example
 ├── .github/
 │   └── FUNDING.yml
-├── backend/
-│   ├── app.py
-│   ├── storage.py
-│   ├── schema.sql
-│   ├── apply_schema.py
-│   ├── db_smoketest.py
-│   ├── action_registry.py
-│   ├── builtin_actions.py
-│   ├── update_readme_action.py
-│   ├── pipeline_parser.py
-│   ├── pipeline_shell_import.py
-│   ├── llm_assisted_parse.py
-│   ├── workspace_config.py
-│   ├── requirements.txt
-│   └── README.md
-├── pwa/
-│   ├── index.html
-│   ├── app.js
-│   ├── i18n.js
-│   ├── api-client.js
-│   ├── styles.css
-│   ├── service-worker.js
-│   ├── manifest.json
-│   └── README.md
-├── docs/
+├── .gitmodules                     # AutoAppDev submodule declaration
+├── autonovelwriter/
+│   ├── backend/
+│   │   ├── server.py              # main backend entrypoint + API/WS handlers + runner logic
+│   │   ├── requirements.txt       # tornado>=6.4
+│   │   ├── .env.example
+│   │   └── tests/                 # backend unit tests
+│   ├── pwa/
+│   │   ├── index.html
+│   │   ├── app.js                 # UI logic + embedded i18n dictionaries
+│   │   ├── app.css
+│   │   ├── manifest.webmanifest
+│   │   ├── service_worker.js
+│   │   ├── icons/
+│   │   └── tests/
+│   └── runtime/                   # mutable state/IO (contents gitignored)
 ├── scripts/
-│   └── pipeline_codegen/
-├── prompt_tools/
-├── examples/
+│   ├── run_autonovelwriter_tmux.sh
+│   ├── setup_conda_env.sh
+│   ├── setup_and_run_autonovelwriter.sh
+│   ├── auto-autonovelwriter-development.sh
+│   └── backups/
+├── scripts-legacy/
+├── docs/
+│   ├── autonovelwriter_spec.md
+│   ├── auto-development-guide.md
+│   └── ORDERING_RATIONALE.md
 ├── references/
+│   └── autonovelwriter_dev/
+├── examples/
+│   └── ralph-wiggum-example.sh
 ├── i18n/
-└── .auto-readme-work/
+│   ├── README.ar.md
+│   ├── README.de.md
+│   ├── README.es.md
+│   ├── README.fr.md
+│   ├── README.ja.md
+│   ├── README.ko.md
+│   ├── README.ru.md
+│   ├── README.vi.md
+│   ├── README.zh-Hans.md
+│   └── README.zh-Hant.md
+└── AutoAppDev/                    # git submodule (git@github.com:lachlanchen/AutoAppDev.git)
 ```
 
 ## ✅ المتطلبات المسبقة
-- نظام تشغيل يدعم `bash`.
-- Python `3.11+`.
-- Conda (`conda`) لسكربتات الإعداد المتوفرة.
-- `tmux` لجلسات backend+PWA أو التطوير الذاتي بأمر واحد.
-- PostgreSQL يمكن الوصول إليه عبر `DATABASE_URL`.
-- اختياري: CLI `codex` للتدفقات المدعومة بـ Codex (self-dev، parse-llm الاحتياطي، auto-readme pipeline).
 
-مصفوفة متطلبات سريعة:
+| الاعتماد | مطلوب | ملاحظات |
+|---|---|---|
+| Python `3.11+` | نعم | الحد الأدنى الموصى به |
+| `pip` | نعم | لتثبيت تبعيات backend |
+| `tmux` | لا | مطلوب لسكربت المشغل متعدد الألواح |
+| `conda` | لا | للسكربتات المساعدة الاختيارية |
+| `node` | لا | اختياري لتشغيل ملف اختبار PWA مباشرة |
 
-| المكون | مطلوب | الغرض |
-| --- | --- | --- |
-| `bash` | نعم | تنفيذ السكربتات |
-| Python `3.11+` | نعم | أدوات backend + codegen |
-| Conda | نعم (التدفق الموصى به) | سكربتات تهيئة البيئة |
-| PostgreSQL | نعم (الوضع المفضل) | التخزين الأساسي عبر `DATABASE_URL` |
-| `tmux` | موصى به | إدارة جلسات backend/PWA و self-dev |
-| `codex` CLI | اختياري | parse بمساعدة LLM وأتمتة README/self-dev |
+## 🚀 التثبيت
 
-## 🧩 التوافق والافتراضات
+| المسار | الأفضل متى | الأمر |
+|---|---|---|
+| الخيار A | تستخدم conda وتريد الإعداد المقدم من المستودع | `scripts/setup_conda_env.sh --name autonovelwriter` |
+| الخيار B | تريد الإعداد + التشغيل في أمر واحد | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
+| الخيار C | تفضّل التحكم اليدوي عبر pip | `python3 -m pip install -r autonovelwriter/backend/requirements.txt` |
 
-| الموضوع | التوقع الحالي |
-| --- | --- |
-| نظام التشغيل المحلي | Linux/macOS هما الهدف الأساسي (`bash` scripts) |
-| نسخة Python | `3.11` (تدار بواسطة `scripts/setup_autoappdev_env.sh`) |
-| وضع التخزين | PostgreSQL هو المفضل ويُعامل كخيار مرجعي |
-| سلوك احتياطي | `backend/storage.py` يتضمن توافق JSON لسيناريوهات التراجع |
-| نموذج الشبكة | تطوير localhost بمنافذ منفصلة (backend + static PWA) |
-| أدوات الوكيل | `codex` CLI اختياري إلا عند استخدام parse بمساعدة LLM أو أتمتة self-dev |
+### الخيار A: مساعد Conda (موصى به لهذا المستودع)
 
-الافتراضات المستخدمة في هذا README:
-- تشغّل الأوامر من جذر المستودع ما لم يُذكر خلاف ذلك.
-- يتم إعداد `.env` قبل تشغيل خدمات backend.
-- `conda` و `tmux` متاحان لتدفقات التشغيل الموصى بها بأمر واحد.
-
-## 🛠️ التثبيت
-### 1) استنساخ المستودع والدخول إليه
 ```bash
-git clone git@github.com:lachlanchen/AutoAppDev.git
-cd AutoAppDev
+scripts/setup_conda_env.sh --name autonovelwriter
 ```
 
-### 2) إعداد البيئة
+ثم شغّل عبر tmux:
+
 ```bash
-cp .env.example .env
+scripts/run_autonovelwriter_tmux.sh --env autonovelwriter
 ```
-حرّر `.env` واضبط على الأقل:
-- `SECRET_KEY`
-- `DATABASE_URL`
-- `AUTOAPPDEV_HOST` و `AUTOAPPDEV_PORT` (أو `PORT`)
 
-### 3) إنشاء/تحديث بيئة backend
+### الخيار B: إعداد وتشغيل في خطوة واحدة
+
 ```bash
-./scripts/setup_autoappdev_env.sh
+scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 ```
 
-### 4) تطبيق مخطط قاعدة البيانات
+### الخيار C: تثبيت pip يدوي
+
 ```bash
-conda run -n autoappdev python -m backend.apply_schema
+python3 -m pip install --upgrade pip
+python3 -m pip install -r autonovelwriter/backend/requirements.txt
 ```
 
-### 5) اختياري: اختبار دخاني لقاعدة البيانات
+### اختياري: تهيئة الوحدة الفرعية
+
 ```bash
-conda run -n autoappdev python -m backend.db_smoketest
+git submodule update --init --recursive
 ```
 
-## ⚡ البدء السريع
+## 🧪 الاستخدام
+
+| التدفق | الأمر / الرابط |
+|---|---|
+| بدء backend | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
+| فتح التطبيق | `http://127.0.0.1:8787/` |
+| نقطة WebSocket | `ws://127.0.0.1:8787/ws` |
+| PWA ثابتة اختياريًا | `python3 -m http.server 5173 --bind 127.0.0.1 --directory autonovelwriter/pwa` |
+| مشغل tmux | `scripts/run_autonovelwriter_tmux.sh --no-attach` |
+
+### بداية سريعة (بدون tmux)
+
 ```bash
-# from repo root
-cp .env.example .env
-./scripts/setup_autoappdev_env.sh
-conda run -n autoappdev python -m backend.apply_schema
-./scripts/run_autoappdev_tmux.sh --restart
+python3 -m pip install -r autonovelwriter/backend/requirements.txt
+python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
+# ثم افتح http://127.0.0.1:8787/
 ```
 
-ثم افتح:
-- PWA: `http://127.0.0.1:5173/`
-- قاعدة API للواجهة الخلفية: `http://127.0.0.1:8788`
-- فحص الصحة: `http://127.0.0.1:8788/api/health`
+### تشغيل للتطوير (backend + PWA)
 
-تحقق سريع بأمر واحد:
+Backend (Tornado):
+
 ```bash
-curl -sS http://127.0.0.1:8788/api/health | python3 -m json.tool
+python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
 ```
 
-خريطة نقاط نهاية سريعة:
+backend يخدم أيضًا أصول PWA الثابتة من `autonovelwriter/pwa/` افتراضيًا، لذلك يمكنك فتح:
+- `http://127.0.0.1:8787/` (PWA)
+- WebSocket: `ws://127.0.0.1:8787/ws`
 
-| السطح | URL |
-| --- | --- |
-| واجهة PWA | `http://127.0.0.1:5173/` |
-| Backend API | `http://127.0.0.1:8788` |
-| Health endpoint | `http://127.0.0.1:8788/api/health` |
+اختياري: تشغيل PWA عبر خادم static منفصل:
 
-## ⚙️ الإعداد
-الملف الأساسي: `.env` (راجع `docs/env.md` و `.env.example`).
-
-### متغيرات مهمة
-
-| المتغير | الغرض |
-| --- | --- |
-| `SECRET_KEY` | مطلوب حسب الاتفاق |
-| `AUTOAPPDEV_HOST`, `AUTOAPPDEV_PORT`, `PORT` | إعدادات ربط backend |
-| `DATABASE_URL` | PostgreSQL DSN (المفضل) |
-| `AUTOAPPDEV_RUNTIME_DIR` | تجاوز مجلد التشغيل (الافتراضي `./runtime`) |
-| `AUTOAPPDEV_PIPELINE_CWD`, `AUTOAPPDEV_PIPELINE_SCRIPT` | هدف تشغيل pipeline الافتراضي |
-| `AUTOAPPDEV_ENABLE_LLM_PARSE=1` | تفعيل `/api/scripts/parse-llm` |
-| `AUTOAPPDEV_CODEX_MODEL`, `AUTOAPPDEV_CODEX_REASONING`, `AUTOAPPDEV_CODEX_SKIP_GIT_CHECK` | إعدادات Codex الافتراضية للإجراءات/النقاط |
-| `AI_API_BASE_URL`, `AI_API_KEY` | محجوز لتكاملات مستقبلية |
-
-تحقق من `.env` بسرعة:
 ```bash
-bash -lc 'set -euo pipefail; test -f .env; set -a; source .env; set +a; \
-python3 - <<"PY"\
-import os, sys\
-req = ["SECRET_KEY", "DATABASE_URL"]\
-missing = [k for k in req if not os.getenv(k)]\
-port_ok = bool(os.getenv("AUTOAPPDEV_PORT") or os.getenv("PORT"))\
-if not port_ok: missing.append("AUTOAPPDEV_PORT or PORT")\
-if missing:\
-  print("Missing env:", ", ".join(missing))\
-  sys.exit(1)\
-print("OK: env looks set")\
-PY'
+python3 -m http.server 5173 --bind 127.0.0.1 --directory autonovelwriter/pwa
 ```
 
-## ▶️ الاستخدام
+افتح PWA على `http://127.0.0.1:5173` ووجّهه إلى backend الافتراضي `ws://127.0.0.1:8787/ws`.
 
-| الوضع | الأمر | الملاحظات |
-| --- | --- | --- |
-| تشغيل backend + PWA (موصى به) | `./scripts/run_autoappdev_tmux.sh --restart` | Backend `http://127.0.0.1:8788`, PWA `http://127.0.0.1:5173/` |
-| تشغيل backend فقط | `conda run -n autoappdev python -m backend.app` | يستخدم إعدادات الربط + DB من `.env` |
-| تشغيل خادم PWA ثابت فقط | `cd pwa && python3 -m http.server 5173 --bind 127.0.0.1` | مفيد لفحوصات الواجهة الأمامية فقط |
-| تشغيل مشغل self-dev في tmux | `./scripts/run_autoappdev_selfdev_tmux.sh --restart` | حلقة تطوير ذاتي قابلة للاستئناف |
+tmux (لتشغيل backend وPWA + تتبع السجلات):
 
-### خيارات السكربت الشائعة
-- `./scripts/run_autoappdev_tmux.sh --help`
-- `./scripts/run_autoappdev_tmux.sh --backend-port 8790 --pwa-port 5174`
-- `./scripts/run_autoappdev_tmux.sh --detached`
-- `./scripts/run_autoappdev_selfdev_tmux.sh --help`
-- `./scripts/run_autoappdev_selfdev_tmux.sh --start-at 14 --reasoning xhigh`
-
-### تحليل وتخزين السكربتات
-- تحليل AAPS عبر API: `POST /api/scripts/parse`
-- استيراد shell موضح: `POST /api/scripts/import-shell`
-- تحليل LLM اختياري: `POST /api/scripts/parse-llm` (يتطلب `AUTOAPPDEV_ENABLE_LLM_PARSE=1`)
-
-### APIs التحكم بالـ pipeline
-- `GET /api/pipeline`
-- `GET /api/pipeline/status`
-- `POST /api/pipeline/start`
-- `POST /api/pipeline/pause`
-- `POST /api/pipeline/resume`
-- `POST /api/pipeline/stop`
-
-### APIs أخرى كثيرة الاستخدام
-- الصحة/الإصدار/الإعداد: `/api/health`, `/api/version`, `/api/config`
-- الخطة/السكربتات: `/api/plan`, `/api/scripts`, `/api/scripts/<id>`
-- الإجراءات: `/api/actions`, `/api/actions/<id>`, `/api/actions/<id>/clone`, `/api/actions/update-readme`
-- المراسلة: `/api/chat`, `/api/inbox`, `/api/outbox`
-- السجلات: `/api/logs`, `/api/logs/tail`
-
-راجع `docs/api-contracts.md` لأشكال الطلب/الاستجابة.
-
-## 🧭 أدلة التشغيل
-
-### دليل: تشغيل الحزمة المحلية كاملة
 ```bash
-cp .env.example .env
-./scripts/setup_autoappdev_env.sh
-conda run -n autoappdev python -m backend.apply_schema
-./scripts/run_autoappdev_tmux.sh --restart
+scripts/run_autonovelwriter_tmux.sh --no-attach
+tmux attach -t autonovelwriter_app
 ```
 
-نقاط تحقق:
-- `curl -sS http://127.0.0.1:8788/api/health | python3 -m json.tool`
-- افتح `http://127.0.0.1:5173/` وتأكد أن الواجهة تحمل `/api/config`.
-- اختياريًا: افتح `/api/version` وتحقق من رجوع بيانات backend المتوقعة.
+إعداد conda:
 
-### دليل: تصحيح backend فقط
 ```bash
-conda run -n autoappdev python -m backend.app
-curl -sS http://127.0.0.1:8788/api/version
-curl -sS http://127.0.0.1:8788/api/pipeline/status | python3 -m json.tool
+scripts/setup_conda_env.sh --name autonovelwriter
+scripts/run_autonovelwriter_tmux.sh --env autonovelwriter
+# تشغيل فوري:
+scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 ```
 
-### دليل: اختبار دخاني codegen حتمي
+السكربت `scripts/auto-autonovelwriter-development.sh` يمكنه أيضًا بدء جلسة tmux أثناء auto-dev.
+
+### سير العمل النموذجي
+
+1. ابدأ الـ backend (أو مساعد tmux).
+2. افتح PWA.
+3. عدّل خط الأنابيب عبر الكتل و/أو مربع النص.
+4. تحقق من صحة السكربت واحفظه.
+5. ابدأ المشغّل وراقب السجلات/الحالات/الأحداث.
+6. راجع المخرجات ودفعات المهام المولّدة.
+
+## ⚙️ الإعدادات
+
+### متغيرات البيئة
+
+استخدم `autonovelwriter/backend/.env.example` كقالب. المتغيرات الأساسية المستخدمة من قبل backend/runtime:
+
+- `AUTONOVELWRITER_RUNTIME_ROOT` (الافتراضي `autonovelwriter/runtime`)
+- `AUTONOVELWRITER_PWA_ROOT` (الافتراضي `autonovelwriter/pwa`)
+- `AUTONOVELWRITER_HOST` (الافتراضي `127.0.0.1`)
+- `AUTONOVELWRITER_PORT` (افتراضي علم CLI: `8787`)
+- `AUTONOVELWRITER_WORKSPACE_ROOT` (الافتراضي: أم المشروع)
+- `AUTONOVELWRITER_WRITER_SCRIPT` (الافتراضي `${WORKSPACE_ROOT}/scripts/auto-xiyouzhiyuan-writer.sh`)
+- `AUTONOVELWRITER_XIYOU_INPUT_DIR` (الافتراضي `${WORKSPACE_ROOT}/references/xiyouzhiyuan/input`)
+- `AUTONOVELWRITER_NOVELS_ROOT` (الافتراضي `${WORKSPACE_ROOT}/auto-novels`)
+- `AUTONOVELWRITER_ENABLE_CODEX` (بوابة تنفيذ agent، معطلة افتراضياً)
+- `AUTONOVELWRITER_CODEX_CLI_PATH` (تجاوز ثنائي أو ملف تنفيذ codex اختياري)
+
+### خيارات CLI للسكربتات
+
+`run_autonovelwriter_tmux.sh`:
+- `--session <name>`
+- `--backend-port <n>`
+- `--pwa-port <n>`
+- `--host <ip>`
+- `--env <conda_env>`
+- `--debug`
+- `--kill`
+- `--no-attach`
+
+`setup_conda_env.sh`:
+- `--name <env>`
+- `--python <ver>`
+- `--force-recreate`
+
+`setup_and_run_autonovelwriter.sh`:
+- `--env <name>`
+- `--python <ver>`
+- `--session <name>`
+- `--backend-port <n>`
+- `--pwa-port <n>`
+- `--host <ip>`
+- `--force-recreate`
+- `--debug`
+- `--kill`
+- `--no-attach`
+
+## 🔌 واجهات Backend الأساسية
+
+| مجموعة API | نقاط النهاية الرئيسية |
+|---|---|
+| الصحة والإعدادات | `/api/health`, `/api/settings` |
+| المشاريع وإعدادات المشروع | `/api/projects`, `/api/projects/active`, `/api/projects/settings` |
+| خط الأنابيب | `/api/pipeline`, `/api/pipeline/validate`, `/api/pipeline/reference_writer*` |
+| المهام | `/api/tasks/batches/index`, `/api/tasks/batches/<batch_id>`, `/api/tasks/batches/<batch_id>/activate` |
+| الإجراءات | `/api/actions`, `/api/actions/<action_id>`, `/api/actions/<action_id>/copy` |
+| المشغّل | `/api/run/start|pause|resume|stop`, `/api/run/status` |
+| المخرجات ومعاينة الرواية | `/api/outputs/index`, `/api/novel/latest`, `/api/novel/latest/pdf` |
+| الوقت الفعلي | `/ws` |
+
+### واجهات HTTP
+
+- Health: `GET /api/health`
+- Settings: `GET/POST /api/settings`
+- Projects: `GET /api/projects`, `POST /api/projects/active`
+- Project settings (active project): `GET/POST /api/projects/settings` (تجاوزات لكل مشروع مع منطق الوراثة: `novel_language`, `novel_tone`, `novel_target_length_words`)
+- Materials index (active project): `GET /api/materials/index`
+- Outputs index (active project): `GET /api/outputs/index`
+- Task batches index: `GET /api/tasks/batches/index` (اختياري: `?project=<project_id>`)
+- Task batch details: `GET /api/tasks/batches/<batch_id>`
+- Task batch activate: `POST /api/tasks/batches/<batch_id>/activate` (يكتب `runtime/tasks/tasks.json` و `project active_tasks.json`)
+- Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`, `PUT /api/actions/<action_id>` (copy-on-edit لتحديث القوالب)
+- Pipeline (canonical script + derived JSON): `GET/POST /api/pipeline`
+- Pipeline validate (preview only): `POST /api/pipeline/validate`
+- Reference writer pipeline preview/load:
+  - `GET /api/pipeline/reference_writer` (يقرأ ويفسر `../scripts/auto-xiyouzhiyuan-writer.sh` كمرجع)
+  - `POST /api/pipeline/reference_writer/load` (يحمل النتيجة في runtime pipeline؛ لا يعدّل السكربت المصدري)
+- Chat: `GET /api/chat/history`, `POST /api/chat/send`
+- Latest novel PDF:
+  - `GET /api/novel/latest` (metadata)
+  - `GET /api/novel/latest/pdf` (تدفق PDF inline للعرض)
+- Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
+- Agent test (gated): `POST /api/agent/test` (يشغّل `codex --version` فقط عند التفعيل + بوابة البيئة)
+
+### WebSocket
+
+- Endpoint: `/ws`
+- Broadcast events: `hello`, `chat`, `outbox_written`, `input_mirror_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_updated`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`, `project_active_changed`, `project_settings_updated`, `echo`
+
+## 📁 مسارات زمن التشغيل
+
+جميع حالة/IO المتغيرة موجودة داخل `autonovelwriter/runtime/`:
+
+| المسار | الغرض |
+|---|---|
+| `autonovelwriter/runtime/io/inbox/` | user -> system (إسقاط ملفات `.txt`/`.md`) |
+| `autonovelwriter/runtime/io/outbox/` | system -> user (يكتب backend الرسائل هنا) |
+| `autonovelwriter/runtime/state/` | حالات JSON محفوظة (settings, pipeline, runner, chat) |
+| `autonovelwriter/runtime/state/chat.sqlite3` | sqlite chat mirror (إضافة إلى chat.jsonl) |
+| `autonovelwriter/runtime/state/active_project.json` | مؤشر المشروع النشط المحفوظ |
+| `autonovelwriter/runtime/tasks/` | ملفات قوائم المهام |
+| `autonovelwriter/runtime/tasks/batches/<batch_id>/` | دفعات المهام المولّدة (مثل `meta_tasks_generate`) |
+| `autonovelwriter/runtime/logs/` | السجلات |
+| `autonovelwriter/runtime/projects/<project_id>/materials/` | مواد المشروع (المدخلات) |
+| `autonovelwriter/runtime/projects/<project_id>/outputs/` | مخرجات المشروع (المسودات/التصدير) |
+| `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json` | تعديلات إعدادات الكتابة حسب المشروع (مثل لغة الرواية) |
+| `autonovelwriter/runtime/actions/defaults/` | قوالب مكتبة الإجراءات الافتراضية (معاملة كموجود ثابت) |
+| `autonovelwriter/runtime/actions/user/` | قوالب مكتبة الإجراءات التي ينشئها المستخدم (بـ copy-on-edit) |
+| `/home/lachlan/Documents/VoidAbyss/references/xiyouzhiyuan/input/` | إدخالات محاكاة المحادثة لبدء خط كتابة الرواية |
+
+## 🧩 سكربت خط الأنابيب (النسخة المرجعية)
+
+يمثل الخط كـ سكربت منسق على القرص:
+- `autonovelwriter/runtime/state/pipeline.script`
+
+backend يخدمه عبر `GET/POST /api/pipeline` كالتالي:
+- `script` (سكربت مرجعي، أسطر shell-ish `STEP <type>` / `DISABLED <type>`)
+- `pipeline` JSON (قائمة مسطحة مشتقة للعرض البسيط في الكتل)
+- `pipeline_ast` (هيكل متداخل مشتق يُستخدم للحلقات + واجهة المسافات)
+
+المشغّل ينفذ الخطوات المشتقة من نفس parser/AST v2 بحيث يظهر في PWA نفس ما ينفذ فعليًا.
+
+منطق التحكم في المشغّل يدعم حاويات v2:
+- `ROUND <n>` يكرر عناصره الفرعية `n` مرات.
+- `FOREACH_TASK` ينفذ عناصره الفرعية مرة لكل مهمة في قائمة المهام النشطة (`autonovelwriter/runtime/tasks/tasks.json`).
+- `FOREACH_ACTION` ينفذ عناصره الفرعية مرة لكل عنصر في `payload.actions` للمهمة الحالية (من المتوقع أن يكون متداخلًا ضمن `FOREACH_TASK`).
+
+الاستئناف:
+- المشغّل يحفظ مؤشر تنفيذ استئنافًا في `autonovelwriter/runtime/state/runner_state.json`.
+- يتحرك المؤشر فقط بعد إتمام بلوك بنجاح (حتى لا تُتجاوز الأعمال غير المكتملة عند إعادة التشغيل).
+- إذا تغيّر سكربت الخط المرجعي (اختلاف hash)، يتوقف المشغّل ويطلب إعادة تشغيل (إبطال للمؤشر).
+- يحفظ المشغّل سجلات `ActionResult` لكل خطوة في `autonovelwriter/runtime/state/action_results.jsonl` ويستخدم `exec_id` ثابتًا لكل خطوة لتجنب تكرار الالتزام عند إعادة التشغيل.
+- أثناء `FOREACH_ACTION`، تتضمن ActionResults: `action_index`, `action_id_ref`, `action_key`، كما تشمل المتغيرات `prev` مع نطاقات `task.prev` و `action.prev` صريحة.
+
+خطوط pipeline v2 تدعم التداخل:
+- `LOOP <n>` يفتح block للحلقة.
+- `ROUND <n>` يفتح block جولات.
+- `FOREACH_TASK` يفتح block لكل مهمة.
+- `FOREACH_ACTION` يفتح block لكل إجراء داخل المهمة (المشغّل يكرّر `task.payload.actions`).
+- `IF <expr>` يفتح block شرطي (parse/render؛ المشغّل ينفذ فقط فرع then حاليًا).
+- `ELSE` يفتح الفرع البديل اختياريًا تحت `IF`.
+- المسافة البادئة للطفل تكون بمقدار 2 مسافة لكل مستوى.
+
+التحقق (بدون حفظ):
+- `POST /api/pipeline/validate` يعيد معاينة معيارية + `pipeline_ast` + تحذيرات وأخطاء.
+
+تعرض PWA السكربت في textarea (مصدر الحقيقة) وتعرض الكتل المتداخلة من `pipeline_ast`.
+إذا كانت نقطة التحقق backend غير متاحة، تستخدم PWA parser محليًا يدعم نفس أفعال v2 (`LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF`, `ELSE`, `STEP`, `DISABLED`).
+
+ملاحظات واجهة الكتل:
+- قيم تكرار `LOOP` و`ROUND` قابلة للتحرير مباشرة داخل القائمة؛ التعديلات الفورية تُحدث textarea السكربت المرجعي.
+- شريط أدوات الكتل يمكنه إدراج `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF` بدون تحرير النص يدويًا (يغلف الكتلة المحددة أو يضيف حاوية صالحة غير فارغة).
+- يمكن حذف الكتل من اللوحة (زر حذف لكل بلوك؛ زر `Delete` للوحة المفاتيح عند التحديد). حذف حاوية يزيل جميع أطفالها، ويمنع المكرر الفارغ للحفاظ على سلامة السكربت.
+- تبقى `IF` صحيحة بنيويًا في المحرر: `ELSE` لا يوجد خارج `IF`، والفرع then لا يصبح فارغًا.
+- بلوكات `STEP` تعرض أدوات مكتبة الإجراءات: اختيار الإجراء، `Customize` (نسخ إجراء افتراضي إلى مستخدم وتبديل)، و`Edit` (نافذة محرر الإجراء لحقول `name/tool/prompt/script`).
+
+## 📝 مخرجات المشغّل (مسودة)
+
+عندما يحتوي الخط على `STEP write`، سينشئ backend ملف مسودة وهمي تحت:
+- `autonovelwriter/runtime/projects/<project_id>/outputs/`
+
+backend يصدّر أيضًا:
+- حدث WS `output_created` مع `path` و `project_rel_path`
+- سطر سجل `log` `[output] created: ...`
+
+PWA تحتوي لوحة Outputs بسيطة تعرض الملفات عبر `GET /api/outputs/index` وتُحدَّث تلقائيًا عند `output_created`.
+
+## 📦 مهام المشغّل (دفعات)
+
+عندما يحتوي الخط على `STEP meta_tasks_generate`، سينشئ backend دفعة مهام مبدئية تحت:
+- `autonovelwriter/runtime/tasks/batches/<batch_id>/`
+
+backend يصدّر أيضًا:
+- حدث WS `tasks_batch_created` مع `batch_dir`, `tasks_jsonl`, `task_count`
+- سطر سجل `log` `[tasks] created batch: ...`
+
+PWA تحتوي لوحة Task Batches بسيطة تعرض الدفعات عبر `GET /api/tasks/batches/index` وتُحدَّث تلقائيًا عند `tasks_batch_created`.
+يمكن أيضًا عرض تفاصيل الدفعة (`GET /api/tasks/batches/<batch_id>`) وتفعيلها لتصبح قائمة المهام الحالية لـ `FOREACH_TASK` (`POST /api/tasks/batches/<batch_id>/activate`).
+
+## 🔐 إعدادات الوكيل / بوابة Codex
+
+لوحة الإعدادات في PWA تحفظ إعدادات الوكيل عبر `/api/settings` في `autonovelwriter/runtime/state/settings.json`.
+
+لأسباب الأمان، لا يشغّل backend واجهة `codex` CLI إلا إذا تحقق الشرطان:
+- `settings.agent.enabled=true` و`settings.agent.sdk="codex"`
+- `AUTONOVELWRITER_ENABLE_CODEX=1` موجود في البيئة
+
+لا ترفع الأسرار. استخدم `autonovelwriter/backend/.env.example` كقالب vars محلي.
+
+## 🌐 I18N واجهة PWA (لغة الواجهة)
+
+PWA يوفّر نظام i18n مدمجًا خفيفًا.
+
+- فرض لغة الواجهة: أضف `?lang=<code>` إلى رابط PWA (مثل `?lang=ja`).
+- التخزين لكل المتصفح عبر localStorage: `anw_lang`.
+- لغات الواجهة المدعومة: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar` (RTL), `fr`, `es`, `ru`, `de`.
+- ملفات README المحلية للمستودع موجودة في `i18n/` ومربوطة بالسطر الواحد للغة في أعلى هذا الملف.
+
+| ملفات README المحلية (`i18n/`) | الحالة |
+|---|---|
+| `README.ar.md`, `README.de.md`, `README.es.md`, `README.fr.md`, `README.ja.md`, `README.ko.md`, `README.ru.md`, `README.vi.md`, `README.zh-Hans.md`, `README.zh-Hant.md` | موجودة |
+
+## 🖋️ إعدادات الرواية (منفصلة عن لغة الواجهة)
+
+إعدادات الكتابة تكون محفوظة في إعدادات backend تحت `settings.novel.*` في:
+- `autonovelwriter/runtime/state/settings.json`
+
+وهي منفصلة عمدًا عن لغة واجهة PWA (`?lang=` / `anw_lang`).
+
+تجاوزات المشروع محفوظة تحت:
+- `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json`
+
+الحقول العامة الحالية (قابلة للتحرير من مودال إعدادات PWA):
+- `settings.novel.language` (رموز شبيهة BCP-47 مثل `en`, `ja`, `zh-Hans`, وغيرها)
+- `settings.novel.tone`
+- `settings.novel.target_length_words`
+- `settings.novel.pov`
+- `settings.novel.tense`
+- `settings.novel.chapter_count_target`
+
+حقول تجاوز المشروع الحالية (فارغ/غير مضبوط = يرث من global):
+- `project_settings.novel_language`
+- `project_settings.novel_tone`
+- `project_settings.novel_target_length_words`
+
+## 🧰 أمثلة
+
+### تشغيل محلي أدنى
+
 ```bash
-python3 scripts/pipeline_codegen/generate_runner_from_ir.py \
-  --in examples/pipeline_ir_codegen_demo_v0.json \
-  --out /tmp/autoappdev_runner.sh
-
-bash -n /tmp/autoappdev_runner.sh
-scripts/pipeline_codegen/smoke_codegen.sh
-scripts/pipeline_codegen/smoke_placeholders.sh
-scripts/pipeline_codegen/smoke_conditional_steps.sh
-scripts/pipeline_codegen/smoke_meta_round_v0.sh
+python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
+# ثم افتح http://127.0.0.1:8787/
 ```
 
-## 📡 لمحة API
+### تشغيل عبر tmux بدون auto-attach
 
-مجموعات API الأساسية باختصار:
-
-| الفئة | النقاط |
-| --- | --- |
-| الصحة + معلومات التشغيل | `GET /api/health`, `GET /api/version`, `GET /api/config`, `POST /api/config` |
-| نموذج الخطة | `GET /api/plan`, `POST /api/plan` |
-| السكربتات | `GET/POST /api/scripts`, `GET/PUT/DELETE /api/scripts/<id>`, `POST /api/scripts/parse`, `POST /api/scripts/import-shell`, `POST /api/scripts/parse-llm` |
-| سجل الإجراءات | `GET/POST /api/actions`, `GET/PUT/DELETE /api/actions/<id>`, `POST /api/actions/<id>/clone`, `POST /api/actions/update-readme` |
-| تشغيل الـ pipeline | `GET /api/pipeline`, `GET /api/pipeline/status`, `POST /api/pipeline/start`, `POST /api/pipeline/pause`, `POST /api/pipeline/resume`, `POST /api/pipeline/stop` |
-| المراسلة + السجلات | `GET/POST /api/chat`, `GET/POST /api/inbox`, `GET/POST /api/outbox`, `GET/POST /api/logs`, `GET /api/logs/tail` |
-| إعدادات مساحة العمل | `GET/POST /api/workspaces/<name>/config` |
-
-## 🧪 أمثلة
-### مثال AAPS
-```text
-AUTOAPPDEV_PIPELINE 1
-
-TASK  {"id":"t1","title":"Happy path demo"}
-STEP  {"id":"s1","title":"Plan","block":"plan"}
-ACTION {"id":"a1","kind":"note","params":{"text":"Read context and outline steps."}}
-```
-
-أمثلة كاملة:
-- `examples/pipeline_formatted_script_v1.aaps`
-- `examples/pipeline_ir_v1.json`
-- `examples/pipeline_shell_annotated_v0.sh`
-- `examples/pipeline_ir_codegen_demo_v0.json`
-
-### توليد runner حتمي
 ```bash
-python3 scripts/pipeline_codegen/generate_runner_from_ir.py \
-  --in examples/pipeline_ir_codegen_demo_v0.json \
-  --out /tmp/autoappdev_runner.sh
-
-bash -n /tmp/autoappdev_runner.sh
-scripts/pipeline_codegen/smoke_codegen.sh
+scripts/run_autonovelwriter_tmux.sh --no-attach
+tmux attach -t autonovelwriter_app
 ```
 
-### Pipeline عرض حتمي
+### تشغيل ملفات اختبار backend مباشرة
+
 ```bash
-export AUTOAPPDEV_PIPELINE_SCRIPT=scripts/pipeline_demo.sh
-conda run -n autoappdev python -m backend.app
+python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py
+python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py
 ```
-ثم استخدم عناصر Start/Pause/Resume/Stop في PWA وافحص `/api/logs`.
 
-### الاستيراد من shell موضح
+### تشغيل ملف اختبار PWA مباشرة
+
 ```bash
-curl -sS -X POST http://127.0.0.1:8788/api/scripts/import-shell \
-  -H 'Content-Type: application/json' \
-  -d @- <<'JSON'
-{
-  "shell_text": "#!/usr/bin/env bash\n# AAPS: AUTOAPPDEV_PIPELINE 1\n# AAPS:\n# AAPS: TASK {\"id\":\"t1\",\"title\":\"Demo\"}\n# AAPS: STEP {\"id\":\"s1\",\"title\":\"Plan\",\"block\":\"plan\"}\n# AAPS: ACTION {\"id\":\"a1\",\"kind\":\"noop\"}\n"
-}
-JSON
+node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
 ```
 
-## 🧱 ملاحظات التطوير
-- الواجهة الخلفية مبنية على Tornado ومصممة لسهولة التطوير المحلي (بما في ذلك CORS متساهل لمنافذ localhost المنفصلة).
-- التخزين PostgreSQL-first مع سلوك توافق في `backend/storage.py`.
-- مفاتيح كتل PWA وقيم `STEP.block` في السكربت متعمدة التوافق (`plan`, `work`, `debug`, `fix`, `summary`, `commit_push`).
-- الإجراءات المدمجة للقراءة فقط؛ انسخ clone قبل التحرير.
-- إجراء `update_readme` مقيّد أمنيًا لأهداف README داخل مساحة العمل تحت `auto-apps/<workspace>/README.md`.
-- توجد إشارات تاريخية لمسارات/أسماء في بعض الوثائق والسكربتات (`HeyCyan`, `LightMind`) موروثة من تطور المشروع. المسار المرجعي الحالي هو جذر هذا المستودع.
-- مجلد `i18n/` في الجذر موجود. من المتوقع وجود ملفات README اللغوية هناك في التشغيل متعدد اللغات.
+### مثال مساعد الأتمتة
 
-### نموذج العمل وملفات الحالة
-- وقت التشغيل الافتراضي هو `./runtime` ما لم يتم تجاوزه عبر `AUTOAPPDEV_RUNTIME_DIR`.
-- حالة/سجل أتمتة self-dev يتم تتبعها تحت `references/selfdev/`.
-- مخرجات خط README يتم تسجيلها تحت `.auto-readme-work/<timestamp>/`.
+```bash
+bash examples/ralph-wiggum-example.sh
+```
 
-### وضع الاختبارات (حاليًا)
-- المستودع يتضمن فحوصات smoke وسكربتات عرض حتمية.
-- لا توجد حاليًا مجموعة اختبارات آلية/تعريف CI كامل على مستوى الجذر.
-- الافتراض: التحقق يعتمد أساسًا على السكربتات حاليًا (`scripts/pipeline_codegen/smoke_*.sh`, `backend.db_smoketest`, قائمة تحقق end-to-end).
+## 🛠️ ملاحظات التطوير
 
-## 🔐 ملاحظات الأمان
-- إجراء `update_readme` مقيّد عمدًا بأهداف README الخاصة بمساحة العمل (`auto-apps/<workspace>/README.md`) مع حماية من path traversal.
-- تحقق سجل الإجراءات يفرض حقول مواصفات إجراء مُطبّعة وقيمًا محدودة لمستويات reasoning المدعومة.
-- سكربتات المستودع تفترض تنفيذًا محليًا موثوقًا؛ راجع محتوى السكربتات قبل التشغيل في بيئات مشتركة أو قريبة من الإنتاج.
-- قد يحتوي `.env` على قيم حساسة (`DATABASE_URL`, API keys). أبقِ `.env` خارج الالتزام واستخدم إدارة أسرار خاصة بكل بيئة خارج التطوير المحلي.
+### سير عمل السائق (Auto-Dev)
+<!-- AUTO_DEV_PROGRESS_START -->
+### Auto-Dev Progress (Generated)
+- updated_utc: 2026-02-16T02:48:02Z
+- current: T032_project_settings_extend_novel_overrides / update_readme — Project settings: extend novel overrides (inherit)
+- queue: total=32 done=31 pending=1
+- last_done: T031_runner_foreach_action_semantics_and_var_scopes — Runner: FOREACH_ACTION semantics + var scopes @ 2026-02-16T10:35:36+0800
+- latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3
+- autoappdev_head: 8bc23a5
+<!-- AUTO_DEV_PROGRESS_END -->
 
-## 🔧 استكشاف الأخطاء وإصلاحها
+`scripts/auto-autonovelwriter-development.sh` يشغّل حلقة Codex-driven قابلة للاستئناف فوق المهام داخل `references/autonovelwriter_dev/`، ويعمل commit/push بعد كل مرحلة (`plan -> implement -> debug -> fix -> i18n -> summary -> update_readme`).
 
-| العرض | ما الذي يجب فحصه |
-| --- | --- |
-| `tmux not found` | ثبّت `tmux` أو شغّل backend/PWA يدويًا. |
-| فشل backend عند الإقلاع بسبب نقص env | أعد التحقق من `.env` مقارنة بـ `.env.example` و `docs/env.md`. |
-| أخطاء قاعدة البيانات (اتصال/مصادقة/مخطط) | تحقق من `DATABASE_URL`; أعد تشغيل `conda run -n autoappdev python -m backend.apply_schema`; فحص اتصال اختياري: `conda run -n autoappdev python -m backend.db_smoketest`. |
-| PWA تعمل لكن لا تستدعي API | تأكد أن backend يستمع على host/port المتوقعين؛ أعد توليد `pwa/config.local.js` عبر إعادة تشغيل `./scripts/run_autoappdev_tmux.sh`. |
-| Pipeline Start يرجع انتقال حالة غير صالح | تحقق من حالة pipeline الحالية أولًا؛ ابدأ من `stopped`. |
-| لا تحديثات سجلات في الواجهة | تأكد من كتابة `runtime/logs/pipeline.log`; استخدم `/api/logs` و `/api/logs/tail` مباشرةً لعزل مشكلة UI عن backend. |
-| نقطة LLM parse معطلة | اضبط `AUTOAPPDEV_ENABLE_LLM_PARSE=1` ثم أعد تشغيل backend. |
-| فشل `conda run -n autoappdev ...` | أعد تشغيل `./scripts/setup_autoappdev_env.sh`; وتأكد من وجود بيئة conda `autoappdev` (`conda env list`). |
-| هدف API خاطئ في الواجهة الأمامية | تأكد من وجود `pwa/config.local.js` وأنه يشير إلى host/port النشطين للواجهة الخلفية. |
+عناصر تحكم مفيدة:
+- الإيقاف بعد المهمة الحالية: `touch references/autonovelwriter_dev/STOP`
+- إعادة تعيين تتبع الحالة (مع الحفاظ على الطابور): `scripts/auto-autonovelwriter-development.sh --reset-state`
+- بدء جلسة Codex جديدة: `scripts/auto-autonovelwriter-development.sh --new-session`
+- الممارسة الآمنة: العمل على فرع/نسخة عمل نظيفة ومراقبة `references/autonovelwriter_dev/state.tsv` قبل إعادة التشغيل
 
-للمسار اليدوي الحتمي للتحقق، استخدم `docs/end-to-end-demo-checklist.md`.
+### افتراضات تشغيلية
 
-## 🌐 سير عمل README و i18n
-- ملف README الجذري هو المصدر المرجعي المستخدم بواسطة خط أتمتة README.
-- النسخ متعددة اللغات متوقعة تحت `i18n/`.
-- حالة مجلد i18n: ✅ موجود في هذا المستودع.
-- مجموعة اللغات الحالية في هذا المستودع:
-  - `i18n/README.ar.md`
-  - `i18n/README.de.md`
-  - `i18n/README.es.md`
-  - `i18n/README.fr.md`
-  - `i18n/README.ja.md`
-  - `i18n/README.ko.md`
-  - `i18n/README.ru.md`
-  - `i18n/README.vi.md`
-  - `i18n/README.zh-Hans.md`
-  - `i18n/README.zh-Hant.md`
-- يجب أن يبقى سطر تنقل اللغات كسطر واحد أعلى كل نسخة README (بدون تكرار شريط اللغات).
-- نقطة دخول خط README: `prompt_tools/auto-readme-pipeline.sh`.
+- هذا README يفترض تطويرًا محليًا أوليًا على Linux/macOS مع `bash` وPython 3.11+.
+- حالة runtime داخل `autonovelwriter/runtime/` قابلة للتعديل ومن المفترض أن تكون غير متتبعة.
+- سلوك خط الأنابيب الموصوف هنا يعكس التنفيذ الحالي داخل `autonovelwriter/backend/server.py` و `autonovelwriter/pwa/app.js`.
 
-### قيود توليد i18n (صارمة)
-- يجب دائمًا معالجة التوليد متعدد اللغات عند تحديث محتوى README المرجعي.
-- أنشئ/حدّث ملفات اللغات واحدًا تلو الآخر (تسلسليًا)، وليس على دفعات غامضة.
-- احتفظ بسطر تنقل لغات واحد بالضبط أعلى كل نسخة.
-- لا تكرر أشرطة اللغات داخل الملف نفسه.
-- حافظ على مقاطع الأوامر والروابط ومسارات API وقصد الشارات عبر الترجمات.
+## 🧪 ملاحظات الاختبار
 
-ترتيب توليد مقترح واحدًا تلو الآخر:
-1. `i18n/README.ar.md`
-2. `i18n/README.de.md`
-3. `i18n/README.es.md`
-4. `i18n/README.fr.md`
-5. `i18n/README.ja.md`
-6. `i18n/README.ko.md`
-7. `i18n/README.ru.md`
-8. `i18n/README.vi.md`
-9. `i18n/README.zh-Hans.md`
-10. `i18n/README.zh-Hant.md`
+لا يوجد orchestrator من نوع `Makefile`/`tox`/`npm test` أعلى مستوى في هذا المستودع حالياً.
 
-جدول تغطية اللغات:
+نقاط الدخول العملية الحالية:
 
-| اللغة | الملف |
-| --- | --- |
+| المجال | نقطة الدخول |
+|---|---|
+| Backend parser/AST | `python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py` |
+| Backend foreach-action syntax | `python3 autonovelwriter/backend/tests/pipeline_foreach_action_roundtrip_test.py` |
+| Backend runner semantics | `python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py` |
+| Backend action library update | `python3 autonovelwriter/backend/tests/actions_library_update_unit_test.py` |
+| سلوك حذف PWA AST | `node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js` |
 
-ملاحظة مساحة العمل المرصودة:
-- قد يظهر `i18n/README.zh-Hant.md.tmp` كأثر ترجمة مؤقت؛ أبقِ الملفات النهائية المرجعية بصيغة `README.<lang>.md`.
+```bash
+# backend (تشغيل ملفات الاختبار منفردة)
+python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py
+python3 autonovelwriter/backend/tests/pipeline_foreach_action_roundtrip_test.py
+python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py
+python3 autonovelwriter/backend/tests/actions_library_update_unit_test.py
 
-## 📘 سياق توليد Readme
+# pwa logic test
+node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
+```
 
-- Pipeline run timestamp: `20260301_095119`
-- Trigger: `./README.md` first complete draft generation (canonical-base incremental update)
-- Input user prompt: `Use current README as canonical base. No reduction: only increment and improve. Preserve existing content, links, badges, commands, and details. Always process multilingual generation (do not skip): ensure i18n exists and generate/update language files one-by-one with a single language-options line at the top and no duplicates.`
-- Goal: generate a complete, beautiful README draft with required sections and support information
-- Source snapshot used:
-  - `./.auto-readme-work/20260301_095119/pipeline-context.md`
-  - `./.auto-readme-work/20260301_095119/repo-structure-analysis.md`
-- This file was generated from repository contents and preserved as a canonical draft entry point.
+إذا أضفت أو غيّرت semantics للمشغّل أو نحو syntax خط الأنابيب أو سلوك مكتبة الإجراءات، حدّث الاختبارات وملاحظات README/API في نفس التغيير.
 
-## ❓ الأسئلة الشائعة
+## 📚 محتويات المستودع
 
-### هل PostgreSQL إلزامي؟
-مفضل ومتوقع للتشغيل الطبيعي. طبقة التخزين تحتوي على سلوك توافق احتياطي، لكن الاستخدام الأقرب للإنتاج يجب أن يفترض توفر PostgreSQL عبر `DATABASE_URL`.
+- `docs/autonovelwriter_spec.md`: مواصفات المنتج للتحكم الشبيه بـ Scratch (chat + folder pipe + start/pause/stop + settings).
+- `scripts/auto-autonovelwriter-development.sh`: أتمتة تطوير AutoNovelWriter نفسه (task loop: `plan -> implement -> debug -> fix -> i18n -> summary -> update_readme -> commit+push`).
+- `docs/auto-development-guide.md`: فلسفة ومتطلبات ثنائية اللغة (EN/ZH) لوكيل تطوير طويل الأمد وقابل للاستئناف.
+- `docs/ORDERING_RATIONALE.md`: مثال لسببية ترتيب الخطوات المعتمدة على لقطات الشاشة.
+- `scripts-legacy/`: سكربتات أقدم للأرشيف، محفوظة للرجوع إليها وليست مستخدمة بواسطة AutoNovelWriter.
+- `examples/ralph-wiggum-example.sh`: مثال مساعد أتمتة Codex CLI.
 
-### لماذا يوجد `AUTOAPPDEV_PORT` و `PORT` معًا؟
-`AUTOAPPDEV_PORT` خاص بالمشروع. أما `PORT` فهو اسم بديل ملائم لبيئات النشر. اجعلهما متطابقين ما لم تكن تتعمد تجاوز السلوك في مسار التشغيل.
+ملاحظات إضافية للمطور:
+- اختبارات backend موجودة في `autonovelwriter/backend/tests/`.
+- يوجد اختبار سلوك صغير للـ PWA في `autonovelwriter/pwa/tests/`.
+- `i18n/` يحتوي ملفات README مترجمة، بينما قواميس الترجمة في الواجهة مدمجة داخل `autonovelwriter/pwa/app.js`.
 
-### من أين أبدأ إذا أردت فقط فحص APIs؟
-شغّل backend فقط (`conda run -n autoappdev python -m backend.app`) واستخدم `/api/health`, `/api/version`, `/api/config` ثم نقاط السكربت/الإجراء المذكورة في `docs/api-contracts.md`.
+## 🧯 استكشاف الأخطاء وإصلاحها
 
-### هل يتم توليد READMEs متعددة اللغات تلقائيًا؟
-نعم. يتضمن المستودع `prompt_tools/auto-readme-pipeline.sh`، ويتم الحفاظ على نسخ اللغات تحت `i18n/` مع سطر تنقل لغات واحد أعلى كل نسخة.
+| العَرَض | ما يجب التحقق منه |
+|---|---|
+| `tmux not found in PATH` | ثبّت tmux أو شغّل backend وخوادم static يدويًا. |
+| `conda not found in PATH` عند استخدام سكربتات `--env` | ثبّت Miniconda/Anaconda أو تجاوز conda واستخدم تثبيت `pip` يدويًا. |
+| PWA لا يتصل بالـ backend | تحقق من عنوان و منفذ backend ونقطة WebSocket `ws://<host>:<port>/ws`. |
+| `POST /api/agent/test` يرجع حالة مقيّدة/معطلة | تأكد من كل من `settings.agent.enabled=true`, `settings.agent.sdk="codex"`, و `AUTONOVELWRITER_ENABLE_CODEX=1`. |
+| المشغّل يتوقف بعد تعديل السكربت | هذا سلوك متوقع؛ يتم إبطال المؤشر عند اختلاف hash الخط ويستلزم إعادة تشغيل. |
+| PWA على `:5173` يعمل لكن استدعاءات API تفشل | تأكد من تشغيل backend على `:8787` (أو حدّث إعدادات app/backend الهدف).
 
-## 🗺️ خارطة الطريق
-- إكمال مهام self-dev المتبقية بعد الحالة الحالية `51 / 55`.
-- توسيع أدوات مساحة العمل/المواد/السياق مع عقود مسارات آمنة أقوى.
-- مواصلة تحسين تجربة لوحة الإجراءات وتدفقات الإجراءات القابلة للتحرير.
-- تعميق دعم README/UI متعدد اللغات عبر `i18n/` وتبديل اللغة أثناء التشغيل.
-- تقوية فحوصات smoke/integration وتغطية CI (حاليًا توجد فحوصات smoke معتمدة على السكربتات؛ لا يوجد تعريف CI كامل موثق في الجذر).
-- الاستمرار في تقوية حتمية parser/import/codegen حول AAPS v1 و canonical IR.
+## 🗺️ خريطة الطريق
+
+- إكمال وتثبيت عناصر auto-dev المتبقية في الطابور (راجع كتلة التقدم المولدة أعلاه).
+- توسيع وتزامن نسخ README متعددة اللغات في `i18n/` باستمرار.
+- توسيع تغطية الاختبارات الآلية عبر حالات الحافة وتفاعلات PWA.
+- الاستمرار في تحسين مكتبة الإجراءات وسير عمليات تكرار المهمة/الإجراء.
 
 ## 🤝 المساهمة
-المساهمات مرحب بها عبر issues وطلبات السحب.
 
-سير عمل مقترح:
-1. Fork وأنشئ فرع ميزة.
-2. حافظ على تغييرات مركزة وقابلة لإعادة الإنتاج.
-3. فضّل السكربتات/الاختبارات الحتمية متى أمكن.
-4. حدّث الوثائق عندما تتغير السلوكيات/العقود (`docs/*`, عقود API, الأمثلة).
-5. افتح PR يتضمن السياق، خطوات التحقق، وأي افتراضات تشغيل.
+المساهمات مرحب بها.
 
-الـ remotes الحالية للمستودع تتضمن:
-- `origin`: `git@github.com:lachlanchen/AutoAppDev.git`
-- قد توجد remotes إضافية في النسخ المحلية لمستودعات ذات صلة (مثال موجود في مساحة العمل هذه: `novel`).
+إرشادات عملية لهذا المستودع:
+- ابدأ من `docs/autonovelwriter_spec.md` و`docs/auto-development-guide.md`.
+- أبقِ تغييرات وقت التشغيل داخل `autonovelwriter/runtime/` (المحتوى غير متتبع) وليس على الملفات المُدارة.
+- اعتمد PRات تدريجية مع أوامر تشغيل واختبار قابلة لإعادة التشغيل.
+- إذا غيّرت semantics خط الأنابيب أو عقود الـ API، حدّث README والاختبارات ذات الصلة معًا.
+
+ملاحظة: لم يُعثر على ملف `CONTRIBUTING.md` مخصص في جذر المستودع في هذه المرحلة.
 
 ---
 
 ## 📄 الترخيص
-![License](https://img.shields.io/badge/License-Not%20Detected-C53030?logo=law&logoColor=white)
 
-لم يتم اكتشاف ملف `LICENSE` في جذر هذا المستودع ضمن هذه اللقطة.
+حالة ملف/الرخصة غير مُذكورة صراحة في جذر المستودع في هذا السياق.
 
 ملاحظة افتراضية:
-- إلى أن تتم إضافة ملف ترخيص، تعامل مع شروط الاستخدام/إعادة التوزيع على أنها غير محددة وتأكد من الأمر مع maintainer.
+- إذا أردت توضيح توزيع المشروع كمشروع مفتوح المصدر، أضف ملف `LICENSE` في المستوى الأعلى وحدث هذا القسم بما يتناسب.
 
 
 ## ❤️ Support

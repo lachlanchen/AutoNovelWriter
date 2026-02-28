@@ -1,667 +1,681 @@
 [English](../README.md) · [العربية](README.ar.md) · [Español](README.es.md) · [Français](README.fr.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Tiếng Việt](README.vi.md) · [中文 (简体)](README.zh-Hans.md) · [中文（繁體）](README.zh-Hant.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
 
+
+
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
-# AutoAppDev 🚀
+<div align="center">
+  <h1>AutoNovelWriter</h1>
+  <p><strong>用于控制自动化小说写作（及应用开发）流水线的 Scratch 风格 PWA + Tornado 后端。</strong></p>
+  <p>
+    <img alt="Python" src="https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white" />
+    <img alt="Backend" src="https://img.shields.io/badge/backend-Tornado%206.4%2B-0ea5e9" />
+    <img alt="Frontend" src="https://img.shields.io/badge/frontend-PWA-10b981" />
+    <img alt="Realtime" src="https://img.shields.io/badge/realtime-WebSocket-06b6d4" />
+    <img alt="Pipeline" src="https://img.shields.io/badge/pipeline-script%20%2B%20AST-2563eb" />
+    <img alt="Runtime" src="https://img.shields.io/badge/runtime-local%20state-orange" />
+    <img alt="Status" src="https://img.shields.io/badge/status-active%20development-f59e0b" />
+    <img alt="Canonical docs" src="https://img.shields.io/badge/docs-README.md-critical?style=flat" />
+    <img alt="Languages" src="https://img.shields.io/badge/i18n-10%2B%20languages-8b5cf6?style=flat" />
+  </p>
+</div>
 
-![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
-![Backend](https://img.shields.io/badge/Backend-Tornado-222222)
-![Frontend](https://img.shields.io/badge/Frontend-PWA-0A7EA4)
-![Database](https://img.shields.io/badge/Database-PostgreSQL-4169E1?logo=postgresql&logoColor=white)
-![Status](https://img.shields.io/badge/Self--Dev-51%2F55%20tasks%20done-2E8B57)
-![i18n](https://img.shields.io/badge/i18n-11%20languages-1f6feb)
-![Pipeline](https://img.shields.io/badge/Pipeline-Resumable-ff6b35)
-![Docs](https://img.shields.io/badge/Docs-Workflow%20First-0e9f6e)
-![Automation](https://img.shields.io/badge/Automation-README%20Pipeline-f97316)
-![API](https://img.shields.io/badge/API-JSON%20HTTP-0ea5e9)
-![State Machine](https://img.shields.io/badge/Lifecycle-start%2Fpause%2Fresume%2Fstop-f59e0b)
-![Control Flow](https://img.shields.io/badge/Control%20Flow-Plan%20%E2%86%92%20Work%20%E2%86%92%20Verify%20%E2%86%92%20Summary-0f766e)
-![GitHub stars](https://img.shields.io/github/stars/lachlanchen/AutoAppDev?style=flat&logo=github&logoColor=white&color=%231DA1F2)
-![GitHub forks](https://img.shields.io/github/forks/lachlanchen/AutoAppDev?style=flat&logo=github&logoColor=white&color=%2300A4A6)
-![GitHub issues](https://img.shields.io/github/issues/lachlanchen/AutoAppDev?style=flat&logo=github&logoColor=white&color=%23ef4444)
+本仓库同时将 `AutoAppDev/` 作为子模块内置（可复用的自动化开发脚本集合）。
 
----
+> [!TIP]
+> `README.md` 是权威基准。其他语言版本位于 `i18n/`，并通过文件顶部的语言切换行统一导航。
 
-可复用脚本和指南，使用 Codex 作为非交互式工具，从截图/Markdown 逐步构建应用。
+## 🧭 Project Snapshot
 
-> 🎯 **使命：** 让应用开发流水线具备确定性、可恢复、且以工件为驱动。
->
-> 🧩 **设计原则：** Plan -> Work -> Verify -> Summary -> Commit/Push.
+| 快速信息 | 说明 |
+|---|---|
+| 主要技术栈 | Python + Tornado 后端、浏览器端 PWA 前端 |
+| 核心交互 | 以单一真源支持脚本文本编辑与块状 UI 编辑 |
+| 执行模式 | 支持可恢复运行；持久化执行游标与动作结果 |
+| 实时能力 | WebSocket 端点：`/ws` |
+| 可变运行时根目录 | `autonovelwriter/runtime/`（默认为 gitignore） |
 
----
+## At-a-Glance Navigation
 
-### 🎛️ 项目信号
+| 🎯 立即操作 | 🔧 命令 / URL |
+|---|---|
+| 打开本地 PWA | `http://127.0.0.1:8787/` |
+| 连接实时更新 | `ws://127.0.0.1:8787/ws` |
+| 快速启动后端 | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
+| 一次性脚本化启动 | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
 
-| 信号 | 当前方向 |
-| --- | --- |
-| 运行时模型 | Tornado backend + static PWA controller |
-| 流水线执行 | 确定性且可恢复（`start/pause/resume/stop`） |
-| 持久化策略 | PostgreSQL 优先，并带兼容回退行为 |
-| 文档流程 | 以根 README 为规范来源，配套自动化 `i18n/` 变体 |
+> [!TIP]
+> 最快本地启动方式：
+> 1. `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill`
+> 2. 打开 `http://127.0.0.1:8787/`
+> 3. 连接 WebSocket 更新：`ws://127.0.0.1:8787/ws`
 
-### 🔗 快速导航
+## 🔌 Launch defaults
 
-| 需求 | 前往 |
-| --- | --- |
-| 首次本地运行 | [⚡ 快速开始](#-快速开始) |
-| 环境与必需变量 | [⚙️ 配置](#️-配置) |
-| API 总览 | [📡 API 快照](#-api-快照) |
-| 运行/调试手册 | [🧭 运维 Runbook](#-运维-runbook) |
-| README/i18n 生成规则 | [🌐 README 与 i18n 工作流](#-readme-与-i18n-工作流) |
-| 故障排查矩阵 | [🔧 故障排查](#-故障排查) |
+| 启动默认值 | 值 |
+|---|---|
+| PWA 地址 | `http://127.0.0.1:8787/` |
+| WebSocket 地址 | `ws://127.0.0.1:8787/ws` |
+| 后端主机/端口 | `127.0.0.1:8787` |
 
-<!-- AUTOAPPDEV:STATUS:BEGIN -->
-## 自研状态（自动更新）
+## Table of Contents
 
-- Updated: 2026-02-16T00:27:20Z
-- Phase commit: `Selfdev: 52 pwa_action_palette_dynamic_and_editable_blocks summary`
-- Progress: 51 / 55 tasks done
-- Codex session: `019c6056-f33a-7f31-b08f-0ca40c365351`
-- Philosophy: Plan -> Work -> Verify -> Summary -> Commit/Push (linear, resumable)
+- [Overview](#-overview)
+- [Features](#-features)
+- [Architecture at a Glance](#-architecture-at-a-glance)
+- [Project Structure](#️-project-structure)
+- [At-a-Glance Navigation](#at-a-glance-navigation)
+- [Prerequisites](#-prerequisites)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [Configuration](#️-configuration)
+- [Key Backend APIs](#-key-backend-apis)
+- [Runtime Paths](#-runtime-paths)
+- [Pipeline Script (Canonical Artifact)](#-pipeline-script-canonical-artifact)
+- [Runner Outputs (Draft Stub)](#-runner-outputs-draft-stub)
+- [Runner Tasks (Batch Stub)](#-runner-tasks-batch-stub)
+- [Agent Settings / Codex Gate](#-agent-settings--codex-gate)
+- [PWA I18N (UI Language)](#-pwa-i18n-ui-language)
+- [Novel Settings (Separate From UI Language)](#️-novel-settings-separate-from-ui-language)
+- [Examples](#-examples)
+- [Development Notes](#️-development-notes)
+- [Testing Notes](#-testing-notes)
+- [Repository Contents](#-repository-contents)
+- [Troubleshooting](#-troubleshooting)
+- [Roadmap](#️-roadmap)
+- [Contributing](#-contributing)
+- [Support](#-support)
+- [License](#-license)
 
-本节由 `scripts/auto-autoappdev-development.sh` 自动更新。
-请勿编辑标记之间的内容。
+## 📌 Overview
 
-<!-- AUTOAPPDEV:STATUS:END -->
+AutoNovelWriter 提供本地编排层，用于：
+- 通过源码文本与块状 UI 两种路径编辑规范流水线脚本（`pipeline.script`）。
+- 运行可恢复的后端执行流程，并持久化执行游标与动作结果。
+- 管理项目、素材、产物、任务批次与动作模板。
+- 通过 WebSocket（`/ws`）向 PWA 推送实时更新。
 
-## 🗂️ 目录
-- [🚀 概览](#-概览)
-- [🧭 仓库快照](#-仓库快照)
-- [🧭 方法论](#-方法论)
-- [✨ 特性](#-特性)
-- [📌 一览](#-一览)
-- [🏗️ 架构](#️-架构)
-- [📚 内容索引](#-内容索引)
-- [🗂️ 项目结构](#️-项目结构)
-- [✅ 前置要求](#-前置要求)
-- [🧩 兼容性与假设](#-兼容性与假设)
-- [🛠️ 安装](#️-安装)
-- [⚡ 快速开始](#-快速开始)
-- [⚙️ 配置](#️-配置)
-- [▶️ 使用方式](#️-使用方式)
-- [🧭 运维 Runbook](#-运维-runbook)
-- [📡 API 快照](#-api-快照)
-- [🧪 示例](#-示例)
-- [🧱 开发说明](#-开发说明)
-- [🔐 安全说明](#-安全说明)
-- [🔧 故障排查](#-故障排查)
-- [🌐 README 与 i18n 工作流](#-readme-与-i18n-工作流)
-- [📘 README 生成上下文](#-readme-生成上下文)
-- [❓ FAQ](#-faq)
-- [🗺️ 路线图](#️-路线图)
-- [🤝 贡献](#-贡献)
-- [❤️ Support](#-support)
-- [📄 许可证](#-许可证)
+可变运行时根目录是 `autonovelwriter/runtime/`（内容默认不进入版本控制）。
 
-## 🧭 仓库快照
+| 模块 | 功能 |
+|---|---|
+| 流水线编排 | 从同一单一源同时编辑规范脚本和嵌套块 UI |
+| 执行 | 支持可恢复状态的运行器 |
+| 项目运维 | 项目范围的素材、产物、设置与任务批次激活 |
+| 实时体验 | `/ws` 事件：状态/日志/输出/任务/动作更新 |
 
-| 关注点 | 当前配置 |
-| --- | --- |
-| 核心循环 | Plan → Work → Debug → Fix → Summary → Commit/Push |
-| 运行时模型 | Tornado backend + static PWA controller |
-| 状态机 | `start` / `pause` / `resume` / `stop` |
-| 持久化 | PostgreSQL 优先，带 JSON 兼容回退 |
-| 文档 | 规范 `README.md` + 多语言 `i18n/` 输出 |
+## ✨ Features
 
-## 🚀 概览
-AutoAppDev 是一个面向长时间运行、可恢复的应用开发流水线控制器项目，结合了：
+- Scratch 风格的流水线编辑器，底层由规范脚本与解析器/AST 驱动。
+- 运行器控制 API（`start/pause/resume/stop`），支持可恢复状态。
+- 控制流容器：`LOOP`、`ROUND`、`FOREACH_TASK`、`FOREACH_ACTION`、`IF/ELSE`。
+- 动作库：内置默认模板，并支持 copy-on-edit 的用户覆盖。
+- 项目级小说设置覆盖，并支持继承语义。
+- `FOREACH_TASK` 的任务批次生成、索引、详情与激活流程。
+- 输出索引与最新小说 PDF 预览端点。
+- 内置 PWA i18n 字典（`en`、`zh-Hans`、`zh-Hant`、`ja`、`ko`、`vi`、`ar`、`fr`、`es`、`ru`、`de`）。
+- tmux 辅助脚本以及可恢复的 Codex 自动开发驱动。
 
-1. 一个基于 PostgreSQL 持久化的 Tornado 后端 API（存储代码中包含本地 JSON 回退行为）。
-2. 一个 Scratch 风格的静态 PWA 控制器界面。
-3. 一套用于流水线编写、确定性代码生成、self-dev 循环与 README 自动化的脚本与文档。
-
-该项目专为可预测的代理执行进行优化，采用严格顺序和以工件为导向的工作流历史。
-
-### 🎨 为什么有这个仓库
-
-| 主题 | 实际含义 |
-| --- | --- |
-| 确定性 | 规范化流水线 IR + parser/import/codegen 流程，面向可复现结果 |
-| 可恢复性 | 对长时间运行任务提供显式生命周期状态机（`start/pause/resume/stop`） |
-| 可运维性 | 运行日志、inbox/outbox 通道，以及脚本驱动的验证循环 |
-| 文档优先 | 规范与示例位于 `docs/`，并配套多语言 README 流程 |
-
-## 🧭 方法论
-AutoAppDev 将 agent 视作执行工具，通过严格且可恢复的循环保持工作稳定：
-
-1. Plan（规划）
-2. Implement（实现）
-3. Debug/verify（带超时）
-4. Fix（修复）
-5. Summarize + log（总结 + 日志）
-6. Commit + push（提交 + 推送）
-
-控制器应用目标是通过 Scratch 风格的块/动作体现同样的理念（含通用 `update_readme` action），确保每个 workspace 保持同步且可复现。
-
-### 🔁 生命周期状态意图
-
-| 状态迁移 | 运行意图 |
-| --- | --- |
-| `start` | 从 stopped/ready 状态启动流水线 |
-| `pause` | 在不丢失上下文的前提下安全暂停长期执行 |
-| `resume` | 从已保存运行时状态/工件继续执行 |
-| `stop` | 结束执行并回到非运行状态 |
-
-## ✨ 特性
-- 可恢复的流水线生命周期控制：start、pause、resume、stop。
-- 脚本库 API，支持 AAPS 流水线脚本（`.aaps`）和标准 IR（`autoappdev_ir` v1）。
-- 确定性的 parser/import 流程：
-  - 解析格式化的 AAPS 脚本。
-  - 通过 `# AAPS:` 注释导入带注解的 shell。
-  - 可选的 Codex 辅助解析回退（`AUTOAPPDEV_ENABLE_LLM_PARSE=1`）。
-- 动作注册表包含内置动作与可编辑/自定义动作（只读内置动作支持 clone/edit）。
-- Scratch 风格的 PWA 块与运行时加载动作面板（`GET /api/actions`）。
-- 运行时消息通道：
-  - Inbox（`/api/inbox`）用于操作者到流水线的指引。
-  - Outbox（`/api/outbox`）支持从 `runtime/outbox` 的文件队列摄取。
-- 来自后端与流水线日志的增量流式输出（`/api/logs`, `/api/logs/tail`）。
-- 基于标准 IR 的确定性 runner 代码生成（`scripts/pipeline_codegen/generate_runner_from_ir.py`）。
-- 用于仓库迭代演进的 self-dev 驱动（`scripts/auto-autoappdev-development.sh`）。
-- 具备多语言生成脚手架的 README 自动化流水线（`i18n/`）。
-
-## 📌 一览
-
-| 领域 | 说明 |
-| --- | --- |
-| 核心运行时 | Tornado backend + static PWA 前端 |
-| 持久化 | PostgreSQL 优先，`backend/storage.py` 中兼容回退 |
-| 流水线模型 | 标准 IR（`autoappdev_ir` v1）与 AAPS 脚本格式 |
-| 控制流 | Start / Pause / Resume / Stop 生命周期 |
-| 开发模式 | 可恢复 self-dev 循环 + 确定性脚本/codegen 工作流 |
-| README/i18n | 基于 `i18n/` 脚手架的自动化 README 流程 |
-
-## 🏗️ 架构
+## 🧭 Architecture at a Glance
 
 ```text
-Operator / Developer
-        |
-        v
-   PWA (static files, pwa/)
-        |
-        | HTTP JSON API
-        v
-Tornado backend (backend/app.py)
-        |
-        +--> Postgres (DATABASE_URL)
-        +--> runtime/ (logs, outbox, llm_parse artifacts)
-        +--> scripts/ (pipeline runner + codegen helpers)
+Browser (PWA)
+  ├─ pipeline editor (script + blocks)
+  ├─ settings / projects / actions / tasks / outputs panels
+  └─ WebSocket client (/ws)
+          │
+          ▼
+Tornado backend (autonovelwriter/backend/server.py)
+  ├─ REST APIs (/api/*)
+  ├─ WebSocket broadcast hub
+  ├─ parser + AST + canonical script persistence
+  ├─ resumable runner + action result commit log
+  └─ runtime bootstrap (dirs + defaults)
+          │
+          ▼
+autonovelwriter/runtime/ (mutable, local-first)
+  ├─ state/ (pipeline, settings, runner, chat)
+  ├─ projects/<id>/ (materials, outputs, project settings)
+  ├─ tasks/ (active list + generated batches)
+  ├─ actions/ (defaults + user overrides)
+  └─ logs/ (runner.log)
 ```
 
-### 后端职责
-- 提供 scripts、actions、plan、pipeline lifecycle、logs、inbox/outbox、workspace config 等控制器 API。
-- 校验并持久化流水线脚本资产。
-- 协调流水线执行状态及其状态变更。
-- 当数据库连接池不可用时提供确定性回退。
+## 🗂️ Project Structure
 
-### 前端职责
-- 渲染 Scratch 风格的块式 UI 与流水线编辑流程。
-- 从后端动态加载动作面板（action palette）。
-- 驱动生命周期控制并监控状态、日志、消息。
-
-## 📚 内容索引
-常用文档、脚本和示例的快速映射：
-
-- `docs/auto-development-guide.md`：Bilingual（EN/ZH）长时间运行、可恢复自动开发代理的理念与要求。
-- `docs/ORDERING_RATIONALE.md`：截图驱动步骤顺序示例依据。
-- `docs/controller-mvp-scope.md`：控制器 MVP 范围（页面 + 最小 API）。
-- `docs/end-to-end-demo-checklist.md`：确定性的人工端到端演示检查清单（backend + PWA happy path）。
-- `docs/env.md`：环境变量（`.env`）约定。
-- `docs/api-contracts.md`：控制器 API 请求与响应契约。
-- `docs/pipeline-formatted-script-spec.md`：标准流水线脚本格式（AAPS）与标准 IR schema（TASK -> STEP -> ACTION）。
-- `docs/pipeline-runner-codegen.md`：从标准 IR 生成可执行 bash runner 的确定性生成器。
-- `docs/common-actions.md`：通用 action 契约与规范（含 `update_readme`）。
-- `docs/workspace-layout.md`：标准 workspace 目录与约定（`materials/interactions/outputs/docs/references/scripts/tools/logs/auto-apps`）。
-- `scripts/run_autoappdev_tmux.sh`：在 tmux 中启动 AutoAppDev（backend + PWA）。
-- `scripts/run_autoappdev_selfdev_tmux.sh`：在 tmux 中启动 AutoAppDev self-dev 驱动。
-- `scripts/app-auto-development.sh`：线性流水线驱动（`plan -> backend -> PWA -> Android -> iOS -> review -> summary`），支持 resume/state。
-- `scripts/generate_screenshot_docs.sh`：截图 -> markdown 描述生成器（由 Codex 驱动）。
-- `scripts/setup_autoappdev_env.sh`：本地运行主 conda 环境初始化脚本。
-- `scripts/setup_backend_env.sh`：后端环境辅助脚本。
-- `examples/ralph-wiggum-example.sh`：Codex CLI 自动化助手示例。
-
-## 🗂️ 项目结构
 ```text
-AutoAppDev/
+AutoNovelWriter/
 ├── README.md
-├── .env.example
 ├── .github/
 │   └── FUNDING.yml
-├── backend/
-│   ├── app.py
-│   ├── storage.py
-│   ├── schema.sql
-│   ├── apply_schema.py
-│   ├── db_smoketest.py
-│   ├── action_registry.py
-│   ├── builtin_actions.py
-│   ├── update_readme_action.py
-│   ├── pipeline_parser.py
-│   ├── pipeline_shell_import.py
-│   ├── llm_assisted_parse.py
-│   ├── workspace_config.py
-│   ├── requirements.txt
-│   └── README.md
-├── pwa/
-│   ├── index.html
-│   ├── app.js
-│   ├── i18n.js
-│   ├── api-client.js
-│   ├── styles.css
-│   ├── service-worker.js
-│   ├── manifest.json
-│   └── README.md
-├── docs/
+├── .gitmodules                     # AutoAppDev submodule declaration
+├── autonovelwriter/
+│   ├── backend/
+│   │   ├── server.py              # main backend entrypoint + API/WS handlers + runner logic
+│   │   ├── requirements.txt       # tornado>=6.4
+│   │   ├── .env.example
+│   │   └── tests/                 # backend unit tests
+│   ├── pwa/
+│   │   ├── index.html
+│   │   ├── app.js                 # UI logic + embedded i18n dictionaries
+│   │   ├── app.css
+│   │   ├── manifest.webmanifest
+│   │   ├── service_worker.js
+│   │   ├── icons/
+│   │   └── tests/
+│   └── runtime/                   # mutable state/IO (contents gitignored)
 ├── scripts/
-│   └── pipeline_codegen/
-├── prompt_tools/
-├── examples/
+│   ├── run_autonovelwriter_tmux.sh
+│   ├── setup_conda_env.sh
+│   ├── setup_and_run_autonovelwriter.sh
+│   ├── auto-autonovelwriter-development.sh
+│   └── backups/
+├── scripts-legacy/
+├── docs/
+│   ├── autonovelwriter_spec.md
+│   ├── auto-development-guide.md
+│   └── ORDERING_RATIONALE.md
 ├── references/
+│   └── autonovelwriter_dev/
+├── examples/
+│   └── ralph-wiggum-example.sh
 ├── i18n/
-└── .auto-readme-work/
+│   ├── README.ar.md
+│   ├── README.de.md
+│   ├── README.es.md
+│   ├── README.fr.md
+│   ├── README.ja.md
+│   ├── README.ko.md
+│   ├── README.ru.md
+│   ├── README.vi.md
+│   ├── README.zh-Hans.md
+│   └── README.zh-Hant.md
+└── AutoAppDev/                    # git submodule (git@github.com:lachlanchen/AutoAppDev.git)
 ```
 
-## ✅ 前置要求
-- 支持 `bash` 的操作系统。
-- Python `3.11+`。
-- Conda（`conda`）用于提供的设置脚本。
-- `tmux`，用于一键启动 backend+PWA 或 self-dev 会话。
-- 可通过 `DATABASE_URL` 访问的 PostgreSQL。
-- 可选：`codex` CLI（用于 Codex 驱动流程：self-dev、parse-llm 回退、auto-readme 流水线）。
+## ✅ Prerequisites
 
-快速需求矩阵：
+| 依赖项 | 是否必需 | 备注 |
+|---|---|---|
+| Python `3.11+` | 是 | 建议基线版本 |
+| `pip` | 是 | 安装后端依赖 |
+| `tmux` | 否 | 用于多窗格启动脚本 |
+| `conda` | 否 | 可选辅助脚本 |
+| `node` | 否 | 可选：直接运行 PWA 测试文件 |
 
-| 组件 | 必需 | 用途 |
-| --- | --- | --- |
-| `bash` | 是 | 脚本执行 |
-| Python `3.11+` | 是 | 后端 + codegen 工具 |
-| Conda | 是（推荐） | 环境初始化脚本 |
-| PostgreSQL | 是（首选） | 通过 `DATABASE_URL` 提供主持久化 |
-| `tmux` | 推荐 | 托管 backend/PWA 与 self-dev 会话 |
-| `codex` CLI | 可选 | LLM 辅助解析与 README/self-dev 自动化 |
+## 🚀 Installation
 
-## 🧩 兼容性与假设
+| 场景 | 最适场景 | 命令 |
+|---|---|---|
+| 方案 A | 使用 conda 且偏好仓库提供的环境配置 | `scripts/setup_conda_env.sh --name autonovelwriter` |
+| 方案 B | 希望一步完成安装与启动 | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
+| 方案 C | 更偏好手动管理 pip | `python3 -m pip install -r autonovelwriter/backend/requirements.txt` |
 
-| 主题 | 当前预期 |
-| --- | --- |
-| 本地操作系统 | 以 Linux/macOS shell 为主（`bash` 脚本） |
-| Python 运行时 | `3.11`（由 `scripts/setup_autoappdev_env.sh` 管理） |
-| 持久化模式 | PostgreSQL 为首选并作为标准 |
-| 回退行为 | `backend/storage.py` 在降级场景中包含 JSON 兼容回退 |
-| 网络模型 | 本地 localhost 分端口开发（backend + static PWA） |
-| 代理工具 | 除非使用 LLM 辅助解析或 self-dev 自动化，否则 `codex` CLI 可选 |
+### Option A: Conda helper (recommended for this repo)
 
-本文档所依据的假设：
-- 除非章节另有说明，命令均在仓库根目录执行。
-- 启动后端服务前已配置 `.env`。
-- 推荐的一键工作流依赖 `conda` 与 `tmux`。
-
-## 🛠️ 安装
-### 1) 克隆并进入仓库
 ```bash
-git clone git@github.com:lachlanchen/AutoAppDev.git
-cd AutoAppDev
+scripts/setup_conda_env.sh --name autonovelwriter
 ```
 
-### 2) 配置环境
+然后使用 tmux 运行：
+
 ```bash
-cp .env.example .env
+scripts/run_autonovelwriter_tmux.sh --env autonovelwriter
 ```
-编辑 `.env` 并至少设置：
-- `SECRET_KEY`
-- `DATABASE_URL`
-- `AUTOAPPDEV_HOST` 与 `AUTOAPPDEV_PORT`（或 `PORT`）
 
-### 3) 创建/更新后端环境
+### Option B: One-shot setup + run
+
 ```bash
-./scripts/setup_autoappdev_env.sh
+scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 ```
 
-### 4) 应用数据库 schema
+### Option C: Manual pip install
+
 ```bash
-conda run -n autoappdev python -m backend.apply_schema
+python3 -m pip install --upgrade pip
+python3 -m pip install -r autonovelwriter/backend/requirements.txt
 ```
 
-### 5) 可选：数据库 smoke test
+### Optional: initialize submodule
+
 ```bash
-conda run -n autoappdev python -m backend.db_smoketest
+git submodule update --init --recursive
 ```
 
-## ⚡ 快速开始
+## 🧪 Usage
+
+| 流程 | 命令 / URL |
+|---|---|
+| 启动后端 | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
+| 打开应用 | `http://127.0.0.1:8787/` |
+| WebSocket 端点 | `ws://127.0.0.1:8787/ws` |
+| 可选：静态 PWA | `python3 -m http.server 5173 --bind 127.0.0.1 --directory autonovelwriter/pwa` |
+| tmux launcher | `scripts/run_autonovelwriter_tmux.sh --no-attach` |
+
+### Quick Start (No tmux)
+
 ```bash
-# from repo root
-cp .env.example .env
-./scripts/setup_autoappdev_env.sh
-conda run -n autoappdev python -m backend.apply_schema
-./scripts/run_autoappdev_tmux.sh --restart
+python3 -m pip install -r autonovelwriter/backend/requirements.txt
+python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
+# 打开 http://127.0.0.1:8787/
 ```
 
-然后打开：
-- PWA: `http://127.0.0.1:5173/`
-- Backend API base: `http://127.0.0.1:8788`
-- 健康检查: `http://127.0.0.1:8788/api/health`
+### Dev Run (Backend + PWA)
 
-一条命令做 smoke-check：
+后端（Tornado）：
+
 ```bash
-curl -sS http://127.0.0.1:8788/api/health | python3 -m json.tool
+python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
 ```
 
-快速端点映射：
+后端默认会从 `autonovelwriter/pwa/` 提供 PWA 的静态资源，因此可以直接打开：
+- `http://127.0.0.1:8787/`（PWA）
+- WebSocket：`ws://127.0.0.1:8787/ws`
 
-| Surface | URL |
-| --- | --- |
-| PWA UI | `http://127.0.0.1:5173/` |
-| Backend API | `http://127.0.0.1:8788` |
-| Health endpoint | `http://127.0.0.1:8788/api/health` |
+可选：PWA（独立静态开发服务器）：
 
-## ⚙️ 配置
-主配置文件：`.env`（见 `docs/env.md` 和 `.env.example`）。
-
-### 重要变量
-
-| 变量 | 用途 |
-| --- | --- |
-| `SECRET_KEY` | 约定上的必需值 |
-| `AUTOAPPDEV_HOST`, `AUTOAPPDEV_PORT`, `PORT` | 后端绑定设置 |
-| `DATABASE_URL` | PostgreSQL DSN（推荐） |
-| `AUTOAPPDEV_RUNTIME_DIR` | 覆盖运行时目录（默认 `./runtime`） |
-| `AUTOAPPDEV_PIPELINE_CWD`, `AUTOAPPDEV_PIPELINE_SCRIPT` | 默认流水线运行目标 |
-| `AUTOAPPDEV_ENABLE_LLM_PARSE=1` | 启用 `/api/scripts/parse-llm` |
-| `AUTOAPPDEV_CODEX_MODEL`, `AUTOAPPDEV_CODEX_REASONING`, `AUTOAPPDEV_CODEX_SKIP_GIT_CHECK` | Codex 的 actions/endpoints 默认值 |
-| `AI_API_BASE_URL`, `AI_API_KEY` | 预留给未来集成 |
-
-快速校验 `.env`：
 ```bash
-bash -lc 'set -euo pipefail; test -f .env; set -a; source .env; set +a; \
-python3 - <<"PY"\
-import os, sys\
-req = ["SECRET_KEY", "DATABASE_URL"]\
-missing = [k for k in req if not os.getenv(k)]\
-port_ok = bool(os.getenv("AUTOAPPDEV_PORT") or os.getenv("PORT"))\
-if not port_ok: missing.append("AUTOAPPDEV_PORT or PORT")\
-if missing:\
-  print("Missing env:", ", ".join(missing))\
-  sys.exit(1)\
-print("OK: env looks set")\
-PY'
+python3 -m http.server 5173 --bind 127.0.0.1 --directory autonovelwriter/pwa
 ```
 
-## ▶️ 使用方式
+在 `http://127.0.0.1:5173` 打开 PWA，并将其指向后端（默认 `ws://127.0.0.1:8787/ws`）。
 
-| 模式 | 命令 | 说明 |
-| --- | --- | --- |
-| 启动 backend + PWA（推荐） | `./scripts/run_autoappdev_tmux.sh --restart` | Backend `http://127.0.0.1:8788`，PWA `http://127.0.0.1:5173/` |
-| 仅启动 backend | `conda run -n autoappdev python -m backend.app` | 使用 `.env` 里的 bind 与 DB 配置 |
-| 仅启动 PWA 静态服务 | `cd pwa && python3 -m http.server 5173 --bind 127.0.0.1` | 适用于前端单独检查 |
-| 在 tmux 中运行 self-dev 驱动 | `./scripts/run_autoappdev_selfdev_tmux.sh --restart` | 可恢复的 self-dev 循环 |
+tmux（同时启动两个窗格 + 日志跟随）：
 
-### 常用脚本参数
-- `./scripts/run_autoappdev_tmux.sh --help`
-- `./scripts/run_autoappdev_tmux.sh --backend-port 8790 --pwa-port 5174`
-- `./scripts/run_autoappdev_tmux.sh --detached`
-- `./scripts/run_autoappdev_selfdev_tmux.sh --help`
-- `./scripts/run_autoappdev_selfdev_tmux.sh --start-at 14 --reasoning xhigh`
-
-### 解析并存储脚本
-- 通过 API 解析 AAPS：`POST /api/scripts/parse`
-- 导入带注释 shell：`POST /api/scripts/import-shell`
-- 可选的 LLM 解析：`POST /api/scripts/parse-llm`（需要 `AUTOAPPDEV_ENABLE_LLM_PARSE=1`）
-
-### 流水线控制 API
-- `GET /api/pipeline`
-- `GET /api/pipeline/status`
-- `POST /api/pipeline/start`
-- `POST /api/pipeline/pause`
-- `POST /api/pipeline/resume`
-- `POST /api/pipeline/stop`
-
-### 其他高频 API
-- 健康/版本/配置：`/api/health`, `/api/version`, `/api/config`
-- Plan 和脚本：`/api/plan`, `/api/scripts`, `/api/scripts/<id>`
-- Actions：`/api/actions`, `/api/actions/<id>`, `/api/actions/<id>/clone`, `/api/actions/update-readme`
-- 消息：`/api/chat`, `/api/inbox`, `/api/outbox`
-- 日志：`/api/logs`, `/api/logs/tail`
-
-详细请求/响应结构见 `docs/api-contracts.md`。
-
-## 🧭 运维 Runbook
-
-### Runbook：启动完整本地栈
 ```bash
-cp .env.example .env
-./scripts/setup_autoappdev_env.sh
-conda run -n autoappdev python -m backend.apply_schema
-./scripts/run_autoappdev_tmux.sh --restart
+scripts/run_autonovelwriter_tmux.sh --no-attach
+tmux attach -t autonovelwriter_app
 ```
 
-验证检查点：
-- `curl -sS http://127.0.0.1:8788/api/health | python3 -m json.tool`
-- 打开 `http://127.0.0.1:5173/` 并确认 UI 可加载 `/api/config`。
-- 可选：打开 `/api/version`，确认返回预期的后端元数据。
+Conda 环境辅助：
 
-### Runbook：仅后端调试
 ```bash
-conda run -n autoappdev python -m backend.app
-curl -sS http://127.0.0.1:8788/api/version
-curl -sS http://127.0.0.1:8788/api/pipeline/status | python3 -m json.tool
+scripts/setup_conda_env.sh --name autonovelwriter
+scripts/run_autonovelwriter_tmux.sh --env autonovelwriter
+# one-shot:
+scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 ```
 
-### Runbook：确定性 codegen smoke
+仓库中的驱动脚本（`scripts/auto-autonovelwriter-development.sh`）也可在自动开发期间启动 tmux 会话。
+
+### Typical workflow
+
+1. 启动后端（或 tmux 辅助脚本）。
+2. 打开 PWA。
+3. 通过 Blocks 或脚本文本框编辑流水线。
+4. 校验并保存流水线。
+5. 启动运行器并监控日志 / 状态 / 事件。
+6. 查看生成的产物和任务批次。
+
+## ⚙️ Configuration
+
+### Environment variables
+
+以 `autonovelwriter/backend/.env.example` 为模板。后端/运行时使用的关键变量：
+
+- `AUTONOVELWRITER_RUNTIME_ROOT`（默认 `autonovelwriter/runtime`）
+- `AUTONOVELWRITER_PWA_ROOT`（默认 `autonovelwriter/pwa`）
+- `AUTONOVELWRITER_HOST`（默认 `127.0.0.1`）
+- `AUTONOVELWRITER_PORT`（CLI 默认值：`8787`）
+- `AUTONOVELWRITER_WORKSPACE_ROOT`（默认：仓库上级目录）
+- `AUTONOVELWRITER_WRITER_SCRIPT`（默认 `${WORKSPACE_ROOT}/scripts/auto-xiyouzhiyuan-writer.sh`）
+- `AUTONOVELWRITER_XIYOU_INPUT_DIR`（默认 `${WORKSPACE_ROOT}/references/xiyouzhiyuan/input`）
+- `AUTONOVELWRITER_NOVELS_ROOT`（默认 `${WORKSPACE_ROOT}/auto-novels`）
+- `AUTONOVELWRITER_ENABLE_CODEX`（代理执行开关，默认关闭）
+- `AUTONOVELWRITER_CODEX_CLI_PATH`（可选的 codex 二进制覆盖路径）
+
+### Script CLI options
+
+`run_autonovelwriter_tmux.sh`：
+- `--session <name>`
+- `--backend-port <n>`
+- `--pwa-port <n>`
+- `--host <ip>`
+- `--env <conda_env>`
+- `--debug`
+- `--kill`
+- `--no-attach`
+
+`setup_conda_env.sh`：
+- `--name <env>`
+- `--python <ver>`
+- `--force-recreate`
+
+`setup_and_run_autonovelwriter.sh`：
+- `--env <name>`
+- `--python <ver>`
+- `--session <name>`
+- `--backend-port <n>`
+- `--pwa-port <n>`
+- `--host <ip>`
+- `--force-recreate`
+- `--debug`
+- `--kill`
+- `--no-attach`
+
+## 🔌 Key Backend APIs
+
+| API 分组 | 主要端点 |
+|---|---|
+| 健康检查与设置 | `/api/health`, `/api/settings` |
+| 项目与项目设置 | `/api/projects`, `/api/projects/active`, `/api/projects/settings` |
+| 流水线 | `/api/pipeline`, `/api/pipeline/validate`, `/api/pipeline/reference_writer*` |
+| 任务 | `/api/tasks/batches/index`, `/api/tasks/batches/<batch_id>`, `/api/tasks/batches/<batch_id>/activate` |
+| 动作 | `/api/actions`, `/api/actions/<action_id>`, `/api/actions/<action_id>/copy` |
+| 运行器 | `/api/run/start|pause|resume|stop`, `/api/run/status` |
+| 输出与小说预览 | `/api/outputs/index`, `/api/novel/latest`, `/api/novel/latest/pdf` |
+| 实时更新 | `/ws` |
+
+### HTTP APIs
+
+- Health: `GET /api/health`
+- Settings: `GET/POST /api/settings`
+- Projects: `GET /api/projects`, `POST /api/projects/active`
+- Project settings（当前激活项目）：`GET/POST /api/projects/settings`（项目级覆盖字段：`novel_language`、`novel_tone`、`novel_target_length_words`）
+- Materials index（当前项目）：`GET /api/materials/index`
+- Outputs index（当前项目）：`GET /api/outputs/index`
+- Task batches index: `GET /api/tasks/batches/index`（可选：`?project=<project_id>`）
+- Task batch details: `GET /api/tasks/batches/<batch_id>`
+- Task batch activate: `POST /api/tasks/batches/<batch_id>/activate`（写入 `runtime/tasks/tasks.json` 与项目 `active_tasks.json`）
+- Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`, `PUT /api/actions/<action_id>`（用于 copy-on-edit 更新默认模板）
+- Pipeline（规范脚本 + 衍生 JSON）: `GET/POST /api/pipeline`
+- Pipeline validate（仅预览）: `POST /api/pipeline/validate`
+- Reference writer pipeline preview/load:
+  - `GET /api/pipeline/reference_writer`（读取并解析 `../scripts/auto-xiyouzhiyuan-writer.sh`）
+  - `POST /api/pipeline/reference_writer/load`（将解析结果加载到运行时 pipeline；不会修改源脚本）
+- Chat: `GET /api/chat/history`, `POST /api/chat/send`
+- Latest novel PDF:
+  - `GET /api/novel/latest`（元信息）
+  - `GET /api/novel/latest/pdf`（用于查看器的内联 PDF 流）
+- Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
+- Agent test（受控）: `POST /api/agent/test`（仅在开启且通过环境变量门禁时执行 `codex --version`）
+
+### WebSocket
+
+- Endpoint: `/ws`
+- Broadcast events: `hello`, `chat`, `outbox_written`, `input_mirror_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_updated`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`, `project_active_changed`, `project_settings_updated`, `echo`
+
+## 📁 Runtime Paths
+
+所有可变状态与 IO 都位于 `autonovelwriter/runtime/`：
+
+| 路径 | 用途 |
+|---|---|
+| `autonovelwriter/runtime/io/inbox/` | user -> system（投递 `.txt`/`.md`） |
+| `autonovelwriter/runtime/io/outbox/` | system -> user（后端写入聊天消息） |
+| `autonovelwriter/runtime/state/` | 持久化 JSON 状态（settings、pipeline、runner、chat） |
+| `autonovelwriter/runtime/state/chat.sqlite3` | sqlite 聊天镜像（除 `chat.jsonl` 外） |
+| `autonovelwriter/runtime/state/active_project.json` | 持久化当前激活项目指针 |
+| `autonovelwriter/runtime/tasks/` | 任务队列文件 |
+| `autonovelwriter/runtime/tasks/batches/<batch_id>/` | 生成的任务批次（如 `meta_tasks_generate`） |
+| `autonovelwriter/runtime/logs/` | 日志 |
+| `autonovelwriter/runtime/projects/<project_id>/materials/` | 项目素材（输入） |
+| `autonovelwriter/runtime/projects/<project_id>/outputs/` | 项目产物（草稿/导出） |
+| `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json` | 项目级小说设置覆盖（例如小说语言） |
+| `autonovelwriter/runtime/actions/defaults/` | 预置动作库模板（视为不可变） |
+| `autonovelwriter/runtime/actions/user/` | 用户动作库模板（通过 copy-on-edit 创建） |
+| `/home/lachlan/Documents/VoidAbyss/references/xiyouzhiyuan/input/` | 用于写作流水线采集的聊天输入镜像 |
+
+## 🧩 Pipeline Script (Canonical Artifact)
+
+流水线在磁盘上的表示是一个格式化脚本：
+- `autonovelwriter/runtime/state/pipeline.script`
+
+后端通过 `GET/POST /api/pipeline` 提供：
+- `script`（规范形式，shell 风格的 `STEP <type>` / `DISABLED <type>` 行）
+- `pipeline` JSON（派生的扁平列表，用于简单块渲染）
+- `pipeline_ast`（派生的嵌套结构，用于循环 + 缩进 UI）
+
+运行器也基于同一 v2 parser/AST 派生出的步骤执行，因此 PWA 显示与实际执行一致。
+
+运行器控制流支持 v2 容器：
+- `ROUND <n>` 将子节点重复 `n` 次。
+- `FOREACH_TASK` 对当前激活任务列表（`autonovelwriter/runtime/tasks/tasks.json`）的每个任务执行其子节点一次。
+- `FOREACH_ACTION` 对当前任务 `payload.actions` 列表中的每个条目执行其子节点一次（设计上应嵌套于 `FOREACH_TASK` 下）。
+
+可恢复性：
+- 运行器将可恢复执行游标持久化到 `autonovelwriter/runtime/state/runner_state.json`。
+- 只有块成功完成后游标才会前进，因此重启不会跳过未完成工作。
+- 若规范脚本发生变更（hash 不匹配），运行器会停止并要求重启（游标失效）。
+- 运行器将每步 `ActionResult` 持久化到 `autonovelwriter/runtime/state/action_results.jsonl`，并使用确定性的每步 `exec_id` 避免重启后重复提交已提交结果。
+- 在 `FOREACH_ACTION` 中运行时，ActionResults 包含 `action_index`、`action_id_ref`、`action_key`，变量中还会出现 `prev`，并区分 `task.prev` 与 `action.prev` 的作用域。
+
+Pipeline v2 支持嵌套：
+- `LOOP <n>` 引入循环块
+- `ROUND <n>` 引入轮次容器块
+- `FOREACH_TASK` 引入按任务迭代容器
+- `FOREACH_ACTION` 引入按动作迭代容器（运行器遍历 `task.payload.actions`）
+- `IF <expr>` 引入条件容器（解析和渲染已支持；当前运行器仅执行 then 分支）
+- `ELSE` 在 `IF` 下引入可选分支
+- 子节点每层缩进 2 个空格
+
+校验（非持久化）：
+- `POST /api/pipeline/validate` 返回规范预览及 `pipeline_ast`、warnings 与 errors。
+
+PWA 在文本域中展示脚本（这是权威来源），并基于 `pipeline_ast` 渲染嵌套块。
+当后端 validate 端点不可达时，PWA 会回退到本地解析器，支持同一 v2 动词（`LOOP`、`ROUND`、`FOREACH_TASK`、`FOREACH_ACTION`、`IF`、`ELSE`、`STEP`、`DISABLED`）。
+
+Blocks UI 说明：
+- `LOOP` 和 `ROUND` 的重复次数可在块列表中内联编辑；合法编辑会立即同步到规范脚本文本域。
+- Blocks 工具栏可插入 `LOOP`、`ROUND`、`FOREACH_TASK`、`FOREACH_ACTION`、`IF` 容器，无需手工改脚本（会包裹选中的块，或追加一个合法且非空的容器）。
+- 可在画布中删除块（每个块有 Delete 按钮；块选中时也可按 `Delete` 键）。删除容器时会提升子节点，编辑器会强制容器保持非空，以避免生成非法脚本。
+- `IF` 块结构在编辑器内始终保持有效：`ELSE` 不会脱离 `IF` 持久化，且 then 分支保持非空。
+- `STEP` 块提供动作库控制：动作选择器、`Customize`（将默认动作复制到用户动作并切换）、`Edit`（`name/tool/prompt/script` 的动作编辑器弹窗）。
+
+## 📝 Runner Outputs (Draft Stub)
+
+当流水线包含 `STEP write` 块时，后端运行器会在以下位置创建草稿文件：
+- `autonovelwriter/runtime/projects/<project_id>/outputs/`
+
+后端同时会触发：
+- WS 事件 `output_created`（含 `path` 与 `project_rel_path`）
+- 一行日志 `[output] created: ...`
+
+PWA 包含简化版 Outputs 面板，可通过 `GET /api/outputs/index` 列表文件，并在 `output_created` 时刷新。
+
+## 📦 Runner Tasks (Batch Stub)
+
+当流水线包含 `STEP meta_tasks_generate` 时，后端运行器会在任务批次目录下创建占位输出：
+- `autonovelwriter/runtime/tasks/batches/<batch_id>/`
+
+后端同时会触发：
+- WS 事件 `tasks_batch_created`（含 `batch_dir`、`tasks_jsonl`、`task_count`）
+- 一行日志 `[tasks] created batch: ...`
+
+PWA 包含简化版 Task Batches 面板，可通过 `GET /api/tasks/batches/index` 列出批次，并在 `tasks_batch_created` 时刷新。
+它还可查看批次详情（`GET /api/tasks/batches/<batch_id>`）并激活某批次作为 `FOREACH_TASK` 的当前任务列表（`POST /api/tasks/batches/<batch_id>/activate`）。
+
+## 🔐 Agent Settings / Codex Gate
+
+PWA 设置面板通过 `/api/settings` 将代理设置持久化到 `autonovelwriter/runtime/state/settings.json`。
+
+出于安全考虑，后端只有在以下条件同时满足时才会启动 `codex` CLI：
+- `settings.agent.enabled=true` 且 `settings.agent.sdk="codex"`
+- 环境变量 `AUTONOVELWRITER_ENABLE_CODEX=1` 已设置
+
+请勿提交任何密钥。可使用 `autonovelwriter/backend/.env.example` 作为本地环境变量模板。
+
+## 🌐 PWA I18N (UI Language)
+
+PWA 内置轻量级 i18n 系统。
+
+- 强制 UI 语言：在 PWA 地址后追加 `?lang=<code>`（例如 `?lang=ja`）。
+- 浏览器持久化：`localStorage` 键为 `anw_lang`。
+- 支持的 UI 语言：`en`、`zh-Hans`、`zh-Hant`、`ja`、`ko`、`vi`、`ar`（RTL）、`fr`、`es`、`ru`、`de`。
+- 本仓库级 README 多语言版本位于 `i18n/`，并从本文件顶部的语言切换行跳转。
+
+| README locale files (`i18n/`) | 状态 |
+|---|---|
+| `README.ar.md`, `README.de.md`, `README.es.md`, `README.fr.md`, `README.ja.md`, `README.ko.md`, `README.ru.md`, `README.vi.md`, `README.zh-Hans.md`, `README.zh-Hant.md` | Present |
+
+## 🖋️ Novel Settings (Separate From UI Language)
+
+小说写作偏好存储在后端设置中的 `settings.novel.*`：
+- `autonovelwriter/runtime/state/settings.json`
+
+这些设置与 PWA UI 语言（`?lang=` / `anw_lang`）是刻意解耦的。
+
+每个项目的覆盖设置存储于：
+- `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json`
+
+当前全局可编辑字段（PWA 设置弹窗）：
+- `settings.novel.language`（类似 BCP-47 的代码，如 `en`、`ja`、`zh-Hans` 等）
+- `settings.novel.tone`
+- `settings.novel.target_length_words`
+- `settings.novel.pov`
+- `settings.novel.tense`
+- `settings.novel.chapter_count_target`
+
+当前项目级覆盖字段（空值/未设置 = 继承全局）：
+- `project_settings.novel_language`
+- `project_settings.novel_tone`
+- `project_settings.novel_target_length_words`
+
+## 🧰 Examples
+
+### Minimal local run
+
 ```bash
-python3 scripts/pipeline_codegen/generate_runner_from_ir.py \
-  --in examples/pipeline_ir_codegen_demo_v0.json \
-  --out /tmp/autoappdev_runner.sh
-
-bash -n /tmp/autoappdev_runner.sh
-scripts/pipeline_codegen/smoke_codegen.sh
-scripts/pipeline_codegen/smoke_placeholders.sh
-scripts/pipeline_codegen/smoke_conditional_steps.sh
-scripts/pipeline_codegen/smoke_meta_round_v0.sh
+python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
+# 然后打开 http://127.0.0.1:8787/
 ```
 
-## 📡 API 快照
+### tmux run with no auto-attach
 
-核心 API 分组一览：
-
-| 分类 | 端点 |
-| --- | --- |
-| 健康 + 运行时信息 | `GET /api/health`, `GET /api/version`, `GET /api/config`, `POST /api/config` |
-| Plan 模型 | `GET /api/plan`, `POST /api/plan` |
-| Scripts | `GET/POST /api/scripts`, `GET/PUT/DELETE /api/scripts/<id>`, `POST /api/scripts/parse`, `POST /api/scripts/import-shell`, `POST /api/scripts/parse-llm` |
-| Action 注册表 | `GET/POST /api/actions`, `GET/PUT/DELETE /api/actions/<id>`, `POST /api/actions/<id>/clone`, `POST /api/actions/update-readme` |
-| Pipeline 运行时 | `GET /api/pipeline`, `GET /api/pipeline/status`, `POST /api/pipeline/start`, `POST /api/pipeline/pause`, `POST /api/pipeline/resume`, `POST /api/pipeline/stop` |
-| 消息 + 日志 | `GET/POST /api/chat`, `GET/POST /api/inbox`, `GET/POST /api/outbox`, `GET/POST /api/logs`, `GET/POST /api/logs/tail` |
-| Workspace 设置 | `GET/POST /api/workspaces/<name>/config` |
-
-## 🧪 示例
-### AAPS 示例
-```text
-AUTOAPPDEV_PIPELINE 1
-
-TASK  {"id":"t1","title":"Happy path demo"}
-STEP  {"id":"s1","title":"Plan","block":"plan"}
-ACTION {"id":"a1","kind":"note","params":{"text":"Read context and outline steps."}}
-```
-
-完整示例：
-- `examples/pipeline_formatted_script_v1.aaps`
-- `examples/pipeline_ir_v1.json`
-- `examples/pipeline_shell_annotated_v0.sh`
-- `examples/pipeline_ir_codegen_demo_v0.json`
-
-### 确定性 runner 生成
 ```bash
-python3 scripts/pipeline_codegen/generate_runner_from_ir.py \
-  --in examples/pipeline_ir_codegen_demo_v0.json \
-  --out /tmp/autoappdev_runner.sh
-
-bash -n /tmp/autoappdev_runner.sh
-scripts/pipeline_codegen/smoke_codegen.sh
+scripts/run_autonovelwriter_tmux.sh --no-attach
+tmux attach -t autonovelwriter_app
 ```
 
-### 确定性演示流水线
+### Run backend test files directly
+
 ```bash
-export AUTOAPPDEV_PIPELINE_SCRIPT=scripts/pipeline_demo.sh
-conda run -n autoappdev python -m backend.app
+python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py
+python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py
 ```
-然后使用 PWA 的 Start/Pause/Resume/Stop 控件并检查 `/api/logs`。
 
-### 从带注释 shell 导入
+### Run PWA logic test file directly
+
 ```bash
-curl -sS -X POST http://127.0.0.1:8788/api/scripts/import-shell \
-  -H 'Content-Type: application/json' \
-  -d @- <<'JSON'
-{
-  "shell_text": "#!/usr/bin/env bash\n# AAPS: AUTOAPPDEV_PIPELINE 1\n# AAPS:\n# AAPS: TASK {\"id\":\"t1\",\"title\":\"Demo\"}\n# AAPS: STEP {\"id\":\"s1\",\"title\":\"Plan\",\"block\":\"plan\"}\n# AAPS: ACTION {\"id\":\"a1\",\"kind\":\"noop\"}\n"
-}
-JSON
+node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
 ```
 
-## 🧱 开发说明
-- 后端基于 Tornado，面向本地开发体验优化（包括 localhost 分端口时的宽松 CORS）。
-- 持久化以 PostgreSQL 为主，并在 `backend/storage.py` 中提供兼容回退。
-- PWA 的 block key 与脚本 `STEP.block` 值保持一致：`plan`、`work`、`debug`、`fix`、`summary`、`commit_push`。
-- 内置动作为只读；编辑前请先 clone。
-- `update_readme` action 受到路径安全限制，仅允许更新 `auto-apps/<workspace>/README.md` 下的 workspace README 目标。
-- 某些文档/脚本中仍保留历史路径或命名（`HeyCyan`、`LightMind`），源于仓库演进。当前仓库的规范路径是本仓库根目录。
-- 根目录 `i18n/` 已存在；多语言 README 文件在 `i18n/` 下维护。
+### Scripted automation helper example
 
-### 工作模型与状态文件
-- 运行时默认目录为 `./runtime`，可通过 `AUTOAPPDEV_RUNTIME_DIR` 覆盖。
-- self-dev 自动化状态与历史记录保存在 `references/selfdev/`。
-- README 流水线制品记录在 `.auto-readme-work/<timestamp>/`。
+```bash
+bash examples/ralph-wiggum-example.sh
+```
 
-### 测试现状（当前）
-- 仓库包含 smoke 检查和确定性演示脚本。
-- 仓库根元数据尚未定义完整的顶层自动化测试套件/CI 清单。
-- 假设验证主要通过脚本驱动（`scripts/pipeline_codegen/smoke_*.sh`、`backend.db_smoketest`、端到端检查清单）。
+## 🛠️ Development Notes
 
-## 🔐 安全说明
-- `update_readme` action 有意限制到工作区 README 目标（`auto-apps/<workspace>/README.md`），并有路径穿越防护。
-- 动作注册表校验会对 action spec 字段进行规范化，并对支持的推理级别值进行边界控制。
-- 仓库脚本默认假设在可信本地环境执行；在共享或接近生产环境运行前请先审阅脚本。
-- `.env` 可能包含敏感值（`DATABASE_URL`、API keys）。请勿提交 `.env`，在本地开发之外使用合适的机密管理方式。
+### Driver Workflow (Auto-Dev)
+<!-- AUTO_DEV_PROGRESS_START -->
+### Auto-Dev Progress (Generated)
+- updated_utc: 2026-02-16T02:48:02Z
+- current: T032_project_settings_extend_novel_overrides / update_readme — Project settings: extend novel overrides (inherit)
+- queue: total=32 done=31 pending=1
+- last_done: T031_runner_foreach_action_semantics_and_var_scopes — Runner: FOREACH_ACTION semantics + var scopes @ 2026-02-16T10:35:36+0800
+- latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3
+- autoappdev_head: 8bc23a5
+<!-- AUTO_DEV_PROGRESS_END -->
 
-## 🔧 故障排查
+`scripts/auto-autonovelwriter-development.sh` 会对 `references/autonovelwriter_dev/` 下的任务执行可恢复的 Codex 自动循环，并在每个阶段（`plan -> implement -> debug -> fix -> i18n -> summary -> update_readme`）后提交并推送。
 
-| 症状 | 排查要点 |
-| --- | --- |
-| `tmux not found` | 安装 `tmux`，或手动分别启动 backend/PWA。 |
-| 后端启动因缺失环境变量失败 | 对照 `.env.example` 与 `docs/env.md` 复查 `.env`。 |
-| 数据库报错（连接/认证/schema） | 检查 `DATABASE_URL`；重跑 `conda run -n autoappdev python -m backend.apply_schema`；可选连接性检查：`conda run -n autoappdev python -m backend.db_smoketest`。 |
-| PWA 可打开但无法调用 API | 确认 backend 在预期 host/port 监听；重新运行 `./scripts/run_autoappdev_tmux.sh` 以重新生成 `pwa/config.local.js`。 |
-| Pipeline Start 返回 invalid transition | 先检查当前 pipeline 状态；从 `stopped` 状态启动。 |
-| UI 无日志更新 | 确认 `runtime/logs/pipeline.log` 正在写入；直接使用 `/api/logs` 与 `/api/logs/tail` 定位是 UI 还是 backend 问题。 |
-| LLM parse endpoint 显示 disabled | 设置 `AUTOAPPDEV_ENABLE_LLM_PARSE=1` 并重启 backend。 |
-| `conda run -n autoappdev ...` 失败 | 重跑 `./scripts/setup_autoappdev_env.sh`；确认 conda 环境 `autoappdev` 存在（`conda env list`）。 |
-| 前端 API 指向错误 | 确认 `pwa/config.local.js` 存在并指向当前 backend host/port。 |
+实用控制项：
+- 在当前任务完成后停止：`touch references/autonovelwriter_dev/STOP`
+- 重置状态跟踪（保留队列）：`scripts/auto-autonovelwriter-development.sh --reset-state`
+- 开启全新 Codex 会话：`scripts/auto-autonovelwriter-development.sh --new-session`
+- 安全实践：在干净分支/工作树内运行，并在重启前检查 `references/autonovelwriter_dev/state.tsv`
 
-如果需要进行确定性手动验证路径，请使用 `docs/end-to-end-demo-checklist.md`。
+### Operational assumptions
 
-## 🌐 README 与 i18n 工作流
-- 根 README 是 README 自动化流水线的规范源。
-- 多语言变体应放在 `i18n/` 目录下。
-- i18n 目录状态：✅ 已在仓库中存在。
-- 当前仓库语言清单：
-  - `i18n/README.ar.md`
-  - `i18n/README.de.md`
-  - `i18n/README.es.md`
-  - `i18n/README.fr.md`
-  - `i18n/README.ja.md`
-  - `i18n/README.ko.md`
-  - `i18n/README.ru.md`
-  - `i18n/README.vi.md`
-  - `i18n/README.zh-Hans.md`
-  - `i18n/README.zh-Hant.md`
-- 每个 README 变体顶部仅保留一条语言导航行（不重复）。
-- README 流水线入口：`prompt_tools/auto-readme-pipeline.sh`。
+- 本 README 默认以 Linux/macOS 下本地优先的开发方式为前提，假定已安装 `bash` 与 Python 3.11+。
+- `autonovelwriter/runtime/` 下的运行时状态是可变的，且预计不纳入版本控制。
+- 这里描述的流水线行为以仓库当前实现为准，主要位于 `autonovelwriter/backend/server.py` 与 `autonovelwriter/pwa/app.js`。
 
-### i18n 生成约束（严格）
-- 更新根 README 内容时，始终执行多语言生成。
-- 逐个语言文件生成/更新（顺序执行，不要并行批量）。
-- 每个变体顶部保持且仅保持一条语言导航行。
-- 不要在同一文件重复语言栏。
-- 翻译时保持规范命令片段、链接、API 路径和徽章语义不变。
+## 🧪 Testing Notes
 
-建议顺序：
-1. `i18n/README.ar.md`
-2. `i18n/README.de.md`
-3. `i18n/README.es.md`
-4. `i18n/README.fr.md`
-5. `i18n/README.ja.md`
-6. `i18n/README.ko.md`
-7. `i18n/README.ru.md`
-8. `i18n/README.vi.md`
-9. `i18n/README.zh-Hans.md`
-10. `i18n/README.zh-Hant.md`
+当前仓库没有顶层 `Makefile` / `tox` / `npm test` 编排器。
 
-语言覆盖表：
+当前可用的测试入口如下：
 
-| 语言 | 文件 |
-| --- | --- |
-| Arabic | `i18n/README.ar.md` |
+| 区域 | 入口 |
+|---|---|
+| 后端 parser/AST | `python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py` |
+| 后端 foreach-action 语法 | `python3 autonovelwriter/backend/tests/pipeline_foreach_action_roundtrip_test.py` |
+| 后端 runner 语义 | `python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py` |
+| 后端动作库更新 | `python3 autonovelwriter/backend/tests/actions_library_update_unit_test.py` |
+| PWA AST 删除行为 | `node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js` |
 
-观察到的工作区说明：
-- `i18n/README.zh-Hant.md.tmp` 可能作为临时翻译产物出现；最终规范文件应保持为 `README.<lang>.md`。
+```bash
+# backend (run individual test files)
+python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py
+python3 autonovelwriter/backend/tests/pipeline_foreach_action_roundtrip_test.py
+python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py
+python3 autonovelwriter/backend/tests/actions_library_update_unit_test.py
 
-## 📘 Readme 生成上下文
+# pwa logic test
+node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
+```
 
-- 流水线运行时间戳：`20260301_095119`
-- 触发条件：`./README.md` 首次完整草稿生成（基于规范源增量更新）
-- 输入用户提示：`Use current README as canonical base. No reduction: only increment and improve. Preserve existing content, links, badges, commands, and details. Always process multilingual generation (do not skip): ensure i18n exists and generate/update language files one-by-one with a single language-options line at the top and no duplicates.`
-- 目标：生成完整、美观的 README 草稿，包含必需章节与支持信息
-- 使用的源码快照：
-  - `./.auto-readme-work/20260301_095119/pipeline-context.md`
-  - `./.auto-readme-work/20260301_095119/repo-structure-analysis.md`
-- 本文件基于仓库内容生成并作为规范起点。
+如果你新增或变更 runner 语义、流水线语法或动作库行为，请同步更新测试和 README/API 说明。
 
-## ❓ FAQ
+## 📚 Repository Contents
 
-### PostgreSQL 是必须的吗？
-推荐并且预计在正常运行时使用 PostgreSQL。存储层包含兼容回退，但生产类场景应假设 `DATABASE_URL` 可用并指向 PostgreSQL。
+- `docs/autonovelwriter_spec.md`：Scratch 风格控制器产品规格（聊天 + 文件夹流水线 + start/pause/stop + settings）。
+- `scripts/auto-autonovelwriter-development.sh`：自动开发 AutoNovelWriter 本身（任务循环：`plan -> implement -> debug -> fix -> i18n -> summary -> update_readme -> commit+push`）。
+- `docs/auto-development-guide.md`：双语（EN/ZH）长程可恢复 auto-development 代理的理念与要求。
+- `docs/ORDERING_RATIONALE.md`：截图驱动步骤排序示例。
+- `scripts-legacy/`：保留但不再使用的旧脚本。
+- `examples/ralph-wiggum-example.sh`：Codex CLI 自动化示例脚本。
 
-### 为什么同时有 `AUTOAPPDEV_PORT` 和 `PORT`？
-`AUTOAPPDEV_PORT` 是项目专用变量；`PORT` 则是更通用的部署友好别名。除非有意覆盖启动路径行为，否则应保持二者一致。
+其他开发说明：
+- 后端测试位于 `autonovelwriter/backend/tests/`。
+- 一个小型 PWA 行为测试位于 `autonovelwriter/pwa/tests/`。
+- `i18n/` 下存放仓库级 README 本地化文件，UI 字典仍内嵌于 `autonovelwriter/pwa/app.js`。
 
-### 只想查看 API 应该从哪里开始？
-仅启动 backend（`conda run -n autoappdev python -m backend.app`），先访问 `/api/health`、`/api/version`、`/api/config`，再使用 `docs/api-contracts.md` 中列出的 script/action 端点。
+## 🧯 Troubleshooting
 
-### 多语言 README 会自动生成吗？
-会。仓库包含 `prompt_tools/auto-readme-pipeline.sh`，语言变体维护在 `i18n/`，且每个文件顶部都保留一条语言导航。
+| 症状 | 排查建议 |
+|---|---|
+| `tmux not found in PATH` | 安装 tmux，或改为手动运行后端/静态服务。 |
+| `conda not found in PATH`（在使用 `--env` 脚本时） | 安装 Miniconda/Anaconda，或改用手动 `pip` 安装。 |
+| PWA 无法连接后端 | 检查后端地址/端口和 WebSocket 端点 `ws://<host>:<port>/ws`。 |
+| `POST /api/agent/test` 返回 gated/disabled | 确认同时满足 `settings.agent.enabled=true`、`settings.agent.sdk="codex"` 与环境变量 `AUTONOVELWRITER_ENABLE_CODEX=1`。 |
+| 修改脚本后运行器停止 | 这是预期行为；规范脚本 hash 变化会使游标失效并要求重启。 |
+| `:5173` 上的静态 PWA 可用但 API 调用失败 | 确认后端在 `:8787` 运行（或调整前端后端目标设置）。 |
 
-## 🗺️ 路线图
-- 完成当前 `51 / 55` 之外的 remaining self-dev 任务。
-- 扩展 workspace/materials/context 工具与更严格的安全路径约束。
-- 继续改进 action palette 的 UX 与可编辑动作流程。
-- 加强 `i18n/` 与运行时语言切换的多语言 README/UI 支持。
-- 强化 smoke/integration 检查与 CI 覆盖（目前已有脚本驱动的 smoke 检查，根目录尚无完整 CI 清单）。
-- 围绕 AAPS v1 与标准 IR 进一步固化 parser/import/codegen 的确定性。
+## 🗺️ Roadmap
 
-## 🤝 贡献
-欢迎通过 issue 与 pull request 参与贡献。
+- 完成并稳定其余 auto-dev 队列项（见上方自动进度块）。
+- 扩展并持续同步 `i18n/` 下仓库级 README 的多语言版本。
+- 扩大运行器边界场景和 PWA 交互的自动化测试覆盖。
+- 持续改进 Action Library 与任务/动作迭代流程。
 
-建议流程：
-1. Fork 并创建功能分支。
-2. 保持改动聚焦、可复现。
-3. 尽可能优先采用确定性脚本和测试。
-4. 行为或契约变化时同步更新文档（`docs/*`、API 契约、示例）。
-5. 提交 PR 时附上上下文、验证步骤与运行时假设。
+## 🤝 Contributing
 
-仓库远程目前包括：
-- `origin`: `git@github.com:lachlanchen/AutoAppDev.git`
-- 本地克隆中可能还包含与相关仓库关联的附加 remote（本工作区示例：`novel`）。
+欢迎贡献。
 
-## 📄 许可证
-![License](https://img.shields.io/badge/License-Not%20Detected-C53030?logo=law&logoColor=white)
+实践建议：
+- 先阅读 `docs/autonovelwriter_spec.md` 与 `docs/auto-development-guide.md`。
+- 将运行时变更限制在 `autonovelwriter/runtime/`（该目录内容是 gitignore，不应提交）。
+- 优先采用可复现、可增量的 PR。
+- 若更改流水线语义或 API 契约，请同步更新 README 与相关测试。
 
-当前仓库快照未检测到根目录 `LICENSE` 文件。
+备注：当前草稿中未发现仓库根目录独立的 `CONTRIBUTING.md`。
 
-说明：
-- 在添加许可证文件前，视使用和再分发条款为未明确，并向维护者确认。
-
+---
 
 ## ❤️ Support
 
 | Donate | PayPal | Stripe |
 | --- | --- | --- |
 | [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
+
+## 📄 License
+
+License 文件/状态在仓库根目录中目前未在该版本草稿中显式声明。
+
+假设说明：
+- 如果你计划明确开源发布，请在仓库根目录添加 `LICENSE` 文件并相应更新本节。

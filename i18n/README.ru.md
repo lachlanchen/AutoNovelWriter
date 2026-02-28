@@ -5,662 +5,678 @@
 
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
-# AutoAppDev 🚀
+<div align="center">
+  <h1>AutoNovelWriter</h1>
+  <p><strong>Scratch-like PWA + Tornado backend для управления автоматизированным пайплайном написания романов (и разработки приложений).</strong></p>
+  <p>
+    <img alt="Python" src="https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white" />
+    <img alt="Backend" src="https://img.shields.io/badge/backend-Tornado%206.4%2B-0ea5e9" />
+    <img alt="Frontend" src="https://img.shields.io/badge/frontend-PWA-10b981" />
+    <img alt="Realtime" src="https://img.shields.io/badge/realtime-WebSocket-06b6d4" />
+    <img alt="Pipeline" src="https://img.shields.io/badge/pipeline-script%20%2B%20AST-2563eb" />
+    <img alt="Runtime" src="https://img.shields.io/badge/runtime-local%20state-orange" />
+    <img alt="Status" src="https://img.shields.io/badge/status-active%20development-f59e0b" />
+    <img alt="Canonical docs" src="https://img.shields.io/badge/docs-README.md-critical?style=flat" />
+    <img alt="Languages" src="https://img.shields.io/badge/i18n-10%2B%20languages-8b5cf6?style=flat" />
+  </p>
+</div>
 
-![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
-![Backend](https://img.shields.io/badge/Backend-Tornado-222222)
-![Frontend](https://img.shields.io/badge/Frontend-PWA-0A7EA4)
-![Database](https://img.shields.io/badge/Database-PostgreSQL-4169E1?logo=postgresql&logoColor=white)
-![Status](https://img.shields.io/badge/Self--Dev-51%2F55%20tasks%20done-2E8B57)
-![i18n](https://img.shields.io/badge/i18n-11%20languages-1f6feb)
-![Pipeline](https://img.shields.io/badge/Pipeline-Resumable-ff6b35)
-![Docs](https://img.shields.io/badge/Docs-Workflow%20First-0e9f6e)
-![Automation](https://img.shields.io/badge/Automation-README%20Pipeline-f97316)
-![API](https://img.shields.io/badge/API-JSON%20HTTP-0ea5e9)
-![State Machine](https://img.shields.io/badge/Lifecycle-start%2Fpause%2Fresume%2Fstop-f59e0b)
-![Control Flow](https://img.shields.io/badge/Control%20Flow-Plan%20%E2%86%92%20Work%20%E2%86%92%20Verify%20%E2%86%92%20Summary-0f766e)
-![GitHub stars](https://img.shields.io/github/stars/lachlanchen/AutoAppDev?style=flat&logo=github&logoColor=white&color=%231DA1F2)
-![GitHub forks](https://img.shields.io/github/forks/lachlanchen/AutoAppDev?style=flat&logo=github&logoColor=white&color=%2300A4A6)
-![GitHub issues](https://img.shields.io/github/issues/lachlanchen/AutoAppDev?style=flat&logo=github&logoColor=white&color=%23ef4444)
+В этом репозитории также используется `AutoAppDev/` как submodule (повторно используемые скрипты auto-development).
 
----
+> [!TIP]
+> `README.md` — базовый канонический документ. Локализованные версии находятся в `i18n/` и подключаются через единственную строку выбора языка наверху.
 
-Переиспользуемые скрипты и руководства для поэтапного создания приложений из скриншотов и markdown с Codex как неинтерактивным инструментом.
+## 🧭 Обзор проекта
 
-> 🎯 **Миссия:** сделать пайплайны разработки приложений детерминированными, возобновляемыми и ориентированными на артефакты.
->
-> 🧩 **Принцип проектирования:** Plan -> Work -> Verify -> Summary -> Commit/Push.
+| Кратко | Подробности |
+|---|---|
+| Основной стек | Python + backend Tornado, frontend PWA в браузере |
+| Базовый UX | Редактор скрипта и блоков на одной общей источнике правды |
+| Режим выполнения | Возобновляемый runner с сохраненным курсором и результатами действий |
+| Realtime | WebSocket endpoint по адресу `/ws` |
+| Изменяемый runtime- root | `autonovelwriter/runtime/` (игнорируется git) |
 
----
+## At-a-Glance Navigation
 
-### 🎛️ Сигналы проекта
+| Что использовать прямо сейчас | Команда / URL |
+|---|---|
+| Открыть локальную PWA | `http://127.0.0.1:8787/` |
+| Подключить live-обновления | `ws://127.0.0.1:8787/ws` |
+| Быстрый старт backend | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
+| Скриптный setup + start | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
 
-| Сигнал | Текущее направление |
-| --- | --- |
-| Модель выполнения | Tornado backend + статичный PWA-контроллер |
-| Выполнение пайплайна | Детеминированное и возобновляемое (`start/pause/resume/stop`) |
-| Стратегия хранения | PostgreSQL-first с совместимым fallback-режимом |
-| Поток документации | Канонический root README + автоматизированные варианты в `i18n/` |
+> [!TIP]
+> Самый быстрый локальный старт:
+> 1. `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill`
+> 2. Откройте `http://127.0.0.1:8787/`
+> 3. Подключите WebSocket-обновления: `ws://127.0.0.1:8787/ws`
 
-### 🔗 Быстрая навигация
+## 🔌 Значения запуска по умолчанию
 
-| Что нужно | Перейти |
-| --- | --- |
-| Первый локальный запуск | [⚡ Quick Start](#-quick-start) |
-| Конфигурация и переменные | [⚙️ Configuration](#-configuration) |
-| Снимок API | [📡 API Snapshot](#-api-snapshot) |
-| Runbooks эксплуатации | [🧭 Operational Runbooks](#-operational-runbooks) |
-| Правила генерации README/i18n | [🌐 README & i18n Workflow](#-readme--i18n-workflow) |
-| Матрица устранения неполадок | [🔧 Troubleshooting](#-troubleshooting) |
+| Значение запуска по умолчанию | Значение |
+|---|---|
+| PWA URL | `http://127.0.0.1:8787/` |
+| WebSocket URL | `ws://127.0.0.1:8787/ws` |
+| Backend host/port | `127.0.0.1:8787` |
 
-<!-- AUTOAPPDEV:STATUS:BEGIN -->
-## Self-Dev Status (Auto-Updated)
+## Содержание
 
-- Updated: 2026-02-16T00:27:20Z
-- Phase commit: `Selfdev: 52 pwa_action_palette_dynamic_and_editable_blocks summary`
-- Progress: 51 / 55 tasks done
-- Codex session: `019c6056-f33a-7f31-b08f-0ca40c365351`
-- Philosophy: Plan -> Work -> Verify -> Summary -> Commit/Push (linear, resumable)
+- [Обзор](#-обзор-проекта)
+- [Возможности](#-возможности)
+- [Архитектура с первого взгляда](#-архитектура-с-первого-взгляда)
+- [Структура проекта](#️-структура-проекта)
+- [At-a-Glance Navigation](#at-a-glance-navigation)
+- [Требования](#-требования)
+- [Установка](#-установка)
+- [Использование](#-использование)
+- [Конфигурация](#️-конфигурация)
+- [Ключевые backend API](#-ключевые-backend-api)
+- [Пути runtime](#-пути-runtime)
+- [Pipeline script (канонический артефакт)](#-pipeline-script-канонический-артефакт)
+- [Runner outputs (черновик)](#-runner-outputs-черновик)
+- [Runner tasks (batch-черновик)](#-runner-tasks-batch-черновик)
+- [Настройки агента / Codex Gate](#-настройки-агента--codex-gate)
+- [PWA I18N (язык интерфейса)](#-pwa-i18n-язык-интерфейса)
+- [Настройки романа (отдельно от UI)](#️-настройки-романа-отдельно-от-ui)
+- [Примеры](#-примеры)
+- [Заметки по разработке](#️-заметки-по-разработке)
+- [Заметки по тестированию](#-заметки-по-тестированию)
+- [Содержимое репозитория](#-содержимое-репозитория)
+- [Устранение неполадок](#-устранение-неполадок)
+- [Roadmap](#️-roadmap)
+- [Как внести вклад](#-как-внести-вклад)
+- [Support](#-support)
+- [Лицензия](#-лицензия)
 
-This section is updated by `scripts/auto-autoappdev-development.sh`.
-Do not edit content between the markers.
+## 📌 Обзор
 
-<!-- AUTOAPPDEV:STATUS:END -->
+AutoNovelWriter предоставляет локальный orchestration-уровень для:
+- Редактирования канонического пайплайн-скрипта (`pipeline.script`) через текст и блоки.
+- Запуска возобновляемого исполнения в backend с сохранением курсора и результатов действий.
+- Управления проектами, материалами, выводами, пакетами задач и шаблонами действий.
+- Трансляции live-обновлений через WebSocket (`/ws`) в PWA.
 
-## 🗂️ Оглавление
-- [🚀 Overview](#-overview)
-- [🧭 Repository Snapshot](#-repository-snapshot)
-- [🧭 Philosophy](#-philosophy)
-- [✨ Features](#-features)
-- [📌 At A Glance](#-at-a-glance)
-- [🏗️ Architecture](#-architecture)
-- [📚 Contents](#-contents)
-- [🗂️ Project Structure](#-project-structure)
-- [✅ Prerequisites](#-prerequisites)
-- [🧩 Compatibility & Assumptions](#-compatibility--assumptions)
-- [🛠️ Installation](#-installation)
-- [⚡ Quick Start](#-quick-start)
-- [⚙️ Configuration](#-configuration)
-- [▶️ Usage](#-usage)
-- [🧭 Operational Runbooks](#-operational-runbooks)
-- [📡 API Snapshot](#-api-snapshot)
-- [🧪 Examples](#-examples)
-- [🧱 Development Notes](#-development-notes)
-- [🔐 Safety Notes](#-safety-notes)
-- [🔧 Troubleshooting](#-troubleshooting)
-- [🌐 README & i18n Workflow](#-readme--i18n-workflow)
-- [📘 Readme Generation Context](#-readme-generation-context)
-- [❓ FAQ](#-faq)
-- [🗺️ Roadmap](#-roadmap)
-- [🤝 Contributing](#-contributing)
-- [❤️ Support](#-support)
-- [📄 License](#-license)
+Канонический изменяемый runtime — `autonovelwriter/runtime/` (содержимое игнорируется Git).
 
-## 🧭 Repository Snapshot
+| Область | Назначение |
+|---|---|
+| Редактирование pipeline | Редактирование канонического скрипта + вложенного UI блоков из одного источника истины |
+| Выполнение | Возобновляемый runner с сохраненным курсором и результатами действий |
+| Работа с проектами | Материалы проекта, outputs, настройки и активация задач batch |
+| Realtime UX | События `/ws` для обновлений статуса, логов, outputs, tasks и действий |
 
-| Фокус | Текущая конфигурация |
-| --- | --- |
-| Core loop | Plan → Work → Debug → Fix → Summary → Commit/Push |
-| Runtime model | Tornado backend + статический PWA controller |
-| State machine | `start` / `pause` / `resume` / `stop` |
-| Persistence | PostgreSQL-first с JSON fallback-совместимостью |
-| Documentation | Канонический `README.md` + многоязычные файлы в `i18n/` |
+## ✨ Возможности
 
-## 🚀 Overview
-AutoAppDev — это контроллер для долгоживущих и возобновляемых пайплайнов разработки приложений. Он сочетает:
+- Scratch-like редактор pipeline на основе канонического скрипта + parser/AST.
+- API управления runner (`start/pause/resume/stop`) с возобновляемым состоянием.
+- Control-flow контейнеры: `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF/ELSE`.
+- Библиотека действий с шаблонами по умолчанию + пользовательскими override по модели copy-on-edit.
+- Проектные override-настройки романа с семантикой наследования.
+- Поток генерации/индекса/деталей/активации batch для `FOREACH_TASK`.
+- Индексация outputs и endpoint предпросмотра последнего PDF романа.
+- Встроенные словари i18n для PWA (`en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`).
+- Скрипты tmux и возобновляемый Codex auto-dev драйвер.
 
-1. Tornado backend API с хранением в PostgreSQL (плюс локальное JSON fallback-поведение в коде хранения).
-2. Scratch-подобный статичный PWA-контроллер.
-3. Скрипты и документацию для авторинга пайплайнов, детерминированной генерации кода, self-development циклов и автоматизации README.
-
-Проект оптимизирован для предсказуемого исполнения агентами с строгой последовательностью и историей артефактов в workflow.
-
-### 🎨 Почему этот репозиторий существует
-
-| Тема | Что это означает на практике |
-| --- | --- |
-| Детеминизм | Каноничная pipeline IR + pipeline/parser/import/codegen-процессы, рассчитанные на воспроизводимость |
-| Возобновляемость | Явная state machine (`start/pause/resume/stop`) для длительных запусков |
-| Эксплуатация | Runtime-логи, каналы inbox/outbox и проверки, управляемые скриптами |
-| Documentation-first | Контракты/спеки/примеры живут в `docs/`, с автоматическим многоязычным README-потоком |
-
-## 🧭 Philosophy
-AutoAppDev рассматривает агентов как инструменты и поддерживает стабильную работу через строгий, возобновляемый цикл:
-
-1. Plan
-2. Implement
-3. Debug/verify (с таймаутами)
-4. Fix
-5. Summarize + log
-6. Commit + push
-
-Контроллер пытается воплощать те же принципы в Scratch-подобных блоках и действиях (включая единое действие `update_readme`), чтобы каждый workspace оставался актуальным и воспроизводимым.
-
-### 🔁 Цикл состояний жизненного цикла
-
-| Переход состояния | Операционная цель |
-| --- | --- |
-| `start` | Запустить пайплайн из состояния stopped/ready |
-| `pause` | Безопасно остановить длительное выполнение без потери контекста |
-| `resume` | Возобновить выполнение из сохранённого runtime-состояния/артефактов |
-| `stop` | Завершить выполнение и вернуться в нерабочее состояние |
-
-## ✨ Features
-- Возобновляемое управление жизненным циклом пайплайна: start, pause, resume, stop.
-- API для Script library для AAPS pipeline-скриптов (`.aaps`) и канонической IR (`autoappdev_ir` v1).
-- Детеминированная parser/import-pipeline:
-  - Разбор отформатированных AAPS-скриптов.
-  - Импорт аннотированного shell через комментарии `# AAPS:`.
-  - Необязательный fallback парсинга с помощью Codex (`AUTOAPPDEV_ENABLE_LLM_PARSE=1`).
-- Реестр действий с built-in и редактируемыми/кастомными action (поток clone/edit для readonly built-in).
-- Scratch-подобные PWA-блоки и динамически загружаемая палитра действий (`GET /api/actions`).
-- Каналы runtime-сообщений:
-  - Inbox (`/api/inbox`) для указаний оператора пайплайну.
-  - Outbox (`/api/outbox`) с ingest file-очереди из `runtime/outbox`.
-- Инкрементальный стриминг логов из backend и pipeline-логов (`/api/logs`, `/api/logs/tail`).
-- Детеминированный codegen runner из канонической IR (`scripts/pipeline_codegen/generate_runner_from_ir.py`).
-- Self-dev driver для итеративной эволюции репозитория (`scripts/auto-autoappdev-development.sh`).
-- Автоматизация README с многоязычной генерацией в `i18n/`.
-
-## 📌 At A Glance
-
-| Область | Детали |
-| --- | --- |
-| Core runtime | Tornado backend + статичный PWA frontend |
-| Persistence | PostgreSQL-first с совместимым fallback-поведением в `backend/storage.py` |
-| Pipeline model | Каноническая IR (`autoappdev_ir` v1) и формат скриптов AAPS |
-| Control flow | Жизненный цикл Start / Pause / Resume / Stop |
-| Dev mode | Возобновляемый self-dev цикл + детеминированные скрипт/codegen workflow |
-| README/i18n | Автоматизированный README pipeline с каркасом `i18n/` |
-
-## 🏗️ Architecture
+## 🧭 Архитектура с первого взгляда
 
 ```text
-Operator / Developer
-        |
-        v
-   PWA (static files, pwa/)
-        |
-        | HTTP JSON API
-        v
-Tornado backend (backend/app.py)
-        |
-        +--> Postgres (DATABASE_URL)
-        +--> runtime/ (logs, outbox, llm_parse artifacts)
-        +--> scripts/ (pipeline runner + codegen helpers)
+Browser (PWA)
+  ├─ pipeline editor (скрипт + blocks)
+  ├─ panels: settings / projects / actions / tasks / outputs
+  └─ WebSocket client (/ws)
+          │
+          ▼
+Tornado backend (autonovelwriter/backend/server.py)
+  ├─ REST APIs (/api/*)
+  ├─ WebSocket broadcast hub
+  ├─ parser + AST + persistence канонического скрипта
+  ├─ resumable runner + журнал коммитов action-result
+  └─ runtime bootstrap (dirs + defaults)
+          │
+          ▼
+autonovelwriter/runtime/ (mutable, local-first)
+  ├─ state/ (pipeline, settings, runner, chat)
+  ├─ projects/<id>/ (materials, outputs, project settings)
+  ├─ tasks/ (active list + generated batches)
+  ├─ actions/ (defaults + user overrides)
+  └─ logs/ (runner.log)
 ```
 
-### Backend responsibilities
-- Экспонирует API контроллера для скриптов, действий, плана, жизненного цикла pipeline, логов, inbox/outbox и конфигурации workspace.
-- Валидирует и сохраняет assets скриптов пайплайна.
-- Координирует состояние выполнения пайплайна и переходы статусов.
-- Обеспечивает детеминированный fallback-поведение, когда пул БД недоступен.
+## 🗂️ Структура проекта
 
-### Frontend responsibilities
-- Отрисовывает Scratch-подобный блоковый UI и поток редактирования пайплайна.
-- Загружает палитру действий динамически из backend registry.
-- Управляет lifecycle-контролами и мониторит статус/логи/сообщения.
-
-## 📚 Contents
-Карта ссылок на наиболее используемые документы, скрипты и примеры:
-
-- `docs/auto-development-guide.md`: Bilingual (EN/ZH) философия и требования к долгоживущему, возобновляемому self-development агенту.
-- `docs/ORDERING_RATIONALE.md`: Пример обоснования порядка screenshot-driven шагов.
-- `docs/controller-mvp-scope.md`: Scope MVP контроллера (экраны + минимальные API).
-- `docs/end-to-end-demo-checklist.md`: Детеминированный чеклист ручного end-to-end демо (happy path backend + PWA).
-- `docs/env.md`: Конвенции переменных окружения (`.env`).
-- `docs/api-contracts.md`: Контракты request/response для контроллера API.
-- `docs/pipeline-formatted-script-spec.md`: Стандартный формат скриптов пайплайна (AAPS) и схема канонической IR (TASK -> STEP -> ACTION).
-- `docs/pipeline-runner-codegen.md`: Детеминированный генератор исполняемых bash pipeline-runner из канонической IR.
-- `docs/common-actions.md`: Типовые контракты/actions (включая `update_readme`).
-- `docs/workspace-layout.md`: Стандартные папки workspace и контракты (`materials/interactions/outputs/docs/references/scripts/tools/logs/auto-apps`).
-- `scripts/run_autoappdev_tmux.sh`: Запуск приложения AutoAppDev (backend + PWA) в tmux.
-- `scripts/run_autoappdev_selfdev_tmux.sh`: Запуск self-dev driver AutoAppDev в tmux.
-- `scripts/app-auto-development.sh`: Линейный pipeline driver (`plan -> backend -> PWA -> Android -> iOS -> review -> summary`) с поддержкой resume/state.
-- `scripts/generate_screenshot_docs.sh`: Генератор screenshot -> markdown описания (Codex-driven).
-- `scripts/setup_autoappdev_env.sh`: Основной bootstrap-скрипт conda окружения для локальных запусков.
-- `scripts/setup_backend_env.sh`: Скрипт-конфиг backend-окружения.
-- `examples/ralph-wiggum-example.sh`: Пример помощника автоматизации Codex CLI.
-
-## 🗂️ Project Structure
 ```text
-AutoAppDev/
+AutoNovelWriter/
 ├── README.md
-├── .env.example
 ├── .github/
 │   └── FUNDING.yml
-├── backend/
-│   ├── app.py
-│   ├── storage.py
-│   ├── schema.sql
-│   ├── apply_schema.py
-│   ├── db_smoketest.py
-│   ├── action_registry.py
-│   ├── builtin_actions.py
-│   ├── update_readme_action.py
-│   ├── pipeline_parser.py
-│   ├── pipeline_shell_import.py
-│   ├── llm_assisted_parse.py
-│   ├── workspace_config.py
-│   ├── requirements.txt
-│   └── README.md
-├── pwa/
-│   ├── index.html
-│   ├── app.js
-│   ├── i18n.js
-│   ├── api-client.js
-│   ├── styles.css
-│   ├── service-worker.js
-│   ├── manifest.json
-│   └── README.md
-├── docs/
+├── .gitmodules                     # AutoAppDev submodule declaration
+├── autonovelwriter/
+│   ├── backend/
+│   │   ├── server.py              # main backend entrypoint + API/WS handlers + runner logic
+│   │   ├── requirements.txt       # tornado>=6.4
+│   │   ├── .env.example
+│   │   └── tests/                 # backend unit tests
+│   ├── pwa/
+│   │   ├── index.html
+│   │   ├── app.js                 # UI logic + embedded i18n dictionaries
+│   │   ├── app.css
+│   │   ├── manifest.webmanifest
+│   │   ├── service_worker.js
+│   │   ├── icons/
+│   │   └── tests/
+│   └── runtime/                   # mutable state/IO (gitignored)
 ├── scripts/
-│   └── pipeline_codegen/
-├── prompt_tools/
-├── examples/
+│   ├── run_autonovelwriter_tmux.sh
+│   ├── setup_conda_env.sh
+│   ├── setup_and_run_autonovelwriter.sh
+│   ├── auto-autonovelwriter-development.sh
+│   └── backups/
+├── scripts-legacy/
+├── docs/
+│   ├── autonovelwriter_spec.md
+│   ├── auto-development-guide.md
+│   └── ORDERING_RATIONALE.md
 ├── references/
+│   └── autonovelwriter_dev/
+├── examples/
+│   └── ralph-wiggum-example.sh
 ├── i18n/
-└── .auto-readme-work/
+│   ├── README.ar.md
+│   ├── README.de.md
+│   ├── README.es.md
+│   ├── README.fr.md
+│   ├── README.ja.md
+│   ├── README.ko.md
+│   ├── README.ru.md
+│   ├── README.vi.md
+│   ├── README.zh-Hans.md
+│   └── README.zh-Hant.md
+└── AutoAppDev/                    # git submodule (git@github.com:lachlanchen/AutoAppDev.git)
 ```
 
-## ✅ Prerequisites
-- ОС с `bash`.
-- Python `3.11+`.
-- Conda (`conda`) для поставляемых setup-скриптов.
-- `tmux` для one-command backend+PWA или self-dev сессий.
-- PostgreSQL, доступный через `DATABASE_URL`.
-- Optional: `codex` CLI для Codex-powered flows (self-dev, parse-llm fallback, auto-readme pipeline).
+## ✅ Требования
 
-Краткая матрица требований:
+| Зависимость | Требуется | Примечание |
+|---|---|---|
+| Python `3.11+` | Да | Рекомендуемый baseline |
+| `pip` | Да | Установка зависимостей backend |
+| `tmux` | Нет | Нужен для многооконного launcher-скрипта |
+| `conda` | Нет | Опционально для helper-скриптов |
+| `node` | Нет | Опционально для прямого запуска PWA тестов |
 
-| Компонент | Обязательно | Назначение |
-| --- | --- | --- |
-| `bash` | Да | Выполнение скриптов |
-| Python `3.11+` | Да | Backend + codegen tooling |
-| Conda | Да (рекомендуемый путь) | Скрипты bootstrap окружения |
-| PostgreSQL | Да (предпочтительный режим) | Основная persistence через `DATABASE_URL` |
-| `tmux` | Рекомендуется | Управляемые backend/PWA и self-dev сессии |
-| `codex` CLI | По желанию | LLM-assisted parse и автоматизация README/self-dev |
+## 🚀 Установка
 
-## 🧩 Compatibility & Assumptions
+| Путь | Когда использовать | Команда |
+|---|---|---|
+| Option A | Используете conda и хотите использовать setup из репозитория | `scripts/setup_conda_env.sh --name autonovelwriter` |
+| Option B | Нужен setup + запуск одной командой | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
+| Option C | Предпочитаете ручное управление pip | `python3 -m pip install -r autonovelwriter/backend/requirements.txt` |
 
-| Тема | Текущее ожидание |
-| --- | --- |
-| Локальная ОС | Linux/macOS shell — основной таргет (`bash`-скрипты) |
-| Python runtime | `3.11` (управляется `scripts/setup_autoappdev_env.sh`) |
-| Режим персистентности | PostgreSQL предпочитается и считается каноническим |
-| Fallback behavior | `backend/storage.py` включает JSON-совместимый fallback для деградации |
-| Сетевая модель | Локальная разработка split-port (backend + статичный PWA) |
-| Agent tooling | `codex` CLI опционален, кроме случаев LLM-assisted parse или self-dev automation |
+### Option A: Помощник conda (рекомендуется для этого репозитория)
 
-Допущения в этом README:
-- Команды выполняются из корня репозитория, если не указано иначе.
-- `.env` настраивается до запуска backend-сервисов.
-- `conda` и `tmux` доступны для рекомендуемых one-command workflow.
-
-## 🛠️ Установка
-### 1) Клонировать и перейти в репозиторий
 ```bash
-git clone git@github.com:lachlanchen/AutoAppDev.git
-cd AutoAppDev
+scripts/setup_conda_env.sh --name autonovelwriter
 ```
 
-### 2) Настроить окружение
+Затем запустите через tmux:
+
 ```bash
-cp .env.example .env
+scripts/run_autonovelwriter_tmux.sh --env autonovelwriter
 ```
-Отредактируйте `.env` и задайте минимум:
-- `SECRET_KEY`
-- `DATABASE_URL`
-- `AUTOAPPDEV_HOST` и `AUTOAPPDEV_PORT` (или `PORT`)
 
-### 3) Создать/обновить backend окружение
+### Option B: Setup + run в одной команде
+
 ```bash
-./scripts/setup_autoappdev_env.sh
+scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 ```
 
-### 4) Применить схему БД
+### Option C: Ручная установка pip
+
 ```bash
-conda run -n autoappdev python -m backend.apply_schema
+python3 -m pip install --upgrade pip
+python3 -m pip install -r autonovelwriter/backend/requirements.txt
 ```
 
-### 5) Дополнительно: smoke test БД
+### Опционально: инициализация submodule
+
 ```bash
-conda run -n autoappdev python -m backend.db_smoketest
+git submodule update --init --recursive
 ```
 
-## ⚡ Quick Start
+## 🧪 Использование
+
+| Поток | Команда / URL |
+|---|---|
+| Запустить backend | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
+| Открыть приложение | `http://127.0.0.1:8787/` |
+| WebSocket endpoint | `ws://127.0.0.1:8787/ws` |
+| Optional static PWA | `python3 -m http.server 5173 --bind 127.0.0.1 --directory autonovelwriter/pwa` |
+| launcher через tmux | `scripts/run_autonovelwriter_tmux.sh --no-attach` |
+
+### Быстрый старт (без tmux)
+
 ```bash
-# from repo root
-cp .env.example .env
-./scripts/setup_autoappdev_env.sh
-conda run -n autoappdev python -m backend.apply_schema
-./scripts/run_autoappdev_tmux.sh --restart
+python3 -m pip install -r autonovelwriter/backend/requirements.txt
+python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
+# open http://127.0.0.1:8787/
 ```
 
-Затем откройте:
-- PWA: `http://127.0.0.1:5173/`
-- Backend API base: `http://127.0.0.1:8788`
-- Health check: `http://127.0.0.1:8788/api/health`
+### Dev Run (Backend + PWA)
 
-Проверка одним вызовом:
+Backend (Tornado):
+
 ```bash
-curl -sS http://127.0.0.1:8788/api/health | python3 -m json.tool
+python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
 ```
 
-Краткая карта endpoints:
+Backend также отдает статику PWA из `autonovelwriter/pwa/` по умолчанию, поэтому можно открыть:
+- `http://127.0.0.1:8787/` (PWA)
+- WebSocket: `ws://127.0.0.1:8787/ws`
 
-| Surface | URL |
-| --- | --- |
-| PWA UI | `http://127.0.0.1:5173/` |
-| Backend API | `http://127.0.0.1:8788` |
-| Health endpoint | `http://127.0.0.1:8788/api/health` |
+Опционально: PWA (отдельный статический dev server):
 
-## ⚙️ Configuration
-Основной файл: `.env` (см. `docs/env.md` и `.env.example`).
-
-### Важные переменные
-
-| Переменная | Назначение |
-| --- | --- |
-| `SECRET_KEY` | Требуется по конвенции |
-| `AUTOAPPDEV_HOST`, `AUTOAPPDEV_PORT`, `PORT` | Backend bind-настройки |
-| `DATABASE_URL` | PostgreSQL DSN (предпочтительный) |
-| `AUTOAPPDEV_RUNTIME_DIR` | Переопределение runtime-директории (по умолчанию `./runtime`) |
-| `AUTOAPPDEV_PIPELINE_CWD`, `AUTOAPPDEV_PIPELINE_SCRIPT` | Цель запуска pipeline по умолчанию |
-| `AUTOAPPDEV_ENABLE_LLM_PARSE=1` | Включить `/api/scripts/parse-llm` |
-| `AUTOAPPDEV_CODEX_MODEL`, `AUTOAPPDEV_CODEX_REASONING`, `AUTOAPPDEV_CODEX_SKIP_GIT_CHECK` | Значения Codex по умолчанию для actions/endpoints |
-| `AI_API_BASE_URL`, `AI_API_KEY` | Зарезервировано для будущих интеграций |
-
-Быстрая проверка `.env`:
 ```bash
-bash -lc 'set -euo pipefail; test -f .env; set -a; source .env; set +a; \
-python3 - <<"PY"\
-import os, sys\
-req = ["SECRET_KEY", "DATABASE_URL"]\
-missing = [k for k in req if not os.getenv(k)]\
-port_ok = bool(os.getenv("AUTOAPPDEV_PORT") or os.getenv("PORT"))\
-if not port_ok: missing.append("AUTOAPPDEV_PORT or PORT")\
-if missing:\
-  print("Missing env:", ", ".join(missing))\
-  sys.exit(1)\
-print("OK: env looks set")\
-PY'
+python3 -m http.server 5173 --bind 127.0.0.1 --directory autonovelwriter/pwa
 ```
 
-## ▶️ Usage
+Откройте PWA на `http://127.0.0.1:5173` и направьте её на backend (по умолчанию `ws://127.0.0.1:8787/ws`).
 
-| Режим | Команда | Примечания |
-| --- | --- | --- |
-| Запуск backend + PWA (рекомендуется) | `./scripts/run_autoappdev_tmux.sh --restart` | Backend `http://127.0.0.1:8788`, PWA `http://127.0.0.1:5173/` |
-| Запуск только backend | `conda run -n autoappdev python -m backend.app` | Использует bind и DB настройки из `.env` |
-| Запуск только статического PWA | `cd pwa && python3 -m http.server 5173 --bind 127.0.0.1` | Полезно для frontend-only проверок |
-| Запуск self-dev драйвера в tmux | `./scripts/run_autoappdev_selfdev_tmux.sh --restart` | Возобновляемый цикл self-development |
+tmux (запуск backend и PWA + tail логов):
 
-### Частые опции скриптов
-- `./scripts/run_autoappdev_tmux.sh --help`
-- `./scripts/run_autoappdev_tmux.sh --backend-port 8790 --pwa-port 5174`
-- `./scripts/run_autoappdev_tmux.sh --detached`
-- `./scripts/run_autoappdev_selfdev_tmux.sh --help`
-- `./scripts/run_autoappdev_selfdev_tmux.sh --start-at 14 --reasoning xhigh`
-
-### Парсинг и сохранение скриптов
-- Parse AAPS через API: `POST /api/scripts/parse`
-- Import аннотированного shell: `POST /api/scripts/import-shell`
-- Optional LLM parse: `POST /api/scripts/parse-llm` (requires `AUTOAPPDEV_ENABLE_LLM_PARSE=1`)
-
-### API управления пайплайном
-- `GET /api/pipeline`
-- `GET /api/pipeline/status`
-- `POST /api/pipeline/start`
-- `POST /api/pipeline/pause`
-- `POST /api/pipeline/resume`
-- `POST /api/pipeline/stop`
-
-### Другие часто используемые API
-- Health/version/config: `/api/health`, `/api/version`, `/api/config`
-- Plan/scripts: `/api/plan`, `/api/scripts`, `/api/scripts/<id>`
-- Actions: `/api/actions`, `/api/actions/<id>`, `/api/actions/<id>/clone`, `/api/actions/update-readme`
-- Messaging: `/api/chat`, `/api/inbox`, `/api/outbox`
-- Logs: `/api/logs`, `/api/logs/tail`
-
-Смотрите `docs/api-contracts.md` для форм request/response.
-
-## 🧭 Operational Runbooks
-
-### Runbook: поднять весь локальный стек
 ```bash
-cp .env.example .env
-./scripts/setup_autoappdev_env.sh
-conda run -n autoappdev python -m backend.apply_schema
-./scripts/run_autoappdev_tmux.sh --restart
+scripts/run_autonovelwriter_tmux.sh --no-attach
+tmux attach -t autonovelwriter_app
 ```
 
-Контрольные точки валидации:
-- `curl -sS http://127.0.0.1:8788/api/health | python3 -m json.tool`
-- Откройте `http://127.0.0.1:5173/` и убедитесь, что UI загрузил `/api/config`.
-- Опционально: откройте `/api/version` и проверьте ожидаемые backend-metadata.
+Conda env helper:
 
-### Runbook: debugging только backend
 ```bash
-conda run -n autoappdev python -m backend.app
-curl -sS http://127.0.0.1:8788/api/version
-curl -sS http://127.0.0.1:8788/api/pipeline/status | python3 -m json.tool
+scripts/setup_conda_env.sh --name autonovelwriter
+scripts/run_autonovelwriter_tmux.sh --env autonovelwriter
+# one-shot:
+scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 ```
 
-### Runbook: deterministic codegen smoke
+Скрипт драйвера репозитория (`scripts/auto-autonovelwriter-development.sh`) также может запускать tmux-сессию для auto-dev.
+
+### Типичный workflow
+
+1. Запустите backend (или tmux helper).
+2. Откройте PWA.
+3. Отредактируйте pipeline через блоки и/или текстовое поле скрипта.
+4. Проверьте/сохраните pipeline.
+5. Запустите runner и следите за логами/статусом/events.
+6. Просмотрите сгенерированные outputs и task batches.
+
+## ⚙️ Конфигурация
+
+### Переменные окружения
+
+Используйте `autonovelwriter/backend/.env.example` как шаблон. Ключевые переменные для backend/runtime:
+
+- `AUTONOVELWRITER_RUNTIME_ROOT` (по умолчанию `autonovelwriter/runtime`)
+- `AUTONOVELWRITER_PWA_ROOT` (по умолчанию `autonovelwriter/pwa`)
+- `AUTONOVELWRITER_HOST` (по умолчанию `127.0.0.1`)
+- `AUTONOVELWRITER_PORT` (значение по умолчанию в CLI: `8787`)
+- `AUTONOVELWRITER_WORKSPACE_ROOT` (по умолчанию: родитель корня репозитория)
+- `AUTONOVELWRITER_WRITER_SCRIPT` (по умолчанию `${WORKSPACE_ROOT}/scripts/auto-xiyouzhiyuan-writer.sh`)
+- `AUTONOVELWRITER_XIYOU_INPUT_DIR` (по умолчанию `${WORKSPACE_ROOT}/references/xiyouzhiyuan/input`)
+- `AUTONOVELWRITER_NOVELS_ROOT` (по умолчанию `${WORKSPACE_ROOT}/auto-novels`)
+- `AUTONOVELWRITER_ENABLE_CODEX` (включатель запуска агента, по умолчанию disabled)
+- `AUTONOVELWRITER_CODEX_CLI_PATH` (опциональный override для бинарника codex)
+
+### CLI опции скриптов
+
+`run_autonovelwriter_tmux.sh`:
+- `--session <name>`
+- `--backend-port <n>`
+- `--pwa-port <n>`
+- `--host <ip>`
+- `--env <conda_env>`
+- `--debug`
+- `--kill`
+- `--no-attach`
+
+`setup_conda_env.sh`:
+- `--name <env>`
+- `--python <ver>`
+- `--force-recreate`
+
+`setup_and_run_autonovelwriter.sh`:
+- `--env <name>`
+- `--python <ver>`
+- `--session <name>`
+- `--backend-port <n>`
+- `--pwa-port <n>`
+- `--host <ip>`
+- `--force-recreate`
+- `--debug`
+- `--kill`
+- `--no-attach`
+
+## 🔌 Ключевые backend API
+
+| API-группа | Ключевые endpoints |
+|---|---|
+| Health & settings | `/api/health`, `/api/settings` |
+| Проекты и project settings | `/api/projects`, `/api/projects/active`, `/api/projects/settings` |
+| Pipeline | `/api/pipeline`, `/api/pipeline/validate`, `/api/pipeline/reference_writer*` |
+| Tasks | `/api/tasks/batches/index`, `/api/tasks/batches/<batch_id>`, `/api/tasks/batches/<batch_id>/activate` |
+| Actions | `/api/actions`, `/api/actions/<action_id>`, `/api/actions/<action_id>/copy` |
+| Runner | `/api/run/start|pause|resume|stop`, `/api/run/status` |
+| Outputs & preview романа | `/api/outputs/index`, `/api/novel/latest`, `/api/novel/latest/pdf` |
+| Realtime | `/ws` |
+
+### HTTP API
+
+- Health: `GET /api/health`
+- Settings: `GET/POST /api/settings`
+- Проекты: `GET /api/projects`, `POST /api/projects/active`
+- Настройки проекта (активный проект): `GET/POST /api/projects/settings` (inherit semantics на проект: `novel_language`, `novel_tone`, `novel_target_length_words`)
+- Индекс материалов (активный проект): `GET /api/materials/index`
+- Outputs index (активный проект): `GET /api/outputs/index`
+- Индекс task batches: `GET /api/tasks/batches/index` (опционально: `?project=<project_id>`)
+- Детали task batch: `GET /api/tasks/batches/<batch_id>`
+- Активация task batch: `POST /api/tasks/batches/<batch_id>/activate` (записывает `runtime/tasks/tasks.json` и `active_tasks.json` проекта)
+- Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`, `PUT /api/actions/<action_id>` (copy-on-edit update для defaults)
+- Pipeline (канонический скрипт + производный JSON): `GET/POST /api/pipeline`
+- Проверка pipeline (только preview): `POST /api/pipeline/validate`
+- Reference writer pipeline preview/load:
+  - `GET /api/pipeline/reference_writer` (читает и парсит `../scripts/auto-xiyouzhiyuan-writer.sh` как reference)
+  - `POST /api/pipeline/reference_writer/load` (загружает разобранный результат в runtime pipeline; исходный скрипт не изменяет)
+- Chat: `GET /api/chat/history`, `POST /api/chat/send`
+- Последний PDF романа:
+  - `GET /api/novel/latest` (метаданные)
+  - `GET /api/novel/latest/pdf` (inline PDF stream для viewer)
+- Управление runner: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
+- Agent test (с gate): `POST /api/agent/test` (запускает `codex --version` только при включении gate + env)
+
+### WebSocket
+
+- Endpoint: `/ws`
+- Broadcast-события: `hello`, `chat`, `outbox_written`, `input_mirror_written`, `output_created`, `tasks_batch_created`, `tasks_batch_activated`, `action_created`, `action_updated`, `action_result_committed`, `run_status`, `task_status`, `log`, `pipeline_updated`, `project_active_changed`, `project_settings_updated`, `echo`
+
+## 📁 Пути runtime
+
+Все изменяемое состояние и IO лежат в `autonovelwriter/runtime/`:
+
+| Путь | Назначение |
+|---|---|
+| `autonovelwriter/runtime/io/inbox/` | user -> system (загрузка `.txt`/`.md`) |
+| `autonovelwriter/runtime/io/outbox/` | system -> user (backend пишет chat messages) |
+| `autonovelwriter/runtime/state/` | persistируемый JSON state (settings, pipeline, runner, chat) |
+| `autonovelwriter/runtime/state/chat.sqlite3` | зеркальный sqlite чат (дополнительно к chat.jsonl) |
+| `autonovelwriter/runtime/state/active_project.json` | сохраненный указатель активного проекта |
+| `autonovelwriter/runtime/tasks/` | файлы очереди задач |
+| `autonovelwriter/runtime/tasks/batches/<batch_id>/` | сгенерированные batches задач (напр. из `meta_tasks_generate`) |
+| `autonovelwriter/runtime/logs/` | логи |
+| `autonovelwriter/runtime/projects/<project_id>/materials/` | материалы проекта (inputs) |
+| `autonovelwriter/runtime/projects/<project_id>/outputs/` | outputs проекта (drafts/exports) |
+| `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json` | пер-проектные override для параметров романа (например, novel language) |
+| `autonovelwriter/runtime/actions/defaults/` | базовые шаблоны Action Library (рассматриваются как immutable) |
+| `autonovelwriter/runtime/actions/user/` | пользовательские шаблоны Action Library (созданы через copy-on-edit) |
+| `/home/lachlan/Documents/VoidAbyss/references/xiyouzhiyuan/input/` | зеркальные чаты writer-пайплайна в ingestion |
+
+## 🧩 Pipeline Script (канонический артефакт)
+
+Pipeline хранится как форматированный скрипт на диске:
+- `autonovelwriter/runtime/state/pipeline.script`
+
+Backend отдает его через `GET/POST /api/pipeline` как:
+- `script` (канонический, shell-like `STEP <type>` / `DISABLED <type>` строки)
+- `pipeline` JSON (derived, плоский список для рендера блоков)
+- `pipeline_ast` (derived, nested structure для loop/indent UI)
+
+Runner выполняет шаги, полученные из одного и того же v2 parser/AST, поэтому PWA и backend совпадают.
+
+Runner control flow поддерживает v2 контейнеры:
+- `ROUND <n>` повторяет детей `n` раз.
+- `FOREACH_TASK` выполняет детей один раз для каждой задачи из active task list (`autonovelwriter/runtime/tasks/tasks.json`).
+- `FOREACH_ACTION` выполняет детей для каждого элемента в `payload.actions` текущей задачи (предназначен для вложения под `FOREACH_TASK`).
+
+Возобновление:
+- runner сохраняет resumable execution cursor в `autonovelwriter/runtime/state/runner_state.json`.
+- Курсор продвигается только после успешного завершения блока (поэтому restart не пропускает незавершенную работу).
+- Если канонический скрипт pipeline изменился (хэш не совпал), runner останавливается и требует restart (cursor инвалидируется).
+- Runner сохраняет `ActionResult` на шаг в `autonovelwriter/runtime/state/action_results.jsonl` и использует детерминированный `exec_id` на шаг, чтобы не дублировать уже закоммиченные результаты после restart.
+- При выполнении внутри `FOREACH_ACTION` ActionResults содержат `action_index`, `action_id_ref`, `action_key`, а переменные включают `prev` и явные скоупы `task.prev` и `action.prev`.
+
+Pipeline script v2 поддерживает вложенность:
+- `LOOP <n>` создает loop block.
+- `ROUND <n>` создает rounds container block.
+- `FOREACH_TASK` создает per-task container block.
+- `FOREACH_ACTION` создает per-action container block (runner итерирует `task.payload.actions`).
+- `IF <expr>` создает conditional container block (parse/render; сейчас runner исполняет только then-branch).
+- `ELSE` создает optional alternate branch под `IF` block.
+- Дети отступаются на 2 пробела на уровень.
+
+Валидация (без сохранения):
+- `POST /api/pipeline/validate` возвращает канонический preview плюс `pipeline_ast`, warnings и errors.
+
+PWA показывает скрипт в textarea (source of truth) и рендерит вложенные блоки из `pipeline_ast`.
+Если endpoint валидации backend недоступен, PWA переходит на local parser с теми же v2 глаголами (`LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF`, `ELSE`, `STEP`, `DISABLED`).
+
+Заметки по Blocks UI:
+- `LOOP` и `ROUND` repeat-count редактируются inline в списке блоков; валидные изменения сразу обновляют канонический script textarea.
+- Панель блоков может вставлять контейнеры `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF` без ручного редактирования скрипта (оборачивает выбранный блок или добавляет корректный непустой контейнер).
+- Блоки можно удалять с canvas (Delete-кнопка у каждого блока; клавиша `Delete`, если блок выбран). Удаление контейнера вынимает детей наверх, и редактор поддерживает non-empty containers, чтобы не создавать invalid скрипты.
+- `IF` блоки поддерживают структурную корректность: `ELSE` не может остаться вне `IF`, основной branch остается непустым.
+- `STEP` блоки показывают controls Action Library: selector action, `Customize` (копирует default action в пользовательскую и переключает на нее), `Edit` (Action Editor modal для `name/tool/prompt/script`).
+
+## 📝 Runner Outputs (черновик)
+
+Когда pipeline содержит блок `STEP write`, backend runner создает stub draft файл в:
+- `autonovelwriter/runtime/projects/<project_id>/outputs/`
+
+Backend также эмитит:
+- WS-событие `output_created` с `path` и `project_rel_path`
+- строку лога `[output] created: ...`
+
+В PWA есть минимальная панель Outputs, она показывает файлы через `GET /api/outputs/index` и обновляется на `output_created`.
+
+## 📦 Runner Tasks (Batch-черновик)
+
+Когда pipeline содержит блок `STEP meta_tasks_generate`, backend runner создает stub task batch в:
+- `autonovelwriter/runtime/tasks/batches/<batch_id>/`
+
+Backend также эмитит:
+- WS-событие `tasks_batch_created` с `batch_dir`, `tasks_jsonl` и `task_count`
+- строку лога `[tasks] created batch: ...`
+
+PWA содержит минимальную панель Task Batches, которая списки batches через `GET /api/tasks/batches/index` и обновляет их на `tasks_batch_created`.
+Она также умеет показывать детали batch (`GET /api/tasks/batches/<batch_id>`) и активировать batch, чтобы сделать его текущим списком для `FOREACH_TASK` (`POST /api/tasks/batches/<batch_id>/activate`).
+
+## 🔐 Настройки агента / Codex Gate
+
+Panel настроек PWA сохраняет agent settings через `/api/settings` в `autonovelwriter/runtime/state/settings.json`.
+
+Для безопасности backend не запускает `codex` CLI, пока не истинны оба условия:
+- `settings.agent.enabled=true` и `settings.agent.sdk="codex"`
+- в окружении установлен `AUTONOVELWRITER_ENABLE_CODEX=1`
+
+Не коммитьте секреты. Используйте `autonovelwriter/backend/.env.example` как шаблон локальных переменных среды.
+
+## 🌐 PWA I18N (язык интерфейса)
+
+У PWA есть облегченная встроенная система i18n.
+
+- Форсировать язык UI: добавьте `?lang=<code>` в URL PWA (например, `?lang=ja`).
+- Сохраняется в localStorage на браузер: `anw_lang`.
+- Поддерживаемые UI языки: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar` (RTL), `fr`, `es`, `ru`, `de`.
+- Локализованные README на уровне репозитория сейчас находятся в `i18n/` и подключаются через единственную строку выбора языка в начале этого документа.
+
+| README locale-файлы (`i18n/`) | Статус |
+|---|---|
+| `README.ar.md`, `README.de.md`, `README.es.md`, `README.fr.md`, `README.ja.md`, `README.ko.md`, `README.ru.md`, `README.vi.md`, `README.zh-Hans.md`, `README.zh-Hant.md` | Present |
+
+## 🖋️ Настройки романа (отдельно от UI)
+
+Настройки написания романа хранятся в backend settings under `settings.novel.*` в:
+- `autonovelwriter/runtime/state/settings.json`
+
+Они намеренно отделены от PWA UI языка (`?lang=` / `anw_lang`).
+
+Пер-проектные overrides лежат в:
+- `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json`
+
+Текущие глобальные поля (редактируемые в модалке PWA Settings):
+- `settings.novel.language` (BCP-47-like коды, например `en`, `ja`, `zh-Hans` и т.д.)
+- `settings.novel.tone`
+- `settings.novel.target_length_words`
+- `settings.novel.pov`
+- `settings.novel.tense`
+- `settings.novel.chapter_count_target`
+
+Текущие проектные override-поля (empty/unset означает inherit глобальных):
+- `project_settings.novel_language`
+- `project_settings.novel_tone`
+- `project_settings.novel_target_length_words`
+
+## 🧰 Примеры
+
+### Минимальный локальный запуск
+
 ```bash
-python3 scripts/pipeline_codegen/generate_runner_from_ir.py \
-  --in examples/pipeline_ir_codegen_demo_v0.json \
-  --out /tmp/autoappdev_runner.sh
-
-bash -n /tmp/autoappdev_runner.sh
-scripts/pipeline_codegen/smoke_codegen.sh
-scripts/pipeline_codegen/smoke_placeholders.sh
-scripts/pipeline_codegen/smoke_conditional_steps.sh
-scripts/pipeline_codegen/smoke_meta_round_v0.sh
+python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
+# then open http://127.0.0.1:8787/
 ```
 
-## 📡 API Snapshot
+### tmux-run без auto-attach
 
-Ключевые группы API на уровне обзора:
-
-| Категория | Endpoints |
-| --- | --- |
-| Health + runtime info | `GET /api/health`, `GET /api/version`, `GET /api/config`, `POST /api/config` |
-| Plan model | `GET /api/plan`, `POST /api/plan` |
-| Scripts | `GET/POST /api/scripts`, `GET/PUT/DELETE /api/scripts/<id>`, `POST /api/scripts/parse`, `POST /api/scripts/import-shell`, `POST /api/scripts/parse-llm` |
-| Action registry | `GET/POST /api/actions`, `GET/PUT/DELETE /api/actions/<id>`, `POST /api/actions/<id>/clone`, `POST /api/actions/update-readme` |
-| Pipeline runtime | `GET /api/pipeline`, `GET /api/pipeline/status`, `POST /api/pipeline/start`, `POST /api/pipeline/pause`, `POST /api/pipeline/resume`, `POST /api/pipeline/stop` |
-| Messaging + logs | `GET/POST /api/chat`, `GET/POST /api/inbox`, `GET/POST /api/outbox`, `GET/POST /api/logs`, `GET/POST /api/logs/tail` |
-| Workspace settings | `GET/POST /api/workspaces/<name>/config` |
-
-## 🧪 Examples
-### AAPS example
-```text
-AUTOAPPDEV_PIPELINE 1
-
-TASK  {"id":"t1","title":"Happy path demo"}
-STEP  {"id":"s1","title":"Plan","block":"plan"}
-ACTION {"id":"a1","kind":"note","params":{"text":"Read context and outline steps."}}
-```
-
-Полные примеры:
-- `examples/pipeline_formatted_script_v1.aaps`
-- `examples/pipeline_ir_v1.json`
-- `examples/pipeline_shell_annotated_v0.sh`
-- `examples/pipeline_ir_codegen_demo_v0.json`
-
-### Deterministic runner generation
 ```bash
-python3 scripts/pipeline_codegen/generate_runner_from_ir.py \
-  --in examples/pipeline_ir_codegen_demo_v0.json \
-  --out /tmp/autoappdev_runner.sh
-
-bash -n /tmp/autoappdev_runner.sh
-scripts/pipeline_codegen/smoke_codegen.sh
+scripts/run_autonovelwriter_tmux.sh --no-attach
+tmux attach -t autonovelwriter_app
 ```
 
-### Deterministic demo pipeline
+### Запуск тестовых файлов backend напрямую
+
 ```bash
-export AUTOAPPDEV_PIPELINE_SCRIPT=scripts/pipeline_demo.sh
-conda run -n autoappdev python -m backend.app
+python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py
+python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py
 ```
-Затем используйте элементы управления Start/Pause/Resume/Stop в PWA и проверьте `/api/logs`.
 
-### Import from annotated shell
+### Запуск PWA logic test file напрямую
+
 ```bash
-curl -sS -X POST http://127.0.0.1:8788/api/scripts/import-shell \
-  -H 'Content-Type: application/json' \
-  -d @- <<'JSON'
-{
-  "shell_text": "#!/usr/bin/env bash\n# AAPS: AUTOAPPDEV_PIPELINE 1\n# AAPS:\n# AAPS: TASK {\"id\":\"t1\",\"title\":\"Demo\"}\n# AAPS: STEP {\"id\":\"s1\",\"title\":\"Plan\",\"block\":\"plan\"}\n# AAPS: ACTION {\"id\":\"a1\",\"kind\":\"noop\"}\n"
-}
-JSON
+node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
 ```
 
-## 🧱 Development Notes
-- Backend основан на Tornado и заточен под локальную разработку (включая permissive CORS для localhost split-port).
-- Storage строится как PostgreSQL-first с совместимым fallback-поведением в `backend/storage.py`.
-- Ключи блоков PWA и значения `STEP.block` скриптов согласованы намеренно (`plan`, `work`, `debug`, `fix`, `summary`, `commit_push`).
-- Built-in actions доступны только для чтения; для правок используйте clone.
-- Action `update_readme` имеет ограничения безопасности пути и нацелена на `auto-apps/<workspace>/README.md`.
-- В некоторых документах/скриптах есть исторические ссылки на `HeyCyan`, `LightMind` — наследие эволюции проекта. Актуальный канонический путь — корень этого репозитория.
-- Корневая директория `i18n/` присутствует. Языковые README-файлы ожидаются там в многоязычных запусках.
+### Пример scripted automation helper
 
-### Working model and state files
-- Runtime по умолчанию `./runtime`, если его не переопределяет `AUTOAPPDEV_RUNTIME_DIR`.
-- Состояние и история self-dev automation хранятся в `references/selfdev/`.
-- Артефакты README pipeline лежат в `.auto-readme-work/<timestamp>/`.
+```bash
+bash examples/ralph-wiggum-example.sh
+```
 
-### Testing posture (current)
-- Репозиторий содержит smoke checks и детеминированные demo-скрипты.
-- Полный top-level automated test suite/CI манифест сейчас не описан в метаданных root.
-- Предположение: валидация сейчас преимущественно скрипт-ориентированная (`scripts/pipeline_codegen/smoke_*.sh`, `backend.db_smoketest`, end-to-end checklist).
+## 🛠️ Заметки по разработке
 
-## 🔐 Safety Notes
-- Action `update_readme` намеренно ограничена targets workspace README (`auto-apps/<workspace>/README.md`) с защитой от path traversal.
-- Валидация action registry нормализует spec-поля и ограничивает значения supported reasoning levels.
-- Скрипты репозитория предполагают доверенный локальный запуск; просматривайте их перед выполнением в shared или production-подобных средах.
-- `.env` может содержать чувствительные значения (`DATABASE_URL`, API keys). Не коммитьте `.env`, секреты храните во внешнем менеджменте.
+### Driver Workflow (Auto-Dev)
+<!-- AUTO_DEV_PROGRESS_START -->
+### Auto-Dev Progress (Generated)
+- updated_utc: 2026-02-16T02:48:02Z
+- current: T032_project_settings_extend_novel_overrides / update_readme — Project settings: extend novel overrides (inherit)
+- queue: total=32 done=31 pending=1
+- last_done: T031_runner_foreach_action_semantics_and_var_scopes — Runner: FOREACH_ACTION semantics + var scopes @ 2026-02-16T10:35:36+0800
+- latest_batch: references/autonovelwriter_dev/tasks/batches/batch_20260216_091332_b3
+- autoappdev_head: 8bc23a5
+<!-- AUTO_DEV_PROGRESS_END -->
 
-## 🔧 Troubleshooting
+`scripts/auto-autonovelwriter-development.sh` запускает возобновляемый Codex-driven loop по задачам в `references/autonovelwriter_dev/` и делает commit/push после каждой стадии (`plan -> implement -> debug -> fix -> i18n -> summary -> update_readme`).
+
+Полезные управления:
+- Остановиться после текущей задачи: `touch references/autonovelwriter_dev/STOP`
+- Сбросить state tracking (сохраняет queue): `scripts/auto-autonovelwriter-development.sh --reset-state`
+- Начать новую Codex session: `scripts/auto-autonovelwriter-development.sh --new-session`
+- Best practice: работайте в чистой branch/worktree и наблюдайте `references/autonovelwriter_dev/state.tsv` перед перезапуском
+
+### Операционные предположения
+
+- Это README ориентировано на локальную разработку на Linux/macOS с `bash` и Python 3.11+.
+- Runtime state в `autonovelwriter/runtime/` изменяем и ожидается как untracked.
+- Описанное поведение pipeline отражает текущую реализацию в `autonovelwriter/backend/server.py` и `autonovelwriter/pwa/app.js`.
+
+## 🧪 Заметки по тестированию
+
+В этом репозитории на момент написания нет top-level `Makefile`/`tox`/`npm test` оркестратора.
+
+Текущие входные точки для практического тестирования:
+
+| Зона | Точка входа |
+|---|---|
+| Backend parser/AST | `python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py` |
+| Backend foreach-action syntax | `python3 autonovelwriter/backend/tests/pipeline_foreach_action_roundtrip_test.py` |
+| Backend runner semantics | `python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py` |
+| Backend action library update | `python3 autonovelwriter/backend/tests/actions_library_update_unit_test.py` |
+| PWA AST delete behavior | `node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js` |
+
+```bash
+# backend (запуск отдельных тестовых файлов)
+python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py
+python3 autonovelwriter/backend/tests/pipeline_foreach_action_roundtrip_test.py
+python3 autonovelwriter/backend/tests/runner_foreach_action_semantics_unit_test.py
+python3 autonovelwriter/backend/tests/actions_library_update_unit_test.py
+
+# pwa logic test
+node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
+```
+
+Если вы меняете семантику runner, синтаксис pipeline или поведение action-library, обновляйте тесты и заметки README/API в том же PR.
+
+## 📚 Содержимое репозитория
+
+- `docs/autonovelwriter_spec.md`: Product spec для Scratch-like контроллера (chat + folder pipe + start/pause/stop + settings).
+- `scripts/auto-autonovelwriter-development.sh`: Auto-development самого AutoNovelWriter (task loop: `plan -> implement -> debug -> fix -> i18n -> summary -> update_readme -> commit+push`).
+- `docs/auto-development-guide.md`: Bilingual (EN/ZH) философия и требования к долгоживущему, возобновляемому auto-development агенту.
+- `docs/ORDERING_RATIONALE.md`: Пример rationale для последовательности screenshot-driven шагов.
+- `scripts-legacy/`: Старые automation скрипты сохранены для справки и больше не используются AutoNovelWriter.
+- `examples/ralph-wiggum-example.sh`: Пример помощника автоматизации Codex CLI.
+
+Дополнительные заметки для разработчиков:
+- Backend tests лежат в `autonovelwriter/backend/tests/`.
+- Небольшой тест поведения PWA в `autonovelwriter/pwa/tests/`.
+- `i18n/` заполнен локализованными README репозитория, тогда как UI translation dictionaries встроены в `autonovelwriter/pwa/app.js`.
+
+## 🧯 Устранение неполадок
 
 | Симптом | Что проверить |
-| --- | --- |
-| `tmux not found` | Установите `tmux` или запустите backend/PWA вручную. |
-| Backend не запускается из-за env | Проверьте `.env` с `.env.example` и `docs/env.md`. |
-| Ошибки БД (connection/auth/schema) | Проверьте `DATABASE_URL`; повторно выполните `conda run -n autoappdev python -m backend.apply_schema`; опционально connectivity check: `conda run -n autoappdev python -m backend.db_smoketest`. |
-| PWA загружается, но не может вызывать API | Убедитесь, что backend слушает на нужном host/port; пересоздайте `pwa/config.local.js`, заново запустив `./scripts/run_autoappdev_tmux.sh`. |
-| Pipeline Start возвращает invalid transition | Сначала проверьте текущий статус пайплайна; стартовать нужно из состояния `stopped`. |
-| Нет новых логов в UI | Проверьте, что `runtime/logs/pipeline.log` пишет; используйте напрямую `/api/logs` и `/api/logs/tail` для изоляции UI и backend-источника. |
-| LLM parse endpoint возвращает disabled | Установите `AUTOAPPDEV_ENABLE_LLM_PARSE=1` и перезапустите backend. |
-| `conda run -n autoappdev ...` fails | Повторно запустите `./scripts/setup_autoappdev_env.sh`; проверьте существование окружения `autoappdev` (`conda env list`). |
-| Неверная API-цель во frontend | Убедитесь, что `pwa/config.local.js` существует и указывает на активный backend host/port. |
-
-Для детерминированного ручного пути проверки используйте `docs/end-to-end-demo-checklist.md`.
-
-## 🌐 README & i18n Workflow
-- Корневой README — канонический источник для pipeline автоматизации README.
-- Многоязычные версии ожидаются в `i18n/`.
-- Статус директории i18n: ✅ присутствует в этом репозитории.
-- Текущий язык-сет в этом репозитории:
-  - `i18n/README.ar.md`
-  - `i18n/README.de.md`
-  - `i18n/README.es.md`
-  - `i18n/README.fr.md`
-  - `i18n/README.ja.md`
-  - `i18n/README.ko.md`
-  - `i18n/README.ru.md`
-  - `i18n/README.vi.md`
-  - `i18n/README.zh-Hans.md`
-  - `i18n/README.zh-Hant.md`
-- Языковая навигация должна оставаться единственной строкой вверху каждого варианта README (без дубликатов).
-- Pipeline entrypoint: `prompt_tools/auto-readme-pipeline.sh`.
-
-### i18n generation constraints (strict)
-- Всегда выполняйте многоязычную генерацию при обновлении канонического README.
-- Генерируйте и обновляйте языковые файлы по одному (последовательно), не в неявных bulk-батчах.
-- Сохраняйте ровно одну строку language-options навигации в начале каждого варианта.
-- Не дублируйте language bar в одном файле.
-- Сохраняйте канонические snippets команд, ссылки, API-пути и смысл бейджей между переводами.
-
-Suggested one-by-one generation order:
-1. `i18n/README.ar.md`
-2. `i18n/README.de.md`
-3. `i18n/README.es.md`
-4. `i18n/README.fr.md`
-5. `i18n/README.ja.md`
-6. `i18n/README.ko.md`
-7. `i18n/README.ru.md`
-8. `i18n/README.vi.md`
-9. `i18n/README.zh-Hans.md`
-10. `i18n/README.zh-Hant.md`
-
-Language coverage table:
-
-| Language | File |
-| --- | --- |
-
-## 📘 Readme Generation Context
-
-- Pipeline run timestamp: `20260301_064935`
-- Trigger: `./README.md`
-- Input user prompt: `probe prompt`
-- Goal: generate a complete, beautiful README draft with required sections and support information
-- Source snapshot used:
-  - `./.auto-readme-work/20260301_064935/pipeline-context.md`
-  - `./.auto-readme-work/20260301_064935/repo-structure-analysis.md`
-- This file was generated from repository contents and preserved as a canonical draft entry point.
-
-## ❓ FAQ
-
-### Is PostgreSQL mandatory?
-Предпочтительно и ожидается для обычной работы. Уровень storage содержит fallback-совместимость, но production-like использование должно предполагать доступный PostgreSQL через `DATABASE_URL`.
-
-### Why both `AUTOAPPDEV_PORT` and `PORT`?
-`AUTOAPPDEV_PORT` — это project-specific переменная. `PORT` существует как deploy-friendly alias. Держите их согласованными, если намеренно не меняете путь запуска.
-
-### Where should I start if I only want to inspect APIs?
-Запустите backend-only (`conda run -n autoappdev python -m backend.app`) и используйте `/api/health`, `/api/version`, `/api/config`, затем endpoints скриптов/actions из `docs/api-contracts.md`.
-
-### Are multilingual READMEs generated automatically?
-Да. Репозиторий содержит `prompt_tools/auto-readme-pipeline.sh`, а языковые варианты поддерживаются в `i18n/` с одной строкой language-navigation наверху каждого файла.
+|---|---|
+| `tmux not found in PATH` | Установить tmux или запускать backend и static servers вручную. |
+| `conda not found in PATH` при использовании скриптов `--env` | Установить Miniconda/Anaconda или пропустить conda и использовать ручную установку `pip`. |
+| PWA не может подключиться к backend | Проверить backend адрес/порт и WebSocket endpoint `ws://<host>:<port>/ws`. |
+| `POST /api/agent/test` возвращает gated/disabled | Убедиться, что установлены и `settings.agent.enabled=true`, и `settings.agent.sdk="codex"`, и env `AUTONOVELWRITER_ENABLE_CODEX=1`. |
+| Runner останавливается после изменения скрипта | Нормальное поведение: cursor invalidates при mismatch хэша pipeline script и требует рестарта. |
+| Статическая PWA на `:5173` работает, но API calls падают | Убедиться, что backend запущен на `:8787` (или обновить target settings в app/backend). |
 
 ## 🗺️ Roadmap
-- Завершить оставшиеся задачи self-dev сверх текущего статуса `51 / 55`.
-- Расширить workspace/materials/context tooling и более строгие safe-path контракты.
-- Продолжать улучшать UX action palette и редактируемые action flows.
-- Углубить поддержку многоязычного README/UI через `i18n/` и переключение языка во runtime.
-- Укрепить smoke/integration checks и CI coverage (сейчас доступны smoke-скрипты, полный CI manifest не описан в корне).
-- Продолжать повышать детерминизм parser/import/codegen вокруг AAPS v1 и канонической IR.
 
-## 🤝 Contributing
-Вклады приветствуются через issues и pull requests.
+- Завершить и стабилизировать оставшиеся пункты auto-dev queue (см. progress block выше).
+- Расширять и синхронизировать локализованные README в репозитории в `i18n/`.
+- Увеличивать покрытие автотестами по edge cases runner и взаимодействию PWA.
+- Продолжать улучшение Action Library и workflows task/action iteration.
 
-Рекомендуемый workflow:
-1. Fork и создайте feature branch.
-2. Держите изменения сконцентрированными и воспроизводимыми.
-3. По возможности используйте детеминированные scripts/tests.
-4. Обновляйте документацию при изменениях поведения/контрактов (`docs/*`, API contracts, examples).
-5. Открывайте PR с контекстом, шагами валидации и runtime assumptions.
+## 🤝 Как внести вклад
 
-В репозитории сейчас доступны remotes:
-- `origin`: `git@github.com:lachlanchen/AutoAppDev.git`
-- Дополнительно в локальных клонах могут быть дополнительные remotes для смежных репозиториев (в этом workspace пример: `novel`).
+Пожелания и изменения приветствуются.
+
+Практические рекомендации для этого репозитория:
+- Начинайте с `docs/autonovelwriter_spec.md` и `docs/auto-development-guide.md`.
+- Keep runtime mutations under `autonovelwriter/runtime/` (contents are gitignored), not tracked files.
+- Предпочитайте инкрементальные PR с воспроизводимыми командами run/test.
+- При изменении семантики pipeline или контрактов API обновляйте README и связанные тесты одновременно.
+
+Примечание: dedicated `CONTRIBUTING.md` на корне на момент этого черновика не найден.
 
 ---
+
+## 📄 Лицензия
+
+Файл/статус лицензии в корне репозитория в этом черновике явно не объявлен.
+
+Примечание по предположению:
+- Если вы планируете явное открытое распространение и лицензирование, добавьте top-level `LICENSE` и обновите этот раздел.
+
 
 ## ❤️ Support
 
 | Donate | PayPal | Stripe |
 | --- | --- | --- |
 | [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
-
-## 📄 License
-![License](https://img.shields.io/badge/License-Not%20Detected-C53030?logo=law&logoColor=white)
-
-В текущем снимке репозитория корневой `LICENSE` не обнаружен.
-
-Примечание:
-- Пока лицензия не добавлена, условия использования и распространения считаются неуточнёнными; уточните у maintainer.

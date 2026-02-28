@@ -2,6 +2,7 @@
 
 
 
+
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
 <div align="center">
@@ -44,12 +45,18 @@
 | 快速启动后端 | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
 | 一次性脚本化启动 | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
 
+> [!TIP]
+> 最快本地启动方式：
+> 1. `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill`
+> 2. 打开 `http://127.0.0.1:8787/`
+> 3. 连接 WebSocket 更新：`ws://127.0.0.1:8787/ws`
+
 ## 🔌 Launch defaults
 
-| 默认项 | 值 |
+| 启动默认值 | 值 |
 |---|---|
-| PWA URL | `http://127.0.0.1:8787/` |
-| WebSocket URL | `ws://127.0.0.1:8787/ws` |
+| PWA 地址 | `http://127.0.0.1:8787/` |
+| WebSocket 地址 | `ws://127.0.0.1:8787/ws` |
 | 后端主机/端口 | `127.0.0.1:8787` |
 
 ## Table of Contents
@@ -199,7 +206,7 @@ AutoNovelWriter/
 
 ## 🚀 Installation
 
-| 路径 | 最适场景 | 命令 |
+| 场景 | 最适场景 | 命令 |
 |---|---|---|
 | 方案 A | 使用 conda 且偏好仓库提供的环境配置 | `scripts/setup_conda_env.sh --name autonovelwriter` |
 | 方案 B | 希望一步完成安装与启动 | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
@@ -243,7 +250,7 @@ git submodule update --init --recursive
 | 启动后端 | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
 | 打开应用 | `http://127.0.0.1:8787/` |
 | WebSocket 端点 | `ws://127.0.0.1:8787/ws` |
-| 可选静态 PWA | `python3 -m http.server 5173 --bind 127.0.0.1 --directory autonovelwriter/pwa` |
+| 可选：静态 PWA | `python3 -m http.server 5173 --bind 127.0.0.1 --directory autonovelwriter/pwa` |
 | tmux launcher | `scripts/run_autonovelwriter_tmux.sh --no-attach` |
 
 ### Quick Start (No tmux)
@@ -365,9 +372,9 @@ scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 - Health: `GET /api/health`
 - Settings: `GET/POST /api/settings`
 - Projects: `GET /api/projects`, `POST /api/projects/active`
-- Project settings（当前激活项目）: `GET/POST /api/projects/settings`（项目级覆盖字段：`novel_language`、`novel_tone`、`novel_target_length_words`）
-- Materials index（当前项目）: `GET /api/materials/index`
-- Outputs index（当前项目）: `GET /api/outputs/index`
+- Project settings（当前激活项目）：`GET/POST /api/projects/settings`（项目级覆盖字段：`novel_language`、`novel_tone`、`novel_target_length_words`）
+- Materials index（当前项目）：`GET /api/materials/index`
+- Outputs index（当前项目）：`GET /api/outputs/index`
 - Task batches index: `GET /api/tasks/batches/index`（可选：`?project=<project_id>`）
 - Task batch details: `GET /api/tasks/batches/<batch_id>`
 - Task batch activate: `POST /api/tasks/batches/<batch_id>/activate`（写入 `runtime/tasks/tasks.json` 与项目 `active_tasks.json`）
@@ -380,7 +387,7 @@ scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Latest novel PDF:
   - `GET /api/novel/latest`（元信息）
-  - `GET /api/novel/latest/pdf`（内联 PDF 流，用于查看器）
+  - `GET /api/novel/latest/pdf`（用于查看器的内联 PDF 流）
 - Runner control: `POST /api/run/start|pause|resume|stop`, `GET /api/run/status`
 - Agent test（受控）: `POST /api/agent/test`（仅在开启且通过环境变量门禁时执行 `codex --version`）
 
@@ -393,7 +400,7 @@ scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 
 所有可变状态与 IO 都位于 `autonovelwriter/runtime/`：
 
-| Path | Purpose |
+| 路径 | 用途 |
 |---|---|
 | `autonovelwriter/runtime/io/inbox/` | user -> system（投递 `.txt`/`.md`） |
 | `autonovelwriter/runtime/io/outbox/` | system -> user（后端写入聊天消息） |
@@ -454,7 +461,7 @@ Blocks UI 说明：
 - Blocks 工具栏可插入 `LOOP`、`ROUND`、`FOREACH_TASK`、`FOREACH_ACTION`、`IF` 容器，无需手工改脚本（会包裹选中的块，或追加一个合法且非空的容器）。
 - 可在画布中删除块（每个块有 Delete 按钮；块选中时也可按 `Delete` 键）。删除容器时会提升子节点，编辑器会强制容器保持非空，以避免生成非法脚本。
 - `IF` 块结构在编辑器内始终保持有效：`ELSE` 不会脱离 `IF` 持久化，且 then 分支保持非空。
-- `STEP` 块提供动作库控制：动作选择器、`Customize`（将默认动作复制到用户动作并切换）与 `Edit`（`name/tool/prompt/script` 的动作编辑器弹窗）。
+- `STEP` 块提供动作库控制：动作选择器、`Customize`（将默认动作复制到用户动作并切换）、`Edit`（`name/tool/prompt/script` 的动作编辑器弹窗）。
 
 ## 📝 Runner Outputs (Draft Stub)
 
@@ -593,7 +600,7 @@ bash examples/ralph-wiggum-example.sh
 
 当前可用的测试入口如下：
 
-| Area | Entry point |
+| 区域 | 入口 |
 |---|---|
 | 后端 parser/AST | `python3 autonovelwriter/backend/tests/pipeline_if_else_roundtrip_test.py` |
 | 后端 foreach-action 语法 | `python3 autonovelwriter/backend/tests/pipeline_foreach_action_roundtrip_test.py` |
@@ -630,7 +637,7 @@ node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
 
 ## 🧯 Troubleshooting
 
-| Symptom | What to check |
+| 症状 | 排查建议 |
 |---|---|
 | `tmux not found in PATH` | 安装 tmux，或改为手动运行后端/静态服务。 |
 | `conda not found in PATH`（在使用 `--env` 脚本时） | 安装 Miniconda/Anaconda，或改用手动 `pip` 安装。 |

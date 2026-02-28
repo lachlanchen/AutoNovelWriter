@@ -2,11 +2,12 @@
 
 
 
+
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
 <div align="center">
   <h1>AutoNovelWriter</h1>
-  <p><strong>Scratch-like PWA + backend Tornado để điều khiển một pipeline tự động viết tiểu thuyết (và phát triển ứng dụng).</strong></p>
+  <p><strong>PWA kiểu Scratch cùng backend Tornado để điều phối pipeline tự động viết tiểu thuyết (và phát triển ứng dụng).</strong></p>
   <p>
     <img alt="Python" src="https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white" />
     <img alt="Backend" src="https://img.shields.io/badge/backend-Tornado%206.4%2B-0ea5e9" />
@@ -15,38 +16,47 @@
     <img alt="Pipeline" src="https://img.shields.io/badge/pipeline-script%20%2B%20AST-2563eb" />
     <img alt="Runtime" src="https://img.shields.io/badge/runtime-local%20state-orange" />
     <img alt="Status" src="https://img.shields.io/badge/status-active%20development-f59e0b" />
+    <img alt="Canonical docs" src="https://img.shields.io/badge/docs-README.md-critical?style=flat" />
+    <img alt="Languages" src="https://img.shields.io/badge/i18n-10%2B%20languages-8b5cf6?style=flat" />
   </p>
 </div>
 
-Kho lưu trữ này cũng tích hợp `AutoAppDev/` dưới dạng submodule (các script tự động phát triển có thể tái sử dụng).
+Repo này cũng tích hợp `AutoAppDev/` như một submodule (tập hợp scripts tự động phát triển có thể tái sử dụng).
 
 > [!TIP]
-> `README.md` là bản gốc chính. Các bản địa hóa đặt trong `i18n/` và được liên kết bởi một dòng lựa chọn ngôn ngữ duy nhất ở đầu file.
+> `README.md` là tài liệu gốc. Các bản địa hoá được đặt trong `i18n/` và được liên kết bởi dòng chọn ngôn ngữ duy nhất ở đầu file.
 
 ## 🧭 Project Snapshot
 
-| Điều cần biết nhanh | Chi tiết |
+| Quick facts | Details |
 |---|---|
-| Công nghệ chính | Python + Tornado backend, PWA frontend trong trình duyệt |
-| UX cốt lõi | Script editor + block editor dùng chung một nguồn pipeline chuẩn |
-| Chế độ chạy | Trình chạy có thể tiếp tục với con trỏ và kết quả action đã lưu |
-| Thời gian thực | Endpoint WebSocket tại `/ws` |
-| Runtime gốc có thể thay đổi | `autonovelwriter/runtime/` (được gitignore) |
-
+| Công nghệ chính | Python + Tornado backend, frontend PWA chạy trong trình duyệt |
+| UX cốt lõi | Soạn thảo script + block dựa trên một nguồn pipeline quy chuẩn duy nhất |
+| Chế độ chạy | Trình chạy có thể tiếp tục (resumable) với con trỏ và kết quả hành động đã lưu |
+| Realtime | Endpoint WebSocket tại `/ws` |
+| Nguồn runtime có thể thay đổi | `autonovelwriter/runtime/` (đã gitignore) |
 ## At-a-Glance Navigation
 
-| Cần làm gì ngay | Lệnh / URL |
+| 🎯 What to use now | 🔧 Command / URL |
 |---|---|
 | Mở PWA local | `http://127.0.0.1:8787/` |
 | Kết nối cập nhật trực tiếp | `ws://127.0.0.1:8787/ws` |
 | Khởi động backend nhanh | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
-| Chạy script thiết lập + khởi chạy | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
+| Chạy setup + start gói gọn | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
 
-| Mặc định khởi chạy | Giá trị |
+> [!TIP]
+> Cách nhanh nhất để chạy local:
+> 1. `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill`
+> 2. Mở `http://127.0.0.1:8787/`
+> 3. Kết nối cập nhật WebSocket tại `ws://127.0.0.1:8787/ws`
+
+## 🔌 Launch defaults
+
+| Launch defaults | Value |
 |---|---|
 | PWA URL | `http://127.0.0.1:8787/` |
 | WebSocket URL | `ws://127.0.0.1:8787/ws` |
-| Host/port backend | `127.0.0.1:8787` |
+| Backend host/port | `127.0.0.1:8787` |
 
 ## Table of Contents
 
@@ -79,32 +89,32 @@ Kho lưu trữ này cũng tích hợp `AutoAppDev/` dưới dạng submodule (c�
 
 ## 📌 Overview
 
-AutoNovelWriter cung cấp lớp điều phối local cho:
-- Soạn thảo pipeline chuẩn (`pipeline.script`) đồng thời qua văn bản nguồn và giao diện block.
-- Chạy backend có khả năng tiếp tục (resumable) với con trỏ và kết quả action đã được lưu.
-- Quản lý dự án, tài liệu, đầu ra, các lô task, và mẫu action.
-- Truyền dữ liệu cập nhật trực tiếp qua WebSocket (`/ws`) đến PWA.
+AutoNovelWriter cung cấp một tầng điều phối nội bộ cục bộ để:
+- Soạn thảo pipeline quy chuẩn (`pipeline.script`) qua cả văn bản nguồn và giao diện block.
+- Chạy backend có thể tiếp tục (`resumable`) với con trỏ và kết quả hành động được lưu.
+- Quản lý dự án, tài nguyên, đầu ra, nhóm task và mẫu action.
+- Truyền luồng cập nhật trực tiếp qua WebSocket (`/ws`) tới PWA.
 
-Runtime chuẩn có thể thay đổi là `autonovelwriter/runtime/` (nội dung được gitignore).
+Runtime quy chuẩn có thể thay đổi là `autonovelwriter/runtime/` (nội dung được gitignore).
 
-| Khu vực | Chức năng |
+| Khu vực | Mô tả |
 |---|---|
-| Viết pipeline | Soạn thảo script chuẩn + giao diện block lồng nhau từ một nguồn tham chiếu duy nhất |
-| Chạy | Runner có thể tiếp tục với con trỏ và kết quả action đã lưu |
-| Vận hành dự án | Tài liệu, đầu ra, cài đặt theo dự án và kích hoạt batch task |
-| UX thời gian thực | Sự kiện `/ws` cho cập nhật trạng thái/log/đầu ra/task/action |
+| Viết pipeline | Soạn thảo script chuẩn + giao diện block lồng nhau từ một nguồn dữ liệu duy nhất |
+| Thực thi | Runner có thể tiếp tục chạy với con trỏ và kết quả hành động đã lưu |
+| Vận hành dự án | Quản lý tài nguyên, đầu ra, cài đặt theo dự án và kích hoạt task batch |
+| UX realtime | Sự kiện `/ws` cho update trạng thái/log/đầu ra/task/action |
 
 ## ✨ Features
 
 - Trình soạn thảo pipeline kiểu Scratch chạy trên script chuẩn + parser/AST.
-- API điều khiển runner (`start/pause/resume/stop`) với trạng thái có thể tiếp tục.
+- API điều khiển runner (`start/pause/resume/stop`) có trạng thái có thể tiếp tục.
 - Các khối điều khiển luồng: `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF/ELSE`.
-- Thư viện Action với mẫu mặc định + cơ chế ghi đè của người dùng theo kiểu copy-on-edit.
-- Ghi đè cài đặt viết tiểu thuyết theo từng dự án với semantics kế thừa.
-- Luồng sinh/chỉ mục/chi tiết/kích hoạt task batch cho `FOREACH_TASK`.
-- Endpoint đánh chỉ mục đầu ra và xem trước PDF tiểu thuyết mới nhất.
-- Từ điển i18n tích hợp sẵn cho PWA (`en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`).
-- Script hỗ trợ tmux và driver Codex auto-dev có khả năng resume.
+- Thư viện Action với template mặc định + lớp ghi đè của người dùng theo cơ chế copy-on-edit.
+- Override cài đặt viết tiểu thuyết theo từng dự án với semantics kế thừa.
+- Quy trình sinh/lập chỉ mục/chi tiết/kích hoạt task batch cho `FOREACH_TASK`.
+- Endpoint lập chỉ mục đầu ra và xem trước PDF tiểu thuyết mới nhất.
+- Từ điển i18n có sẵn cho PWA (`en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`).
+- Script hỗ trợ tmux và driver auto-dev Codex có khả năng resume.
 
 ## 🧭 Architecture at a Glance
 
@@ -188,18 +198,18 @@ AutoNovelWriter/
 | Dependency | Required | Notes |
 |---|---|---|
 | Python `3.11+` | Yes | baseline được khuyến nghị |
-| `pip` | Yes | Cài đặt dependency backend |
+| `pip` | Yes | Cài dependency backend |
 | `tmux` | No | Cần cho script launcher nhiều pane |
-| `conda` | No | Script phụ trợ tuỳ chọn |
+| `conda` | No | Script hỗ trợ tùy chọn |
 | `node` | No | Tùy chọn để chạy trực tiếp file test PWA |
 
 ## 🚀 Installation
 
-| Đường dẫn | Phù hợp khi | Lệnh |
+| Path | Tốt nhất khi | Command |
 |---|---|---|
-| Option A | Bạn dùng conda và muốn dùng thiết lập từ repo | `scripts/setup_conda_env.sh --name autonovelwriter` |
+| Option A | Bạn dùng conda và muốn setup theo repo | `scripts/setup_conda_env.sh --name autonovelwriter` |
 | Option B | Bạn muốn setup + chạy trong một lệnh | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
-| Option C | Bạn muốn kiểm soát pip thủ công | `python3 -m pip install -r autonovelwriter/backend/requirements.txt` |
+| Option C | Bạn muốn điều khiển cài đặt pip thủ công | `python3 -m pip install -r autonovelwriter/backend/requirements.txt` |
 
 ### Option A: Conda helper (recommended for this repo)
 
@@ -258,7 +268,7 @@ Backend (Tornado):
 python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
 ```
 
-Backend cũng phục vụ static assets của PWA từ `autonovelwriter/pwa/` theo mặc định, vì vậy bạn có thể mở:
+Backend cũng phục vụ static assets của PWA từ `autonovelwriter/pwa/` theo mặc định, nên bạn có thể mở:
 - `http://127.0.0.1:8787/` (PWA)
 - WebSocket: `ws://127.0.0.1:8787/ws`
 
@@ -268,9 +278,9 @@ Optional: PWA (separate static dev server):
 python3 -m http.server 5173 --bind 127.0.0.1 --directory autonovelwriter/pwa
 ```
 
-Mở PWA tại `http://127.0.0.1:5173` và trỏ sang backend (mặc định `ws://127.0.0.1:8787/ws`).
+Mở PWA tại `http://127.0.0.1:5173` rồi trỏ về backend (mặc định `ws://127.0.0.1:8787/ws`).
 
-tmux (launch both panes + log tail):
+tmux (khởi chạy cả hai pane + log tail):
 
 ```bash
 scripts/run_autonovelwriter_tmux.sh --no-attach
@@ -286,33 +296,33 @@ scripts/run_autonovelwriter_tmux.sh --env autonovelwriter
 scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 ```
 
-Repo’s driver script (`scripts/auto-autonovelwriter-development.sh`) có thể khởi tạo thêm một phiên tmux trong quá trình auto-dev.
+Script điều khiển repo (`scripts/auto-autonovelwriter-development.sh`) cũng có thể khởi tạo một session tmux khi auto-dev.
 
 ### Typical workflow
 
-1. Start backend (hoặc tmux helper).
-2. Open PWA.
-3. Edit pipeline qua Blocks và/hoặc textarea script.
+1. Khởi chạy backend (hoặc tmux helper).
+2. Mở PWA.
+3. Chỉnh pipeline qua Blocks và/hoặc textarea script.
 4. Validate/save pipeline.
-5. Start runner và theo dõi logs/status/events.
-6. Review generated outputs/task batches.
+5. Khởi chạy runner và theo dõi logs/status/events.
+6. Xem lại outputs/task batches đã tạo.
 
 ## ⚙️ Configuration
 
 ### Environment variables
 
-Dùng `autonovelwriter/backend/.env.example` làm mẫu. Các biến chính được backend/runtime sử dụng:
+Dùng `autonovelwriter/backend/.env.example` làm template. Các biến chính dùng bởi backend/runtime:
 
 - `AUTONOVELWRITER_RUNTIME_ROOT` (mặc định `autonovelwriter/runtime`)
 - `AUTONOVELWRITER_PWA_ROOT` (mặc định `autonovelwriter/pwa`)
 - `AUTONOVELWRITER_HOST` (mặc định `127.0.0.1`)
 - `AUTONOVELWRITER_PORT` (CLI flag mặc định: `8787`)
-- `AUTONOVELWRITER_WORKSPACE_ROOT` (mặc định: cha của repo root)
+- `AUTONOVELWRITER_WORKSPACE_ROOT` (mặc định: parent của repo root)
 - `AUTONOVELWRITER_WRITER_SCRIPT` (mặc định `${WORKSPACE_ROOT}/scripts/auto-xiyouzhiyuan-writer.sh`)
 - `AUTONOVELWRITER_XIYOU_INPUT_DIR` (mặc định `${WORKSPACE_ROOT}/references/xiyouzhiyuan/input`)
 - `AUTONOVELWRITER_NOVELS_ROOT` (mặc định `${WORKSPACE_ROOT}/auto-novels`)
-- `AUTONOVELWRITER_ENABLE_CODEX` (agent execution gate, mặc định tắt)
-- `AUTONOVELWRITER_CODEX_CLI_PATH` (ghi đè nhị phân codex tuỳ chọn)
+- `AUTONOVELWRITER_ENABLE_CODEX` (agent execution gate, mặc định disabled)
+- `AUTONOVELWRITER_CODEX_CLI_PATH` (tuỳ chọn ghi đè đường dẫn binary codex)
 
 ### Script CLI options
 
@@ -361,18 +371,18 @@ Dùng `autonovelwriter/backend/.env.example` làm mẫu. Các biến chính đư
 - Health: `GET /api/health`
 - Settings: `GET/POST /api/settings`
 - Projects: `GET /api/projects`, `POST /api/projects/active`
-- Project settings (active project): `GET/POST /api/projects/settings` (override theo project với semantics kế thừa: `novel_language`, `novel_tone`, `novel_target_length_words`)
+- Project settings (active project): `GET/POST /api/projects/settings` (per-project overrides với semantics kế thừa: `novel_language`, `novel_tone`, `novel_target_length_words`)
 - Materials index (active project): `GET /api/materials/index`
 - Outputs index (active project): `GET /api/outputs/index`
-- Task batches index: `GET /api/tasks/batches/index` (tùy chọn: `?project=<project_id>`)
+- Task batches index: `GET /api/tasks/batches/index` (optional: `?project=<project_id>`)
 - Task batch details: `GET /api/tasks/batches/<batch_id>`
-- Task batch activate: `POST /api/tasks/batches/<batch_id>/activate` (ghi vào `runtime/tasks/tasks.json` và `active_tasks.json` của dự án)
+- Task batch activate: `POST /api/tasks/batches/<batch_id>/activate` (ghi vào `runtime/tasks/tasks.json` và `project_settings` của dự án)
 - Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`, `PUT /api/actions/<action_id>` (copy-on-edit update for defaults)
 - Pipeline (canonical script + derived JSON): `GET/POST /api/pipeline`
 - Pipeline validate (preview only): `POST /api/pipeline/validate`
 - Reference writer pipeline preview/load:
-  - `GET /api/pipeline/reference_writer` (đọc và parse `../scripts/auto-xiyouzhiyuan-writer.sh` dưới dạng reference)
-  - `POST /api/pipeline/reference_writer/load` (nạp kết quả parse vào runtime pipeline; không chỉnh sửa script nguồn)
+  - `GET /api/pipeline/reference_writer` (đọc và parse `../scripts/auto-xiyouzhiyuan-writer.sh` làm reference)
+  - `POST /api/pipeline/reference_writer/load` (nạp kết quả parse vào runtime pipeline; không chỉnh sửa source script)
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
 - Latest novel PDF:
   - `GET /api/novel/latest` (metadata)
@@ -387,136 +397,136 @@ Dùng `autonovelwriter/backend/.env.example` làm mẫu. Các biến chính đư
 
 ## 📁 Runtime Paths
 
-Tất cả trạng thái mutable và IO nằm trong `autonovelwriter/runtime/`:
+Tất cả state và IO thay đổi nằm trong `autonovelwriter/runtime/`:
 
-| Path | Purpose |
+| Path | Mục đích |
 |---|---|
 | `autonovelwriter/runtime/io/inbox/` | user -> system (đưa vào `.txt`/`.md`) |
-| `autonovelwriter/runtime/io/outbox/` | system -> user (backend ghi tin nhắn chat) |
-| `autonovelwriter/runtime/state/` | trạng thái JSON đã lưu bền (settings, pipeline, runner, chat) |
-| `autonovelwriter/runtime/state/chat.sqlite3` | sqlite chat mirror (ngoài `chat.jsonl`) |
+| `autonovelwriter/runtime/io/outbox/` | system -> user (backend ghi chat messages) |
+| `autonovelwriter/runtime/state/` | persisted JSON state (settings, pipeline, runner, chat) |
+| `autonovelwriter/runtime/state/chat.sqlite3` | sqlite chat mirror (ngoài chat.jsonl) |
 | `autonovelwriter/runtime/state/active_project.json` | con trỏ dự án active đã được lưu |
 | `autonovelwriter/runtime/tasks/` | các file hàng đợi task |
-| `autonovelwriter/runtime/tasks/batches/<batch_id>/` | lô task được sinh ra (ví dụ từ `meta_tasks_generate`) |
+| `autonovelwriter/runtime/tasks/batches/<batch_id>/` | task batch đã sinh (ví dụ từ `meta_tasks_generate`) |
 | `autonovelwriter/runtime/logs/` | logs |
-| `autonovelwriter/runtime/projects/<project_id>/materials/` | tài liệu đầu vào của dự án |
-| `autonovelwriter/runtime/projects/<project_id>/outputs/` | đầu ra dự án (bản nháp/xuất bản) |
+| `autonovelwriter/runtime/projects/<project_id>/materials/` | tài liệu dự án (inputs) |
+| `autonovelwriter/runtime/projects/<project_id>/outputs/` | đầu ra dự án (drafts/exports) |
 | `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json` | override cài đặt viết tiểu thuyết theo dự án (ví dụ ngôn ngữ tiểu thuyết) |
-| `autonovelwriter/runtime/actions/defaults/` | mẫu Action Library mặc định (được coi là immutable) |
-| `autonovelwriter/runtime/actions/user/` | mẫu Action Library của người dùng (được tạo qua copy-on-edit) |
+| `autonovelwriter/runtime/actions/defaults/` | template mặc định Action Library (coi như immutable) |
+| `autonovelwriter/runtime/actions/user/` | template Action Library của user (tạo qua copy-on-edit) |
 | `/home/lachlan/Documents/VoidAbyss/references/xiyouzhiyuan/input/` | mirrored chat inputs cho writer pipeline ingestion |
 
 ## 🧩 Pipeline Script (Canonical Artifact)
 
-Pipeline được biểu diễn dưới dạng một script đã format trên đĩa:
+Pipeline được biểu diễn dưới dạng script đã format trên đĩa:
 - `autonovelwriter/runtime/state/pipeline.script`
 
-Backend phục vụ qua `GET/POST /api/pipeline` dưới dạng:
+Backend phục vụ thông qua `GET/POST /api/pipeline` với:
 - `script` (canonical, shell-ish `STEP <type>` / `DISABLED <type>` lines)
-- `pipeline` JSON (derived, danh sách phẳng để render block đơn giản)
-- `pipeline_ast` (derived, cấu trúc lồng dùng cho UI container + indentation)
+- `pipeline` JSON (derived, danh sách phẳng cho việc render block đơn giản)
+- `pipeline_ast` (derived, cấu trúc lồng dùng cho loops + indentation UI)
 
-Runner chạy các bước suy ra từ cùng parser/AST v2 nên giao diện mà PWA hiển thị sẽ khớp với thứ chạy thực tế.
+Runner thực thi các bước được sinh ra từ cùng parser/AST v2 để PWA hiển thị đúng nội dung đang chạy.
 
-Runner control flow hỗ trợ v2 containers:
-- `ROUND <n>` lặp lại các con của nó `n` lần.
-- `FOREACH_TASK` chạy các con của nó một lần cho mỗi task trong danh sách task active (`autonovelwriter/runtime/tasks/tasks.json`).
-- `FOREACH_ACTION` chạy các con của nó một lần cho mỗi entry trong `payload.actions` của task hiện tại (dự kiến lồng dưới `FOREACH_TASK`).
+Luồng điều khiển runner hỗ trợ các container v2:
+- `ROUND <n>` lặp lại children `n` lần.
+- `FOREACH_TASK` chạy children của nó một lần cho mỗi task trong danh sách task đang active (`autonovelwriter/runtime/tasks/tasks.json`).
+- `FOREACH_ACTION` chạy children của nó một lần cho mỗi entry trong `payload.actions` của task hiện tại (được thiết kế để lồng dưới `FOREACH_TASK`).
 
-Resumability:
-- Runner lưu một con trỏ thực thi có thể tiếp tục vào `autonovelwriter/runtime/state/runner_state.json`.
-- Con trỏ chỉ tăng sau khi một block hoàn thành thành công (nên restart không bỏ qua phần chưa xong).
-- Nếu script pipeline chuẩn thay đổi (hash mismatch), runner dừng và yêu cầu restart (con trỏ bị vô hiệu hóa).
-- Runner lưu `ActionResult` theo từng bước vào `autonovelwriter/runtime/state/action_results.jsonl` và dùng `exec_id` cố định theo bước để tránh commit lại kết quả đã có khi restart.
-- Khi chạy bên trong `FOREACH_ACTION`, ActionResults bao gồm `action_index`, `action_id_ref`, và `action_key`, và biến bao gồm `prev` cùng phạm vi tường minh `task.prev` và `action.prev`.
+Khả năng tiếp tục:
+- Runner lưu con trỏ thực thi có thể tiếp tục vào `autonovelwriter/runtime/state/runner_state.json`.
+- Con trỏ chỉ tăng sau khi block hoàn thành thành công (vì vậy restart không bỏ qua phần chưa xong).
+- Nếu script pipeline chuẩn thay đổi (hash mismatch), runner dừng và yêu cầu khởi động lại (con trỏ bị vô hiệu hoá).
+- Runner lưu `ActionResult` theo từng bước vào `autonovelwriter/runtime/state/action_results.jsonl` và dùng `exec_id` định danh theo bước để không trùng lặp kết quả đã commit khi restart.
+- Khi chạy trong `FOREACH_ACTION`, ActionResults gồm `action_index`, `action_id_ref`, và `action_key`, và biến bao gồm `prev` cùng phạm vi tách bạch `task.prev` và `action.prev`.
 
-Pipeline script v2 hỗ trợ lồng:
-- `LOOP <n>` giới thiệu một block loop.
-- `ROUND <n>` giới thiệu một block rounds.
-- `FOREACH_TASK` giới thiệu một block theo từng task.
-- `FOREACH_ACTION` giới thiệu một block theo từng action (runner lặp qua `task.payload.actions`).
-- `IF <expr>` giới thiệu block điều kiện (parse/render; runner hiện chỉ chạy nhánh then).
-- `ELSE` giới thiệu nhánh thay thế tùy chọn dưới một block `IF`.
-- Các node con được thụt vào 2 dấu cách mỗi cấp.
+Pipeline script v2 hỗ trợ nesting:
+- `LOOP <n>` thêm một loop block.
+- `ROUND <n>` thêm một rounds container block.
+- `FOREACH_TASK` thêm một per-task container block.
+- `FOREACH_ACTION` thêm một per-action container block (runner iterate `task.payload.actions`).
+- `IF <expr>` thêm một conditional container block (parse/render; runner hiện chỉ chạy nhánh then).
+- `ELSE` thêm nhánh thay thế tùy chọn dưới block `IF`.
+- Children được thụt lề 2 spaces mỗi cấp.
 
-Validation (không ghi vĩnh viễn):
-- `POST /api/pipeline/validate` trả về bản preview chuẩn cùng `pipeline_ast`, warnings, và errors.
+Validation (không lưu vĩnh viễn):
+- `POST /api/pipeline/validate` trả về bản preview chuẩn kèm `pipeline_ast`, warnings và errors.
 
-PWA hiển thị script trong textarea (nguồn chân lý) và render nested blocks từ `pipeline_ast`.
-Nếu endpoint validate của backend không thể truy cập, PWA fallback sang parser cục bộ hỗ trợ cùng các verb v2 (`LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF`, `ELSE`, `STEP`, `DISABLED`).
+PWA hiển thị script trong textarea (nguồn gốc chân lý) và render nested blocks từ `pipeline_ast`.
+Nếu endpoint validate của backend không truy cập được, PWA fallback sang parser local hỗ trợ cùng các verb v2 (`LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF`, `ELSE`, `STEP`, `DISABLED`).
 
 Blocks UI notes:
-- Giá trị lặp của `LOOP` và `ROUND` có thể chỉnh sửa inline trong danh sách block; chỉnh sửa hợp lệ sẽ cập nhật ngay ngay lập tức canonical script textarea.
-- Thanh công cụ Blocks có thể chèn `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, và `IF` mà không cần chỉnh tay script (tự bao block đang chọn, hoặc thêm một container hợp lệ không rỗng).
-- Có thể xóa Block khỏi canvas (nút Delete trên từng block; phím `Delete` khi block được chọn). Xóa container sẽ đưa các node con lên cùng cấp, và editor giữ container không rỗng để tránh script không hợp lệ.
-- Block `IF` được giữ đúng cấu trúc trong editor: `ELSE` không thể tồn tại ngoài `IF`, và nhánh then luôn không rỗng.
-- Block `STEP` hiển thị Action Library controls: action selector, `Customize` (copy một action mặc định thành action người dùng và chuyển sang dùng nó), và `Edit` (modal Action Editor cho `name/tool/prompt/script`).
+- Giá trị lặp của `LOOP` và `ROUND` chỉnh trực tiếp inline trong danh sách block; sửa hợp lệ sẽ cập nhật ngay lập tức textarea script canonical.
+- Thanh công cụ Blocks có thể chèn `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, và `IF` containers mà không cần chỉnh tay script (tự bao block đang chọn hoặc append một container hợp lệ không rỗng).
+- Có thể xóa block từ canvas (nút Delete trên từng block; phím `Delete` khi block được chọn). Xóa container sẽ tách nodes con lên cùng cấp, và editor giữ container non-empty để tránh script không hợp lệ.
+- Block `IF` được giữ đúng cấu trúc trong editor: `ELSE` không thể tồn tại ngoài `IF`, và nhánh then luôn non-empty.
+- Block `STEP` hiển thị action controls: action selector, `Customize` (copy một action mặc định sang user action và chuyển sang dùng nó), và `Edit` (Action Editor modal cho `name/tool/prompt/script`).
 
 ## 📝 Runner Outputs (Draft Stub)
 
-Khi pipeline chứa block `STEP write`, backend runner sẽ tạo file nháp stub tại:
+Khi pipeline chứa block `STEP write`, runner backend sẽ tạo file draft stub tại:
 - `autonovelwriter/runtime/projects/<project_id>/outputs/`
 
 Backend cũng phát:
 - WS event `output_created` với `path` và `project_rel_path`
 - Một dòng `log` `[output] created: ...`
 
-PWA có panel Outputs tối thiểu liệt kê file qua `GET /api/outputs/index` và làm mới khi có `output_created`.
+PWA có panel Outputs tối thiểu liệt kê file qua `GET /api/outputs/index` và refresh khi nhận `output_created`.
 
 ## 📦 Runner Tasks (Batch Stub)
 
-Khi pipeline chứa block `STEP meta_tasks_generate`, backend runner sẽ tạo một task batch stub tại:
+Khi pipeline chứa block `STEP meta_tasks_generate`, runner backend sẽ tạo task batch stub tại:
 - `autonovelwriter/runtime/tasks/batches/<batch_id>/`
 
-Backend phát:
+Backend cũng phát:
 - WS event `tasks_batch_created` với `batch_dir`, `tasks_jsonl`, và `task_count`
 - Một dòng `log` `[tasks] created batch: ...`
 
-PWA có panel Task Batches tối thiểu liệt kê batch qua `GET /api/tasks/batches/index` và làm mới khi có `tasks_batch_created`.
-Nó cũng có thể hiển thị chi tiết batch (`GET /api/tasks/batches/<batch_id>`) và kích hoạt batch làm danh sách task hiện tại cho `FOREACH_TASK` (`POST /api/tasks/batches/<batch_id>/activate`).
+PWA có panel Task Batches tối thiểu liệt kê batches qua `GET /api/tasks/batches/index` và refresh khi có `tasks_batch_created`.
+Nó cũng có thể xem chi tiết batch (`GET /api/tasks/batches/<batch_id>`) và kích hoạt batch để trở thành danh sách task hiện tại cho `FOREACH_TASK` (`POST /api/tasks/batches/<batch_id>/activate`).
 
 ## 🔐 Agent Settings / Codex Gate
 
 Panel Settings của PWA lưu trữ agent settings qua `/api/settings` tại `autonovelwriter/runtime/state/settings.json`.
 
-Để bảo mật, backend sẽ không spawn lệnh `codex` trừ khi cả hai điều kiện đúng:
+Để an toàn, backend sẽ không khởi tạo `codex` CLI trừ khi cả hai điều kiện đúng:
 - `settings.agent.enabled=true` và `settings.agent.sdk="codex"`
 - `AUTONOVELWRITER_ENABLE_CODEX=1` được set trong environment
 
-Không commit secrets. Dùng `autonovelwriter/backend/.env.example` làm mẫu cho biến môi trường local.
+Không commit secrets. Dùng `autonovelwriter/backend/.env.example` như template cho các biến môi trường local.
 
 ## 🌐 PWA I18N (UI Language)
 
-PWA có hệ thống i18n nhẹ, gắn sẵn.
+PWA có hệ thống i18n gọn nhẹ.
 
-- Đặt ngôn ngữ UI: thêm `?lang=<code>` vào URL PWA (ví dụ `?lang=ja`).
-- Lưu theo trình duyệt: `anw_lang` trong localStorage.
-- Ngôn ngữ UI được hỗ trợ: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar` (RTL), `fr`, `es`, `ru`, `de`.
-- Các README đa ngôn ngữ cấp repo hiện nằm trong `i18n/` và được liên kết từ một dòng lựa chọn ngôn ngữ ở đầu file.
+- Cố định ngôn ngữ UI: thêm `?lang=<code>` vào URL PWA (ví dụ `?lang=ja`).
+- Lưu theo trình duyệt trong localStorage: `anw_lang`.
+- Các ngôn ngữ UI hỗ trợ: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar` (RTL), `fr`, `es`, `ru`, `de`.
+- README đa ngôn ngữ cấp repo hiện nằm trong `i18n/` và được liên kết bằng một dòng language-options ở đầu file.
 
 | README locale files (`i18n/`) | Trạng thái |
 |---|---|
-| `README.ar.md`, `README.de.md`, `README.es.md`, `README.fr.md`, `README.ja.md`, `README.ko.md`, `README.ru.md`, `README.vi.md`, `README.zh-Hans.md`, `README.zh-Hant.md` | Đã có |
+| `README.ar.md`, `README.de.md`, `README.es.md`, `README.fr.md`, `README.ja.md`, `README.ko.md`, `README.ru.md`, `README.vi.md`, `README.zh-Hans.md`, `README.zh-Hant.md` | Có sẵn |
 
 ## 🖋️ Novel Settings (Separate From UI Language)
 
 Cài đặt viết tiểu thuyết được lưu trong backend settings dưới `settings.novel.*` tại:
 - `autonovelwriter/runtime/state/settings.json`
 
-Những cài đặt này tách biệt có chủ đích với ngôn ngữ UI của PWA (`?lang=` / `anw_lang`).
+Những cài đặt này được tách biệt cố ý khỏi ngôn ngữ UI PWA (`?lang=` / `anw_lang`).
 
-Override theo dự án được lưu tại:
+Per-project overrides được lưu tại:
 - `autonovelwriter/runtime/projects/<project_id>/state/project_settings.json`
 
 Các trường global hiện tại (có thể chỉnh trong modal Settings của PWA):
-- `settings.novel.language` (mã gần với BCP-47 như `en`, `ja`, `zh-Hans`, ...)
+- `settings.novel.language` (mã gần kiểu BCP-47 như `en`, `ja`, `zh-Hans`, ...)
 - `settings.novel.tone`
 - `settings.novel.target_length_words`
 - `settings.novel.pov`
 - `settings.novel.tense`
 - `settings.novel.chapter_count_target`
 
-Các trường override cấp dự án (bỏ trống/không đặt = kế thừa global):
+Các trường override theo dự án (để trống/không đặt = kế thừa global):
 - `project_settings.novel_language`
 - `project_settings.novel_tone`
 - `project_settings.novel_target_length_words`
@@ -569,25 +579,25 @@ bash examples/ralph-wiggum-example.sh
 - autoappdev_head: 8bc23a5
 <!-- AUTO_DEV_PROGRESS_END -->
 
-`scripts/auto-autonovelwriter-development.sh` chạy một loop Codex-driven resumable theo các task trong `references/autonovelwriter_dev/` và sẽ commit/push sau mỗi giai đoạn (`plan -> implement -> debug -> fix -> i18n -> summary -> update_readme`).
+`scripts/auto-autonovelwriter-development.sh` chạy một loop Codex-driven resumable qua các task trong `references/autonovelwriter_dev/` và sẽ commit/push sau mỗi giai đoạn (`plan -> implement -> debug -> fix -> i18n -> summary -> update_readme`).
 
 Useful controls:
-- Stop after current task: `touch references/autonovelwriter_dev/STOP`
+- Dừng sau task hiện tại: `touch references/autonovelwriter_dev/STOP`
 - Reset state tracking (giữ queue): `scripts/auto-autonovelwriter-development.sh --reset-state`
-- Start a fresh Codex session: `scripts/auto-autonovelwriter-development.sh --new-session`
-- Thực hành an toàn: chạy trên clean branch/worktree và theo dõi `references/autonovelwriter_dev/state.tsv` trước khi khởi động lại
+- Bắt đầu một Codex session mới: `scripts/auto-autonovelwriter-development.sh --new-session`
+- Thực hành an toàn: chạy trong clean branch/worktree và theo dõi `references/autonovelwriter_dev/state.tsv` trước khi khởi động lại
 
 ### Operational assumptions
 
 - README này giả định phát triển local-first trên Linux/macOS với `bash` và Python 3.11+.
-- Runtime state dưới `autonovelwriter/runtime/` là mutable và được mong đợi là untracked.
-- Hành vi pipeline mô tả tại đây phản ánh implementation hiện tại trong `autonovelwriter/backend/server.py` và `autonovelwriter/pwa/app.js`.
+- Trạng thái runtime trong `autonovelwriter/runtime/` là mutable và dự kiến không được theo dõi.
+- Hành vi pipeline mô tả phản ánh implementation hiện tại trong `autonovelwriter/backend/server.py` và `autonovelwriter/pwa/app.js`.
 
 ## 🧪 Testing Notes
 
-Không có orchestrator top-level `Makefile`/`tox`/`npm test` trong repo tại thời điểm viết.
+Không có orchestrator cấp top-level `Makefile`/`tox`/`npm test` trong repository tại thời điểm viết.
 
-Các entry point test thực tế hiện tại:
+Các entry point test thực tế:
 
 | Area | Entry point |
 |---|---|
@@ -608,51 +618,51 @@ python3 autonovelwriter/backend/tests/actions_library_update_unit_test.py
 node autonovelwriter/pwa/tests/pipeline_ast_delete.test.js
 ```
 
-Nếu bạn thêm hoặc thay đổi runner semantics, pipeline syntax, hoặc action-library behavior, hãy cập nhật tests và ghi chú README/API trong cùng một thay đổi.
+Nếu bạn thêm hoặc thay đổi runner semantics, cú pháp pipeline, hoặc hành vi action-library, cập nhật tests và ghi chú README/API trong cùng một thay đổi.
 
 ## 📚 Repository Contents
 
 - `docs/autonovelwriter_spec.md`: Spec sản phẩm cho controller kiểu Scratch (chat + folder pipe + start/pause/stop + settings).
-- `scripts/auto-autonovelwriter-development.sh`: Auto-develop bản thân app AutoNovelWriter (task loop: `plan -> implement -> debug -> fix -> i18n -> summary -> update_readme -> commit+push`).
-- `docs/auto-development-guide.md`: Triết lý và yêu cầu song ngữ (EN/ZH) cho một agent phát triển tự động, chạy dài, có khả năng resume.
-- `docs/ORDERING_RATIONALE.md`: Ví dụ về lý do sắp xếp theo thứ tự cho các bước dẫn bởi screenshot.
-- `scripts-legacy/`: Script tự động hóa cũ được giữ để tham chiếu nhưng không dùng cho AutoNovelWriter.
-- `examples/ralph-wiggum-example.sh`: Ví dụ helper tự động hóa Codex CLI.
+- `scripts/auto-autonovelwriter-development.sh`: Auto-develop chính ứng dụng AutoNovelWriter (task loop: `plan -> implement -> debug -> fix -> i18n -> summary -> update_readme -> commit+push`).
+- `docs/auto-development-guide.md`: Tư duy song ngữ (EN/ZH) và yêu cầu cho agent auto-development chạy dài, có khả năng resume.
+- `docs/ORDERING_RATIONALE.md`: Ví dụ lý do sắp xếp theo sequence bằng screenshot.
+- `scripts-legacy/`: Các script tự động hóa cũ, giữ để tham khảo và không dùng cho AutoNovelWriter.
+- `examples/ralph-wiggum-example.sh`: Helper automates Codex CLI.
 
 Additional developer notes:
-- Backend tests live in `autonovelwriter/backend/tests/`.
-- A small PWA behavior test lives in `autonovelwriter/pwa/tests/`.
-- `i18n/` được điền đầy đủ các bản localized repository README, còn dictionary dịch UI được nhúng trong `autonovelwriter/pwa/app.js`.
+- Backend tests nằm trong `autonovelwriter/backend/tests/`.
+- Có một PWA behavior test nhỏ trong `autonovelwriter/pwa/tests/`.
+- `i18n/` đã được điền các bản README repository có localize, còn dictionary dịch UI được nhúng trong `autonovelwriter/pwa/app.js`.
 
 ## 🧯 Troubleshooting
 
 | Symptom | What to check |
 |---|---|
-| `tmux not found in PATH` | Cài tmux hoặc chạy backend/static servers theo cách thủ công. |
-| `conda not found in PATH` when using `--env` scripts | Cài Miniconda/Anaconda, hoặc bỏ qua conda và dùng cài đặt `pip` thủ công. |
+| `tmux not found in PATH` | Cài tmux hoặc chạy backend/static servers thủ công. |
+| `conda not found in PATH` khi dùng script `--env` | Cài Miniconda/Anaconda, hoặc bỏ qua conda và dùng cài `pip` thủ công. |
 | PWA cannot connect to backend | Kiểm tra địa chỉ backend và endpoint WebSocket `ws://<host>:<port>/ws`. |
 | `POST /api/agent/test` returns gated/disabled | Đảm bảo cả `settings.agent.enabled=true`, `settings.agent.sdk="codex"`, và env `AUTONOVELWRITER_ENABLE_CODEX=1`. |
-| Pipeline runner stops after script edit | Đây là hành vi dự kiến; con trỏ bị vô hiệu hóa khi hash script pipeline thay đổi và cần restart. |
-| Static PWA on `:5173` works but API calls fail | Xác nhận backend đang chạy trên `:8787` (hoặc chỉnh backend target trong PWA/backend tương ứng). |
+| Pipeline runner stops after script edit | Hành vi dự kiến; con trỏ bị vô hiệu hoá khi hash script pipeline mismatch và cần restart. |
+| Static PWA on `:5173` works but API calls fail | Xác nhận backend đang chạy trên `:8787` (hoặc cập nhật target backend trong thiết lập app/backend cho phù hợp). |
 
 ## 🗺️ Roadmap
 
-- Hoàn thiện và ổn định các mục auto-dev queue còn lại (xem block progress đã sinh ở trên).
-- Mở rộng và đồng bộ hóa các biến thể README i18n tại `i18n/`.
-- Mở rộng phạm vi test tự động cho các edge case runner và tương tác PWA.
-- Tiếp tục cải thiện Action Library và workflows lặp qua task/action.
+- Hoàn tất và ổn định các mục còn lại trong auto-dev queue (xem block progress ở trên).
+- Mở rộng và đồng bộ hóa các bản README đa ngôn ngữ dưới `i18n/`.
+- Mở rộng phạm vi kiểm thử tự động cho các edge case runner và tương tác PWA.
+- Tiếp tục cải thiện Action Library và luồng lặp task/action.
 
 ## 🤝 Contributing
 
-Nhận đóng góp đều được hoan nghênh.
+Đóng góp luôn được hoan nghênh.
 
 Hướng dẫn thực tế cho repo:
 - Bắt đầu từ `docs/autonovelwriter_spec.md` và `docs/auto-development-guide.md`.
-- Giữ các mutation chạy ở `autonovelwriter/runtime/` (nội dung gitignored), không ghi lên tracked files.
-- Ưu tiên PR theo từng phần nhỏ, có lệnh chạy được lặp lại.
-- Nếu thay đổi semantics pipeline hoặc API contract, hãy cập nhật README và tests liên quan cùng lúc.
+- Giữ các mutation runtime trong `autonovelwriter/runtime/` (nội dung gitignored), không để theo track trong git.
+- Ưu tiên PR theo từng phần nhỏ với lệnh chạy/tái tạo được.
+- Nếu thay đổi semantics pipeline hoặc API contract, cập nhật README và tests liên quan cùng lúc.
 
-Note: file `CONTRIBUTING.md` riêng chưa được tìm thấy tại root repo tại thời điểm of this draft.
+Note: chưa tìm thấy file `CONTRIBUTING.md` riêng ở repo root tại thời điểm của bản nháp này.
 
 ---
 
@@ -664,7 +674,7 @@ Note: file `CONTRIBUTING.md` riêng chưa được tìm thấy tại root repo t
 
 ## 📄 License
 
-License file/status is not explicitly declared at repository root in this draft.
+File/địa vị status giấy phép chưa được khai báo rõ tại repository root trong bản nháp này.
 
-Assumption note:
-- If you intend to open-source redistribution clearly, add a top-level `LICENSE` file and update this section accordingly.
+Ghi chú giả định:
+- Nếu bạn muốn phân phối mã nguồn công khai rõ ràng, thêm file `LICENSE` cấp root và cập nhật đúng phần này theo trạng thái thực tế.

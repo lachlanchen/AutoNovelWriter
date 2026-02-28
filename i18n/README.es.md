@@ -2,6 +2,7 @@
 
 
 
+
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
 <div align="center">
@@ -666,6 +667,8 @@ El archivo/estado de licencia no está declarado explícitamente en la raíz del
 
 Nota de supuesto:
 - Si quieres redistribución open-source de forma explícita, añade un `LICENSE` en raíz y actualiza esta sección acorde.
+
+
 
 
 ## ❤️ Support

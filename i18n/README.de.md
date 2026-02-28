@@ -2,6 +2,7 @@
 
 
 
+
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
 <div align="center">
@@ -23,7 +24,7 @@
 Dieses Repo enthält außerdem `AutoAppDev/` als Submodul (wiederverwendbare Auto-Development-Skripte).
 
 > [!TIP]
-> `README.md` ist die kanonische Basis. Lokalisierte Varianten liegen in `i18n/` und sind über die Sprach-Links-Zeile oben verknüpft.
+> `README.md` ist die kanonische Grundlage. Lokalisierte Varianten liegen in `i18n/` und sind über die Sprachlinks-Zeile oben verknüpft.
 
 ## 🧭 Projekt-Snapshot
 
@@ -34,7 +35,6 @@ Dieses Repo enthält außerdem `AutoAppDev/` als Submodul (wiederverwendbare Aut
 | Ausführungsmodus | Fortsetzbarer Runner mit gespeichertem Cursor und Aktionsresultaten |
 | Realtime | WebSocket-Endpunkt unter `/ws` |
 | Änderbarer Runtime-Root | `autonovelwriter/runtime/` (durch `.gitignore` ausgeschlossen) |
-
 ## At-a-Glance Navigation
 
 | 🎯 Was jetzt nutzen | 🔧 Befehl / URL |
@@ -46,7 +46,7 @@ Dieses Repo enthält außerdem `AutoAppDev/` als Submodul (wiederverwendbare Aut
 
 ## 🔌 Start-Standardwerte
 
-| Standardwerte | Wert |
+| Start-Standardwerte | Wert |
 |---|---|
 | PWA-URL | `http://127.0.0.1:8787/` |
 | WebSocket-URL | `ws://127.0.0.1:8787/ws` |
@@ -77,7 +77,7 @@ Dieses Repo enthält außerdem `AutoAppDev/` als Submodul (wiederverwendbare Aut
 - [Inhaltsübersicht des Repos](#-repository-inhalte)
 - [Fehlerbehebung](#-fehlerbehebung)
 - [Roadmap](#️-roadmap)
-- [Mitmachen](#-mitmachen)
+- [Mitwirken](#-mitwirken)
 - [Support](#-support)
 - [Lizenz](#-lizenz)
 
@@ -89,7 +89,7 @@ AutoNovelWriter bietet eine lokale Orchestrierungs-Schicht für:
 - das Verwalten von Projekten, Materialien, Ausgaben, Task-Batches und Action-Templates,
 - sowie Live-Updates via WebSocket (`/ws`) an die PWA.
 
-Der veränderbare (mutable) Runtime-Root ist `autonovelwriter/runtime/` (Inhalt ist in `.gitignore`).
+Der veränderbare Runtime-Root ist `autonovelwriter/runtime/` (Inhalt ist in `.gitignore`).
 
 | Bereich | Funktion |
 |---|---|
@@ -103,7 +103,7 @@ Der veränderbare (mutable) Runtime-Root ist `autonovelwriter/runtime/` (Inhalt 
 - Scratch-ähnlicher Pipeline-Editor, gestützt durch ein kanonisches Skript + Parser/AST.
 - Runner-Kontroll-APIs (`start/pause/resume/stop`) mit fortsetzbarem Zustand.
 - Kontrollfluss-Container: `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF/ELSE`.
-- Action Library mit Standardvorlagen + Copy-on-Edit-Nutzerübernahmen.
+- Action Library mit Standardvorlagen + Copy-on-Edit-Nutzerkopien.
 - Projektbezogene Roman-Settings-Overrides mit Vererbung.
 - Task-Batch-Flow für Generierung/Index/Details/Aktivierung von `FOREACH_TASK`.
 - Indexierung der Outputs und Endpunkte für die neueste Roman-PDF-Vorschau.
@@ -368,7 +368,7 @@ Nutze `autonovelwriter/backend/.env.example` als Vorlage. Schlüsselvariablen f�
 - Projekteinstellungen (aktives Projekt): `GET/POST /api/projects/settings` (Projekt-Overrides mit Vererbung: `novel_language`, `novel_tone`, `novel_target_length_words`)
 - Materials index (aktives Projekt): `GET /api/materials/index`
 - Outputs-Index (aktives Projekt): `GET /api/outputs/index`
-- Task-Batch-Index: `GET /api/tasks/batches/index` (optional: `?project=<project_id>`)
+- Task-Batch-Index: `GET /api/tasks/batches/index` (optional: `?project=<project_id>` )
 - Task-Batch-Details: `GET /api/tasks/batches/<batch_id>`
 - Task-Batch aktivieren: `POST /api/tasks/batches/<batch_id>/activate` (schreibt `runtime/tasks/tasks.json` und projektbezogenes `active_tasks.json`)
 - Action Library: `GET /api/actions`, `GET /api/actions/<action_id>`, `POST /api/actions/<action_id>/copy`, `PUT /api/actions/<action_id>` (Copy-on-Edit-Aktualisierung für Defaults)
@@ -496,7 +496,7 @@ Die PWA hat ein leichtgewichtiges integriertes I18N-System.
 - UI-Sprache erzwingen: `?lang=<code>` an die PWA-URL hängen (z. B. `?lang=ja`).
 - Persistenz pro Browser in localStorage: `anw_lang`.
 - Unterstützte UI-Sprachen: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar` (RTL), `fr`, `es`, `ru`, `de`.
-- Repository-weite lokalisierten READMEs liegen in `i18n/` und sind über die einzelne Sprachlink-Zeile oben verknüpft.
+- Repository-weite lokalisierte READMEs liegen in `i18n/` und sind über die einzelne Sprachlink-Zeile oben verknüpft.
 
 | Locale-Dateien (`i18n/`) | Status |
 |---|---|

@@ -2,6 +2,7 @@
 
 
 
+
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
 <div align="center">
@@ -15,13 +16,17 @@
     <img alt="Pipeline" src="https://img.shields.io/badge/pipeline-script%20%2B%20AST-2563eb" />
     <img alt="Runtime" src="https://img.shields.io/badge/runtime-local%20state-orange" />
     <img alt="Status" src="https://img.shields.io/badge/status-active%20development-f59e0b" />
+    <img alt="Canonical docs" src="https://img.shields.io/badge/docs-README.md-critical?style=flat" />
+    <img alt="Languages" src="https://img.shields.io/badge/i18n-10%2B%20languages-8b5cf6?style=flat" />
   </p>
 </div>
 
 このリポジトリには `AutoAppDev/` サブモジュール（再利用可能な自動開発スクリプト群）も同梱されています。
 
 > [!TIP]
-> `README.md` が正本（canonical base）です。各言語版は `i18n/` にあり、先頭 1 行の言語リンクから参照します。
+> `README.md` が基準版（canonical base）です。各言語版は `i18n/` にあり、先頭 1 行の言語リンクから参照します。
+
+## 🧭 Project Snapshot
 
 | Quick facts | Details |
 |---|---|
@@ -30,6 +35,23 @@
 | 実行モード | カーソルとアクション結果を永続化する再開可能ランナー |
 | リアルタイム | WebSocket エンドポイント `/ws` |
 | 可変ランタイムルート | `autonovelwriter/runtime/`（gitignore 対象） |
+
+## At-a-Glance Navigation
+
+| 🎯 What to use now | 🔧 Command / URL |
+|---|---|
+| PWA を開く | `http://127.0.0.1:8787/` |
+| リアルタイム更新に接続 | `ws://127.0.0.1:8787/ws` |
+| バックエンドをすぐ起動 | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
+| セットアップと起動を一括 | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
+
+> [!TIP]
+> 最短のローカル起動手順:
+> 1. `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill`
+> 2. `http://127.0.0.1:8787/` を開く
+> 3. WebSocket 更新: `ws://127.0.0.1:8787/ws`
+
+## 🔌 Launch defaults
 
 | Launch defaults | Value |
 |---|---|
@@ -43,6 +65,7 @@
 - [Features](#-features)
 - [Architecture at a Glance](#-architecture-at-a-glance)
 - [Project Structure](#️-project-structure)
+- [At-a-Glance Navigation](#at-a-glance-navigation)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
 - [Usage](#-usage)
@@ -91,7 +114,7 @@ AutoNovelWriter は、次のためのローカルオーケストレーション�
 - 継承セマンティクスを持つ、プロジェクト単位の小説設定オーバーライド。
 - `FOREACH_TASK` 用タスクバッチの生成/一覧/詳細/有効化フロー。
 - 出力一覧と最新小説 PDF プレビュー API。
-- 内蔵 PWA i18n 辞書（`en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`, `fr`, `es`, `ru`, `de`）。
+- 内蔵 PWA i18n 辞書（`en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`（RTL）, `fr`, `es`, `ru`, `de`）。
 - tmux ヘルパースクリプトと再開可能な Codex 自動開発ドライバー。
 
 ## 🧭 Architecture at a Glance
@@ -335,13 +358,13 @@ scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 
 | API Group | Primary endpoints |
 |---|---|
-| ヘルスチェックと設定 | `/api/health`, `/api/settings` |
-| プロジェクトとプロジェクト設定 | `/api/projects`, `/api/projects/active`, `/api/projects/settings` |
+| Health & settings | `/api/health`, `/api/settings` |
+| Projects & project settings | `/api/projects`, `/api/projects/active`, `/api/projects/settings` |
 | Pipeline | `/api/pipeline`, `/api/pipeline/validate`, `/api/pipeline/reference_writer*` |
 | Tasks | `/api/tasks/batches/index`, `/api/tasks/batches/<batch_id>`, `/api/tasks/batches/<batch_id>/activate` |
 | Actions | `/api/actions`, `/api/actions/<action_id>`, `/api/actions/<action_id>/copy` |
 | Runner | `/api/run/start|pause|resume|stop`, `/api/run/status` |
-| 出力と小説プレビュー | `/api/outputs/index`, `/api/novel/latest`, `/api/novel/latest/pdf` |
+| Outputs & novel preview | `/api/outputs/index`, `/api/novel/latest`, `/api/novel/latest/pdf` |
 | Realtime | `/ws` |
 
 ### HTTP APIs
@@ -479,7 +502,7 @@ PWA には軽量な内蔵 i18n システムがあります。
 
 - UI 言語を強制指定: PWA URL に `?lang=<code>` を付与（例: `?lang=ja`）。
 - ブラウザごとに localStorage `anw_lang` へ永続化。
-- 対応 UI 言語: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar` (RTL), `fr`, `es`, `ru`, `de`。
+- 対応 UI 言語: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `vi`, `ar`（RTL）, `fr`, `es`, `ru`, `de`。
 - リポジトリレベルの多言語 README は `i18n/` にあり、このファイル先頭の言語リンク行から参照します。
 
 | README locale files (`i18n/`) | Status |

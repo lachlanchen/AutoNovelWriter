@@ -2,6 +2,7 @@
 
 
 
+
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
 <div align="center">
@@ -42,6 +43,12 @@ This repo also vendors `AutoAppDev/` as a submodule (reusable auto-development s
 | Connect live updates | `ws://127.0.0.1:8787/ws` |
 | Start backend quickly | `python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787` |
 | Run scripted setup + start | `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill` |
+
+> [!TIP]
+> Fastest local start:
+> 1. `scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill`
+> 2. Open `http://127.0.0.1:8787/`
+> 3. Connect WebSocket updates at `ws://127.0.0.1:8787/ws`
 
 ## 🔌 Launch defaults
 

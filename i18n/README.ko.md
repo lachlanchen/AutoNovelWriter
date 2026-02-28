@@ -2,6 +2,7 @@
 
 
 
+
 [![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
 <div align="center">
@@ -254,7 +255,7 @@ python3 autonovelwriter/backend/server.py --host 127.0.0.1 --port 8787
 # open http://127.0.0.1:8787/
 ```
 
-### Dev Run (Backend + PWA)
+### 개발 실행 (백엔드 + PWA)
 
 Backend (Tornado):
 
@@ -292,7 +293,7 @@ scripts/setup_and_run_autonovelwriter.sh --env autonovelwriter --kill
 
 드라이버 스크립트(`scripts/auto-autonovelwriter-development.sh`)는 자동 개발 중 tmux 세션도 시작할 수 있습니다.
 
-### Typical workflow
+### 일반적인 작업 흐름
 
 1. 백엔드 시작 (또는 tmux 헬퍼).
 2. PWA 열기.

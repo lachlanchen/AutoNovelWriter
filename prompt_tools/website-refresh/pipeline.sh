@@ -97,7 +97,7 @@ if [[ ! -d "$materials_markdown_dir" ]]; then
   exit 1
 fi
 
-languages_raw="${AUTO_WEBSITE_LANGUAGES:-zh-Hans zh-Hant ja ko vi ar fr es}"
+languages_raw="${AUTO_WEBSITE_LANGUAGES:-en zh-Hans zh-Hant ja ko vi ar fr es}"
 themes_raw="${AUTO_WEBSITE_THEMES:-light dark}"
 read -r -a language_list <<< "$languages_raw"
 read -r -a theme_list <<< "$themes_raw"
@@ -150,10 +150,10 @@ cat > "$pipeline_context_file" <<CTX
 - Keep changes steady and incremental by phase.
 CTX
 
-echo "[1/6] Analyze current website"
+echo "[1/8] Analyze current website"
 "$analyze_tool" "$repo_path" "$user_prompt" "$pipeline_context_file" "$analysis_output_file" "$materials_dir" "$materials_markdown_dir"
 
-echo "[2/6] Build materials brief"
+echo "[2/8] Build materials brief"
 "$materials_brief_tool" "$repo_path" "$user_prompt" "$pipeline_context_file" "$materials_dir" "$materials_markdown_dir" "$materials_brief_file"
 
 echo "[3/8] Apply content updates"

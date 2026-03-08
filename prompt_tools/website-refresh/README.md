@@ -46,5 +46,5 @@ prompt_tools/website-refresh/pipeline.sh \
   - `AUTO_WEBSITE_MODEL` (default: `gpt-5.3-codex`)
   - `AUTO_WEBSITE_REASONING_EFFORT` (default: `medium`)
 - Loop controls:
-  - `AUTO_WEBSITE_LANGUAGES` (default: `zh-Hans zh-Hant ja ko vi ar fr es`)
+  - `AUTO_WEBSITE_LANGUAGES` (default: `en zh-Hans zh-Hant ja ko vi ar fr es`)
   - `AUTO_WEBSITE_THEMES` (default: `light dark`)

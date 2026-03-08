@@ -69,10 +69,12 @@ analyze_tool="$tool_dir/steps/auto-site-analysis.sh"
 materials_brief_tool="$tool_dir/steps/auto-materials-brief.sh"
 content_update_tool="$tool_dir/steps/auto-update-content.sh"
 design_update_tool="$tool_dir/steps/auto-update-design.sh"
+language_update_tool="$tool_dir/steps/auto-update-language.sh"
+theme_update_tool="$tool_dir/steps/auto-update-theme.sh"
 validate_tool="$tool_dir/steps/auto-validate-website.sh"
 commit_push_tool="$tool_dir/steps/auto-commit-push.sh"
 
-for f in "$analyze_tool" "$materials_brief_tool" "$content_update_tool" "$design_update_tool" "$validate_tool" "$commit_push_tool"; do
+for f in "$analyze_tool" "$materials_brief_tool" "$content_update_tool" "$design_update_tool" "$language_update_tool" "$theme_update_tool" "$validate_tool" "$commit_push_tool"; do
   if [[ ! -x "$f" ]]; then
     echo "Required executable missing: $f"
     exit 1
@@ -94,6 +96,11 @@ if [[ ! -d "$materials_markdown_dir" ]]; then
   echo "Materials markdown directory does not exist: $materials_markdown_dir"
   exit 1
 fi
+
+languages_raw="${AUTO_WEBSITE_LANGUAGES:-zh-Hans zh-Hant ja ko vi ar fr es}"
+themes_raw="${AUTO_WEBSITE_THEMES:-light dark}"
+read -r -a language_list <<< "$languages_raw"
+read -r -a theme_list <<< "$themes_raw"
 
 run_ts="$(date +%Y%m%d_%H%M%S)"
 work_dir="$repo_path/.auto-website-work/$run_ts"
@@ -123,14 +130,18 @@ cat > "$pipeline_context_file" <<CTX
 - User goal prompt: $user_prompt
 - Materials directory: $materials_dir
 - Materials markdown directory: $materials_markdown_dir
+- Language update loop: ${language_list[*]}
+- Theme update loop: ${theme_list[*]}
 
 ## Step Overview
 1. Analyze current website structure/content and existing references.
 2. Build a concise brief from source materials.
-3. Apply content updates (copy and information architecture).
-4. Apply design updates (style/layout/theme/animation).
-5. Validate changed website files.
-6. Optionally commit and push.
+3. Apply base content updates (copy and information architecture).
+4. Apply visual design updates (style/layout/animation baseline).
+5. Run i18n updates in a language loop.
+6. Run theme refinements in a theme loop.
+7. Validate changed website files.
+8. Optionally commit and push.
 
 ## Rules
 - Keep edits focused on website-related files.
@@ -145,19 +156,37 @@ echo "[1/6] Analyze current website"
 echo "[2/6] Build materials brief"
 "$materials_brief_tool" "$repo_path" "$user_prompt" "$pipeline_context_file" "$materials_dir" "$materials_markdown_dir" "$materials_brief_file"
 
-echo "[3/6] Apply content updates"
+echo "[3/8] Apply content updates"
 "$content_update_tool" "$repo_path" "$user_prompt" "$pipeline_context_file" "$analysis_output_file" "$materials_brief_file"
 stage_and_push_step "auto website: content update"
 
-echo "[4/6] Apply design updates"
+echo "[4/8] Apply design updates"
 "$design_update_tool" "$repo_path" "$user_prompt" "$pipeline_context_file" "$analysis_output_file" "$materials_brief_file"
 stage_and_push_step "auto website: design update"
 
-echo "[5/6] Validate website updates"
+echo "[5/8] Update i18n by language loop"
+for lang in "${language_list[@]}"; do
+  if [[ -n "$lang" ]]; then
+    echo "  - language: $lang"
+    "$language_update_tool" "$repo_path" "$user_prompt" "$pipeline_context_file" "$analysis_output_file" "$materials_brief_file" "$lang"
+    stage_and_push_step "auto website: i18n update ($lang)"
+  fi
+done
+
+echo "[6/8] Update themes by theme loop"
+for theme in "${theme_list[@]}"; do
+  if [[ -n "$theme" ]]; then
+    echo "  - theme: $theme"
+    "$theme_update_tool" "$repo_path" "$user_prompt" "$pipeline_context_file" "$analysis_output_file" "$materials_brief_file" "$theme"
+    stage_and_push_step "auto website: theme update ($theme)"
+  fi
+done
+
+echo "[7/8] Validate website updates"
 "$validate_tool" "$repo_path" "$pipeline_context_file"
 stage_and_push_step "auto website: validation fixes"
 
-echo "[6/6] Optional commit and push"
+echo "[8/8] Optional commit and push"
 if [[ "$commit_and_push" == "--commit-and-push" ]]; then
   stage_and_push_step "auto website: final pipeline sweep"
 else

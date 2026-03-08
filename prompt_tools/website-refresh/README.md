@@ -9,6 +9,8 @@ This tool is modeled after the `AutoAppDev` prompt-pipeline pattern and is desig
 - `prompt_tools/website-refresh/steps/auto-materials-brief.sh`
 - `prompt_tools/website-refresh/steps/auto-update-content.sh`
 - `prompt_tools/website-refresh/steps/auto-update-design.sh`
+- `prompt_tools/website-refresh/steps/auto-update-language.sh`
+- `prompt_tools/website-refresh/steps/auto-update-theme.sh`
 - `prompt_tools/website-refresh/steps/auto-validate-website.sh`
 - `prompt_tools/website-refresh/steps/auto-commit-push.sh`
 
@@ -31,8 +33,10 @@ prompt_tools/website-refresh/pipeline.sh \
    - `.auto-website-work/<timestamp>/materials-brief.md`
 3. Run content pass (copy + information architecture).
 4. Run design pass (style/layout/theme/animation).
-5. Run validation/fix pass.
-6. Optionally commit/push after each mutating step using the codex commit/push step tool.
+5. Run i18n pass in a language loop (`AUTO_WEBSITE_LANGUAGES`).
+6. Run theme pass in a theme loop (`AUTO_WEBSITE_THEMES`).
+7. Run validation/fix pass.
+8. Optionally commit/push after each mutating step using the codex commit/push step tool.
 
 ## Notes
 
@@ -41,3 +45,6 @@ prompt_tools/website-refresh/pipeline.sh \
 - Model/reasoning controls:
   - `AUTO_WEBSITE_MODEL` (default: `gpt-5.3-codex`)
   - `AUTO_WEBSITE_REASONING_EFFORT` (default: `medium`)
+- Loop controls:
+  - `AUTO_WEBSITE_LANGUAGES` (default: `zh-Hans zh-Hant ja ko vi ar fr es`)
+  - `AUTO_WEBSITE_THEMES` (default: `light dark`)

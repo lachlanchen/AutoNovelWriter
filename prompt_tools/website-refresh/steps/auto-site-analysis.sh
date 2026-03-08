@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -lt 4 ]]; then
-  echo "Usage: $0 <repo_path> <user_prompt> <pipeline_context_file> <analysis_output_file>"
+if [[ $# -lt 6 ]]; then
+  echo "Usage: $0 <repo_path> <user_prompt> <pipeline_context_file> <analysis_output_file> <materials_dir> <materials_markdown_dir>"
   exit 1
 fi
 
@@ -10,6 +10,8 @@ repo_path="$1"
 user_prompt="$2"
 pipeline_context_file="$3"
 analysis_output_file="$4"
+materials_dir="$5"
+materials_markdown_dir="$6"
 model="${AUTO_WEBSITE_MODEL:-gpt-5.3-codex}"
 reasoning_effort="${AUTO_WEBSITE_REASONING_EFFORT:-medium}"
 
@@ -30,9 +32,14 @@ Inputs:
 - Repo path: $repo_path
 - User goal prompt: $user_prompt
 - Pipeline context file: $pipeline_context_file
+- Materials directory: $materials_dir
+- Materials markdown directory: $materials_markdown_dir
 
 Required actions:
-1. Inspect website files and structure (HTML/CSS/JS/assets, plus references/plans if present).
+1. Inspect website files and structure (HTML/CSS/JS/assets).
+2. Inspect business materials from:
+   - $materials_dir
+   - $materials_markdown_dir
 2. Identify current state, messaging gaps, UI/UX issues, and responsive risks.
 3. Write a factual analysis to this exact file path: $analysis_output_file
 

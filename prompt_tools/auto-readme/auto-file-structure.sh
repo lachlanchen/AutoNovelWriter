@@ -10,6 +10,8 @@ repo_path="$1"
 user_prompt="$2"
 pipeline_context_file="$3"
 structure_output_file="$4"
+model="${AUTO_README_MODEL:-gpt-5.3-codex}"
+reasoning_effort="${AUTO_README_REASONING_EFFORT:-medium}"
 
 if [[ ! -d "$repo_path" ]]; then
   echo "Repo path does not exist: $repo_path"
@@ -49,6 +51,8 @@ Important:
 PROMPT
 
 cat "$prompt_file" | codex exec \
+  --model "$model" \
+  -c "reasoning_effort=\"$reasoning_effort\"" \
   --dangerously-bypass-approvals-and-sandbox \
   -C "$repo_path" \
   --skip-git-repo-check \

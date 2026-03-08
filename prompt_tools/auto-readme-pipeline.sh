@@ -50,6 +50,100 @@ for f in "$structure_tool" "$write_tool" "$beautify_tool" "$translate_tool"; do
   fi
 done
 
+canonical_support_block=$'## ❤️ Support\n\n| Donate | PayPal | Stripe |\n| --- | --- | --- |\n| [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |'
+
+canonical_banner_line='[![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)'
+canonical_support_url_patterns='chat.lazying.art/donate\npaypal.me/RongzhouChen\nbuy.stripe.com/aFadR8gIaflgfQV6T4fw400\nimg.shields.io/badge/Donate-LazyingArt\nimg.shields.io/badge/PayPal-RongzhouChen\nimg.shields.io/badge/Stripe-Donate\ncamo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7\ncamo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21\ncamo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942'
+
+ensure_single_banner() {
+  local file="$1"
+  [ -f "$file" ] || return 0
+
+  local tmp_file="$file.auto-readme-banner"
+  local tmp_file2="$file.auto-readme-banner-final"
+  awk -v banner="$canonical_banner_line" '
+    $0 ~ /lachlanchen\/lachlanchen\/raw\/main\/figs\/banner\.png/ {
+      if (!seen_banner) {
+        print banner
+        seen_banner = 1
+      }
+      next
+    }
+    { print }
+  ' "$file" > "$tmp_file"
+
+  if rg -q 'lachlanchen\/lachlanchen\/raw\/main\/figs\/banner\.png' "$tmp_file"; then
+    mv "$tmp_file" "$file"
+    return 0
+  fi
+
+  {
+    printf '%s\n\n' "$canonical_banner_line"
+    cat "$tmp_file"
+  } > "$tmp_file2"
+  mv "$tmp_file2" "$file"
+  rm -f "$tmp_file"
+}
+
+ensure_single_support_panel() {
+  local file="$1"
+  [ -f "$file" ] || return 0
+
+  local tmp_file="$file.auto-readme-support"
+  local tmp_file2="$file.auto-readme-support-final"
+  local marker
+  local -a support_patterns=()
+  mapfile -t support_patterns <<< "$canonical_support_url_patterns"
+
+  awk '
+    BEGIN { in_support = 0 }
+    {
+      if (in_support) {
+        if ($0 ~ /^## /) {
+          in_support = 0
+        } else {
+          next
+        }
+      }
+
+      if ($0 ~ /^##[[:space:]]*❤️?[[:space:]]*Support/) {
+        in_support = 1
+        next
+      }
+
+      print
+    }
+  ' "$file" > "$tmp_file"
+
+  # Remove legacy shield-style and old support-link variants before reinsertion.
+  {
+    for p in "${support_patterns[@]}"; do
+      printf '%s\n' "$p"
+    done
+  } > "$tmp_file.patterns"
+  grep -Fivf "$tmp_file.patterns" "$tmp_file" > "${tmp_file}.filtered" || true
+  rm -f "$tmp_file.patterns"
+
+  marker=$(rg -n '^## .*Contact|^## .*License|^## 📬' "${tmp_file}.filtered" | head -n 1 | cut -d: -f1 || true)
+  if [ -n "$marker" ] && [ "$marker" -gt 0 ]; then
+    {
+      head -n $((marker - 1)) "${tmp_file}.filtered"
+      printf '%s\n\n' "$canonical_support_block"
+      tail -n +"$marker" "${tmp_file}.filtered"
+    } > "$tmp_file2"
+  else
+    {
+      cat "${tmp_file}.filtered"
+      printf '\n\n%s\n' "$canonical_support_block"
+    } > "$tmp_file2"
+  fi
+
+  mv "$tmp_file2" "$file"
+  rm -f "$tmp_file" "$tmp_file2" "${tmp_file}.filtered"
+}
+
+effective_prompt="$user_prompt"$'\n\nAdd or update a support section near the lower part of README. Use exactly this block and keep only one copy:\n\n'"${canonical_support_block}"
+
 run_ts="$(date +%Y%m%d_%H%M%S)"
 work_dir="$repo_path/.auto-readme-work/$run_ts"
 mkdir -p "$work_dir"
@@ -98,23 +192,25 @@ printf '%s\n' "$root_nav_line" > "$root_nav_block_file"
 printf '%s\n' "$i18n_nav_line" > "$i18n_nav_block_file"
 
 echo "[1/5] Analyze repository structure"
-"$structure_tool" "$repo_path" "$user_prompt" "$pipeline_context_file" "$structure_output_file"
+"$structure_tool" "$repo_path" "$effective_prompt" "$pipeline_context_file" "$structure_output_file"
 
 echo "[2/5] Write first complete README"
-"$write_tool" "$repo_path" "$user_prompt" "$pipeline_context_file" "$structure_output_file" "$readme_path"
+"$write_tool" "$repo_path" "$effective_prompt" "$pipeline_context_file" "$structure_output_file" "$readme_path"
 
 echo "[3/5] Beautify README"
-"$beautify_tool" "$repo_path" "$user_prompt" "$pipeline_context_file" "$readme_path"
+"$beautify_tool" "$repo_path" "$effective_prompt" "$pipeline_context_file" "$readme_path"
 
 echo "[4/5] Generate multilingual READMEs"
 : > "$translated_files_file"
 while IFS='|' read -r lang_code lang_label output_name; do
-  [[ -n "${output_name:-}" ]] || continue
+  if [[ -z "${output_name:-}" ]]; then
+    continue
+  fi
   output_path="$repo_path/$output_name"
-  step_note="Translating README into $lang_label ($lang_code) as part of multilingual batch generation."
+  step_note="Translating README into $lang_label with language code $lang_code as part of multilingual batch generation."
   "$translate_tool" \
     "$repo_path" \
-    "$user_prompt" \
+    "$effective_prompt" \
     "$pipeline_context_file" \
     "$readme_path" \
     "$lang_label" \
@@ -208,7 +304,17 @@ if [[ "$i18n_mode" -eq 1 ]]; then
   done < <(find "$repo_path" -maxdepth 1 -type f -name 'README.*.md' | sort)
 fi
 
-echo "[7/7] Optional commit and push"
+echo "[7/8] Enforce single canonical support panel in all README variants"
+ensure_single_banner "$repo_path/README.md"
+ensure_single_support_panel "$repo_path/README.md"
+if [ -d "$repo_path/i18n" ]; then
+  while IFS= read -r p; do
+    ensure_single_banner "$p"
+    ensure_single_support_panel "$p"
+  done < <(find "$repo_path/i18n" -maxdepth 1 -type f -name 'README.*.md' | sort)
+fi
+
+echo "[8/8] Optional commit and push"
 if [[ "$commit_and_push" == "--commit-and-push" ]]; then
   (
     cd "$repo_path"

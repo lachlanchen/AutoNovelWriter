@@ -32,3 +32,7 @@ pwa/config.local.js
 # Local outputs and data
 results/
 Data-*/
+
+# Pipeline temp artifacts
+.auto-readme-work/
+i18n/*.tmp

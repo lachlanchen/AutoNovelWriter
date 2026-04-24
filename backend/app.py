@@ -1722,13 +1722,8 @@ def _compute_paths() -> tuple[Path, Path]:
 
 
 def _require_env() -> None:
-    missing: list[str] = []
     if not safe_env("DATABASE_URL", "").strip():
-        missing.append("DATABASE_URL")
-    if missing:
-        print(f"ERROR: missing required env: {', '.join(missing)}", file=sys.stderr)
-        print("Hint: cp .env.example .env and set required values (see docs/env.md).", file=sys.stderr)
-        raise SystemExit(2)
+        print("Warning: DATABASE_URL is not set; using local JSON runtime storage.", file=sys.stderr)
 
 
 def _listen_port() -> int:
@@ -1749,9 +1744,12 @@ async def make_app(runtime_dir: Path, log_dir: Path) -> tornado.web.Application:
     await storage.start()
     schema_path = Path(__file__).with_name("schema.sql")
     await storage.ensure_schema(schema_path.read_text("utf-8"))
-    # Smoke check: prove DB is reachable by fetching server time during startup.
-    db_time = await storage.get_server_time_iso()
-    print(f"DB time: {db_time}")
+    # Smoke check DB when configured; otherwise use Storage's local JSON fallback.
+    if db_url:
+        db_time = await storage.get_server_time_iso()
+        print(f"DB time: {db_time}")
+    else:
+        print(f"DB disabled: local JSON runtime at {runtime_dir}")
 
     controller = PipelineControl(storage=storage, runtime_dir=runtime_dir, log_dir=log_dir)
     novel_orchestrator = NovelCodexOrchestrator(storage=storage, runtime_dir=runtime_dir)

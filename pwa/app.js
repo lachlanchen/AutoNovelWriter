@@ -1,5 +1,6 @@
 const els = {
   topbar: document.querySelector(".topbar"),
+  settingsToggle: document.getElementById("settings-toggle"),
   themeBtn: document.getElementById("btn-theme"),
   agentSelect: document.getElementById("agent-select"),
   modelSelect: document.getElementById("model-select"),
@@ -2430,6 +2431,14 @@ function bindControls() {
   }
   if (els.novelAgentRefresh) {
     els.novelAgentRefresh.addEventListener("click", refreshNovelAgentStatus);
+  }
+  if (els.settingsToggle && els.topbar) {
+    els.settingsToggle.addEventListener("click", () => {
+      const open = !els.topbar.classList.contains("is-settings-open");
+      els.topbar.classList.toggle("is-settings-open", open);
+      els.settingsToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      window.requestAnimationFrame(setViewportVars);
+    });
   }
 }
 

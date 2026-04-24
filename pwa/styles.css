@@ -108,6 +108,10 @@ body[data-theme="dark"] {
   justify-content: flex-end;
 }
 
+.settings-toggle {
+  display: none;
+}
+
 .select {
   display: flex;
   flex-direction: column;
@@ -767,6 +771,13 @@ html[dir="rtl"] .msg--system {
 
 @media (max-width: 780px) {
   body { overflow: auto; }
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px 12px;
+    padding: 10px 12px;
+  }
   .layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto minmax(260px, auto);
@@ -783,8 +794,57 @@ html[dir="rtl"] .msg--system {
   .writing-screen {
     grid-template-rows: minmax(160px, 0.9fr) minmax(260px, 1.1fr);
   }
-  .brand { min-width: 0; }
-  .controls { justify-content: flex-start; }
+  .brand {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    flex: 0 0 auto;
+  }
+  .brand-text {
+    min-width: 0;
+  }
+  .brand-name,
+  .brand-sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .settings-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 9px 11px;
+  }
+  .controls {
+    grid-column: 1 / -1;
+    display: none;
+    width: 100%;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 8px;
+    max-height: min(46dvh, 360px);
+    overflow: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--stroke);
+  }
+  .topbar.is-settings-open .controls {
+    display: flex;
+  }
+  .controls .select {
+    flex: 1 1 135px;
+    min-width: min(44vw, 170px);
+  }
+  .controls .btn {
+    flex: 1 1 auto;
+  }
+  .ctrl-msg {
+    flex: 1 1 100%;
+  }
   .bottom-nav {
     border-radius: 18px 18px 0 0;
     gap: 6px;

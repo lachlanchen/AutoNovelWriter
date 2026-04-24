@@ -107,6 +107,8 @@ The canonical mutable runtime is `autonovelwriter/runtime/` (contents are gitign
 ## ✨ Features
 
 - Scratch-like pipeline editor backed by a canonical script + parser/AST.
+- Mobile-style novel workspace with bottom tabs for Beats, Draft, Autopilot, and Loop Setup.
+- Browser Codex API split into a fast reply session and optional high-reasoning assistant task.
 - Runner control APIs (`start/pause/resume/stop`) with resumable state.
 - Control-flow containers: `LOOP`, `ROUND`, `FOREACH_TASK`, `FOREACH_ACTION`, `IF/ELSE`.
 - Action Library with default templates + copy-on-edit user overrides.
@@ -370,6 +372,7 @@ Use `autonovelwriter/backend/.env.example` as template. Key variables used by ba
 | Tasks | `/api/tasks/batches/index`, `/api/tasks/batches/<batch_id>`, `/api/tasks/batches/<batch_id>/activate` |
 | Actions | `/api/actions`, `/api/actions/<action_id>`, `/api/actions/<action_id>/copy` |
 | Runner | `/api/run/start|pause|resume|stop`, `/api/run/status` |
+| Browser novel workspace | `/api/novel/preview`, `/api/novel/agent/status`, `/api/novel/codex/reply`, `/api/novel/codex/assistant` |
 | Outputs & novel preview | `/api/outputs/index`, `/api/novel/latest`, `/api/novel/latest/pdf` |
 | Realtime | `/ws` |
 
@@ -391,6 +394,11 @@ Use `autonovelwriter/backend/.env.example` as template. Key variables used by ba
   - `GET /api/pipeline/reference_writer` (reads and parses `../scripts/auto-xiyouzhiyuan-writer.sh` as reference)
   - `POST /api/pipeline/reference_writer/load` (loads parsed result into runtime pipeline; never edits source script)
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
+- Browser novel workspace:
+  - `GET /api/novel/preview` (beats, latest draft text, and accepted/proposed AAPS loop preview)
+  - `GET /api/novel/agent/status` (reply/assistant sessions, reasoning, paths, loop validation)
+  - `POST /api/novel/codex/reply` (synchronous quick reply; defaults to `gpt-5.5` medium)
+  - `POST /api/novel/codex/assistant` (queues the assistant task; defaults to `gpt-5.5` high)
 - Browser Codex writing agents: `GET /api/agent/sessions/status` (quick reply + long writer session state)
 - Latest novel PDF:
   - `GET /api/novel/latest` (metadata)

@@ -74,14 +74,26 @@ const els = {
   wsContextPath: document.getElementById("ws-context-path"),
   wsMsg: document.getElementById("ws-msg"),
 
-  novelTabs: document.querySelectorAll(".novel-tab"),
-  novelPanels: document.querySelectorAll(".novel-panel"),
+  novelTabs: document.querySelectorAll("[data-novel-tab]"),
+  novelPanels: document.querySelectorAll("[data-novel-panel]"),
+  novelReplyReasoning: document.getElementById("novel-reply-reasoning"),
+  novelAssistantReasoning: document.getElementById("novel-assistant-reasoning"),
+  beatsPreview: document.getElementById("beats-preview"),
+  draftPreview: document.getElementById("draft-preview"),
+  loopPreview: document.getElementById("loop-preview"),
+  beatsRefresh: document.getElementById("beats-refresh"),
+  draftRefresh: document.getElementById("draft-refresh"),
+  novelChatlogBeats: document.getElementById("novel-chatlog-beats"),
+  novelChatlogDraft: document.getElementById("novel-chatlog-draft"),
   novelBeats: document.getElementById("novel-beats"),
   novelBeatsSend: document.getElementById("novel-beats-send"),
   novelDraft: document.getElementById("novel-draft"),
   novelDraftSend: document.getElementById("novel-draft-send"),
   novelLoop: document.getElementById("novel-loop"),
   novelLoopSend: document.getElementById("novel-loop-send"),
+  agentFloatToggle: document.getElementById("agent-float-toggle"),
+  agentPopover: document.getElementById("agent-popover"),
+  agentPopoverClose: document.getElementById("agent-popover-close"),
   novelAgentStatus: document.getElementById("novel-agent-status"),
   novelAgentRefresh: document.getElementById("novel-agent-refresh"),
 };
@@ -744,11 +756,20 @@ async function api(path, opts = {}) {
 
 function setNovelTab(key) {
   const target = String(key || "beats");
-  els.novelTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.novelTab === target));
-  els.novelPanels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.novelPanel === target));
+  els.novelTabs.forEach((tab) => {
+    const active = tab.dataset.novelTab === target;
+    tab.classList.toggle("is-active", active);
+    if (tab.classList.contains("novel-tab")) tab.setAttribute("aria-current", active ? "page" : "false");
+  });
+  els.novelPanels.forEach((panel) => {
+    const active = panel.dataset.novelPanel === target;
+    panel.hidden = !active;
+    panel.classList.toggle("is-active", active);
+  });
   try {
     localStorage.setItem("autonovelwriter_novel_tab", target);
   } catch {}
+  if (target === "beats" || target === "draft" || target === "loop") loadNovelPreview();
 }
 
 async function refreshNovelAgentStatus() {
@@ -761,14 +782,69 @@ async function refreshNovelAgentStatus() {
   }
 }
 
+function activeNovelMode() {
+  const active = Array.from(els.novelPanels || []).find((panel) => panel && !panel.hidden && panel.dataset.novelPanel);
+  return active ? String(active.dataset.novelPanel || "chat") : "chat";
+}
+
+function novelAgentOptions(mode) {
+  const model = String((els.modelSelect && els.modelSelect.value) || "gpt-5.5").trim() || "gpt-5.5";
+  const replyReasoning =
+    String((els.novelReplyReasoning && els.novelReplyReasoning.value) || "medium").trim() || "medium";
+  const assistantReasoning =
+    String((els.novelAssistantReasoning && els.novelAssistantReasoning.value) || "high").trim() || "high";
+  return {
+    mode: mode || activeNovelMode(),
+    reply_model: model,
+    reply_reasoning: replyReasoning,
+    assistant_model: model,
+    assistant_reasoning: assistantReasoning,
+    assistant_enabled: true,
+  };
+}
+
+function previewFallback(label) {
+  return `${label} preview is empty. Send a message below and the assistant task will organize material asynchronously.`;
+}
+
+function formatLoopPreview(res) {
+  const validation = res && res.loop_validation && typeof res.loop_validation === "object" ? res.loop_validation : {};
+  const status = Object.keys(validation).length
+    ? `Validation:\n${JSON.stringify(validation, null, 2)}`
+    : "Validation:\n(no accepted or rejected loop script yet)";
+  const script = String((res && res.loop_script) || "").trim();
+  return `${status}\n\nAAPS script:\n${script || "(no loop script yet)"}`;
+}
+
+async function loadNovelPreview() {
+  try {
+    const res = await api("/api/novel/preview", { timeout_ms: 4000 });
+    const beats = String((res && (res.beats || res.story_state)) || "").trim();
+    const draft = String((res && (res.draft || res.story_state)) || "").trim();
+    if (els.beatsPreview) els.beatsPreview.textContent = beats || previewFallback("Beats board");
+    if (els.draftPreview) els.draftPreview.textContent = draft || previewFallback("Draft");
+    if (els.loopPreview) els.loopPreview.textContent = formatLoopPreview(res || {});
+  } catch (e) {
+    const msg = `preview unavailable: ${(e && e.message) || String(e)}`;
+    if (els.beatsPreview) els.beatsPreview.textContent = msg;
+    if (els.draftPreview) els.draftPreview.textContent = msg;
+    if (els.loopPreview) els.loopPreview.textContent = msg;
+  }
+}
+
 async function submitNovelText(prefix, textarea) {
   const body = String((textarea && textarea.value) || "").trim();
   if (!body) return;
   const content = `${prefix}${body}`;
+  const mode = activeNovelMode();
   if (textarea) textarea.value = "";
   try {
-    await api("/api/chat", { method: "POST", timeout_ms: 8000, body: JSON.stringify({ content }) });
-    await Promise.all([loadChat(), refreshNovelAgentStatus()]);
+    await api("/api/chat", {
+      method: "POST",
+      timeout_ms: 8000,
+      body: JSON.stringify({ content, agent_options: novelAgentOptions(mode) }),
+    });
+    await Promise.all([loadChat(), refreshNovelAgentStatus(), loadNovelPreview()]);
   } catch (e) {
     if (els.ctrlMsg) {
       els.ctrlMsg.textContent = (e && e.message) || String(e);
@@ -2066,14 +2142,21 @@ async function loadChat() {
       return a.idx - b.idx;
     });
 
-    els.chatlog.innerHTML = "";
-    merged.forEach(({ m }) => {
-      const div = document.createElement("div");
-      div.className = `msg ${m.role === "user" ? "msg--user" : "msg--system"}`;
-      div.textContent = m.content || "";
-      els.chatlog.appendChild(div);
-    });
-    els.chatlog.scrollTop = els.chatlog.scrollHeight;
+    const renderChatInto = (container) => {
+      if (!container) return;
+      container.innerHTML = "";
+      merged.forEach(({ m }) => {
+        const div = document.createElement("div");
+        div.className = `msg ${m.role === "user" ? "msg--user" : "msg--system"}`;
+        div.textContent = m.content || "";
+        container.appendChild(div);
+      });
+      container.scrollTop = container.scrollHeight;
+    };
+
+    renderChatInto(els.chatlog);
+    renderChatInto(els.novelChatlogBeats);
+    renderChatInto(els.novelChatlogDraft);
   } catch {
     // ignore
   }
@@ -2084,11 +2167,15 @@ async function sendChat() {
   if (!content) return;
   els.chatInput.value = "";
   try {
-    await api("/api/chat", { method: "POST", timeout_ms: 8000, body: JSON.stringify({ content }) });
+    await api("/api/chat", {
+      method: "POST",
+      timeout_ms: 8000,
+      body: JSON.stringify({ content, agent_options: novelAgentOptions(activeNovelMode()) }),
+    });
   } catch (e) {
     console.warn(e);
   }
-  await Promise.all([loadChat(), refreshNovelAgentStatus()]);
+  await Promise.all([loadChat(), refreshNovelAgentStatus(), loadNovelPreview()]);
 }
 
 function scrollLogsToBottom() {
@@ -2291,6 +2378,12 @@ function bindControls() {
   els.novelTabs.forEach((tab) => {
     tab.addEventListener("click", () => setNovelTab(tab.dataset.novelTab || "beats"));
   });
+  if (els.beatsRefresh) {
+    els.beatsRefresh.addEventListener("click", loadNovelPreview);
+  }
+  if (els.draftRefresh) {
+    els.draftRefresh.addEventListener("click", loadNovelPreview);
+  }
   if (els.novelBeatsSend) {
     els.novelBeatsSend.addEventListener("click", () =>
       submitNovelText("Add this to the beats board and organize it into durable material: ", els.novelBeats)
@@ -2303,8 +2396,19 @@ function bindControls() {
   }
   if (els.novelLoopSend) {
     els.novelLoopSend.addEventListener("click", () =>
-      submitNovelText("Start an autonomous novel-writing loop from this goal; organize, write, critique, fix, summarize, and commit/push where applicable: ", els.novelLoop)
+      submitNovelText("Revise or run the Autopilot Loop from this goal. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ", els.novelLoop)
     );
+  }
+  if (els.agentFloatToggle && els.agentPopover) {
+    els.agentFloatToggle.addEventListener("click", () => {
+      els.agentPopover.hidden = !els.agentPopover.hidden;
+      if (!els.agentPopover.hidden) refreshNovelAgentStatus();
+    });
+  }
+  if (els.agentPopoverClose && els.agentPopover) {
+    els.agentPopoverClose.addEventListener("click", () => {
+      els.agentPopover.hidden = true;
+    });
   }
   if (els.novelAgentRefresh) {
     els.novelAgentRefresh.addEventListener("click", refreshNovelAgentStatus);
@@ -2340,6 +2444,7 @@ function boot() {
   refreshHealth();
   refreshStatus();
   loadChat();
+  loadNovelPreview();
   refreshNovelAgentStatus();
   refreshLogs({ reset: true });
   updateActionsButtons();
@@ -2352,6 +2457,8 @@ function boot() {
     if (!els.tabLogs.hidden) refreshLogs();
     if (!els.tabChat.hidden) loadChat();
     refreshNovelAgentStatus();
+    const active = activeNovelMode();
+    if (active === "beats" || active === "draft" || active === "loop") loadNovelPreview();
   }, 2500);
 }
 

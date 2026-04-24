@@ -93,7 +93,9 @@ backend_env=(
   "AUTOAPPDEV_HOST=$backend_host"
   "AUTOAPPDEV_PORT=$backend_port"
   "AUTONOVELWRITER_CODEX_REPLY_MODEL=gpt-5.5"
+  "AUTONOVELWRITER_CODEX_REPLY_REASONING=medium"
   "AUTONOVELWRITER_CODEX_WRITER_MODEL=gpt-5.5"
+  "AUTONOVELWRITER_CODEX_WRITER_REASONING=high"
 )
 if [ "$enable_codex" -eq 1 ]; then
   backend_env+=("AUTONOVELWRITER_ENABLE_CODEX=1")
@@ -111,7 +113,7 @@ tmux set-option -t "$session" -g mouse on
 tmux send-keys -t "$session:0.0" "cd \"$repo_root\"" C-m
 tmux send-keys -t "$session:0.0" "echo \"[backend] http://$backend_host:$backend_port\"" C-m
 if [ "$enable_codex" -eq 1 ]; then
-  tmux send-keys -t "$session:0.0" "echo \"[codex] quick reply gpt-5.5 medium; writer gpt-5.5 xhigh\"" C-m
+  tmux send-keys -t "$session:0.0" "echo \"[codex] quick reply gpt-5.5 medium; assistant gpt-5.5 high\"" C-m
 fi
 tmux send-keys -t "$session:0.0" "$backend_cmd" C-m
 

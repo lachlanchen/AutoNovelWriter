@@ -71,6 +71,7 @@ def _novel_paths(runtime_dir: Path) -> dict[str, Path]:
         "logs": logs,
         "materials": materials,
         "interactions": root / "interactions",
+        "loop": root / "loop",
         "outputs": outputs,
         "chapters": outputs / "chapters",
         "reply_session": state / "codex_reply_session.txt",
@@ -1197,6 +1198,7 @@ class NovelCodexOrchestrator:
             state = {}
         reply_state = state.get("reply") if isinstance(state.get("reply"), dict) else {}
         writer_state = state.get("writer") if isinstance(state.get("writer"), dict) else {}
+        settings_state = state.get("settings") if isinstance(state.get("settings"), dict) else {}
         reply_sid = paths["reply_session"].read_text("utf-8").strip() if paths["reply_session"].exists() else ""
         writer_sid = paths["writer_session"].read_text("utf-8").strip() if paths["writer_session"].exists() else ""
         return {
@@ -1204,16 +1206,18 @@ class NovelCodexOrchestrator:
             "reply": {
                 **reply_state,
                 "session_id": reply_sid,
-                "model": safe_env("AUTONOVELWRITER_CODEX_REPLY_MODEL", "gpt-5.5"),
-                "reasoning": "medium",
+                "model": str(settings_state.get("reply_model") or safe_env("AUTONOVELWRITER_CODEX_REPLY_MODEL", "gpt-5.5")),
+                "reasoning": str(settings_state.get("reply_reasoning") or safe_env("AUTONOVELWRITER_CODEX_REPLY_REASONING", "medium")),
             },
             "writer": {
                 **writer_state,
                 "session_id": writer_sid,
-                "model": safe_env("AUTONOVELWRITER_CODEX_WRITER_MODEL", "gpt-5.5"),
-                "reasoning": "xhigh",
+                "model": str(settings_state.get("assistant_model") or safe_env("AUTONOVELWRITER_CODEX_WRITER_MODEL", "gpt-5.5")),
+                "reasoning": str(settings_state.get("assistant_reasoning") or safe_env("AUTONOVELWRITER_CODEX_WRITER_REASONING", "high")),
             },
-            "paths": {k: str(v) for k, v in paths.items() if k in {"materials", "outputs", "chapters", "external_input", "logs"}},
+            "settings": settings_state,
+            "loop": state.get("loop") if isinstance(state.get("loop"), dict) else {},
+            "paths": {k: str(v) for k, v in paths.items() if k in {"materials", "outputs", "chapters", "external_input", "logs", "loop"}},
         }
 
     def _set_state(self, role: str, patch: dict[str, Any]) -> None:
@@ -1227,7 +1231,27 @@ class NovelCodexOrchestrator:
         state[role] = cur
         _write_json_file(paths["agent_state"], state)
 
-    async def handle_user_message(self, content: str, record: dict[str, str]) -> None:
+    def _agent_options(self, options: dict[str, Any] | None) -> dict[str, Any]:
+        opts = options if isinstance(options, dict) else {}
+        reasoning_allowed = {"low", "medium", "high", "xhigh"}
+        reply_reasoning = str(opts.get("reply_reasoning") or safe_env("AUTONOVELWRITER_CODEX_REPLY_REASONING", "medium")).strip()
+        assistant_reasoning = str(opts.get("assistant_reasoning") or safe_env("AUTONOVELWRITER_CODEX_WRITER_REASONING", "high")).strip()
+        if reply_reasoning not in reasoning_allowed:
+            reply_reasoning = "medium"
+        if assistant_reasoning not in reasoning_allowed:
+            assistant_reasoning = "high"
+        return {
+            "reply_model": str(opts.get("reply_model") or safe_env("AUTONOVELWRITER_CODEX_REPLY_MODEL", "gpt-5.5")).strip() or "gpt-5.5",
+            "reply_reasoning": reply_reasoning,
+            "assistant_model": str(opts.get("assistant_model") or safe_env("AUTONOVELWRITER_CODEX_WRITER_MODEL", "gpt-5.5")).strip() or "gpt-5.5",
+            "assistant_reasoning": assistant_reasoning,
+            "assistant_enabled": opts.get("assistant_enabled") is not False,
+            "mode": str(opts.get("mode") or "chat").strip() or "chat",
+        }
+
+    async def handle_user_message(self, content: str, record: dict[str, str], options: dict[str, Any] | None = None) -> None:
+        opts = self._agent_options(options)
+        self._set_state("settings", opts)
         if not _codex_gate_enabled():
             await self.storage.add_chat_message(
                 "assistant",
@@ -1235,9 +1259,10 @@ class NovelCodexOrchestrator:
             )
             return
 
-        self._set_state("writer", {"state": "queued", "latest_input": record.get("interaction_path")})
-        asyncio.create_task(self._run_writer(content, record))
-        await self._run_reply(content, record)
+        if opts["assistant_enabled"]:
+            self._set_state("writer", {"state": "queued", "latest_input": record.get("interaction_path")})
+            asyncio.create_task(self._run_writer(content, record, opts))
+        await self._run_reply(content, record, opts)
 
     async def _recent_chat(self, limit: int = 18) -> str:
         try:
@@ -1266,12 +1291,12 @@ class NovelCodexOrchestrator:
             ]
         )
 
-    async def _run_reply(self, content: str, record: dict[str, str]) -> None:
+    async def _run_reply(self, content: str, record: dict[str, str], options: dict[str, Any]) -> None:
         async with self.reply_lock:
             self._set_state("reply", {"state": "running", "latest_input": record.get("interaction_path")})
             prompt = f"""You are AutoNovelWriter's quick browser reply agent.
 
-You answer quickly in the browser. Do not edit files. The separate writer agent has been queued and will do the real organization and drafting.
+You answer quickly in the browser. Do not edit files. A separate assistant writer task may already be queued and will do the real organization, drafting, and loop-script edits.
 Use the same language as the user when obvious. Keep the answer short, practical, and natural.
 
 Project context:
@@ -1288,10 +1313,10 @@ Reply in 2-5 concise sentences. Mention that the writer session is handling the 
                 runtime_dir=self.runtime_dir,
                 role="reply",
                 prompt=prompt,
-                model=safe_env("AUTONOVELWRITER_CODEX_REPLY_MODEL", "gpt-5.5"),
-                reasoning="medium",
+                model=options["reply_model"],
+                reasoning=options["reply_reasoning"],
                 full_auto=False,
-                timeout_s=180,
+                timeout_s=90,
             )
             text = str(res.get("text") or "").strip()
             if not text:
@@ -1299,7 +1324,64 @@ Reply in 2-5 concise sentences. Mention that the writer session is handling the 
             await self.storage.add_chat_message("assistant", text)
             self._set_state("reply", {"state": "idle" if res.get("ok") else "error", "last_result": res})
 
-    async def _run_writer(self, content: str, record: dict[str, str]) -> None:
+    async def _validate_loop_script(self, record: dict[str, str], options: dict[str, Any], *, repair_once: bool = True) -> dict[str, Any]:
+        paths = _novel_paths(self.runtime_dir)
+        proposed = paths["loop"] / "proposed.aaps"
+        accepted = paths["loop"] / "accepted.aaps"
+        validation_json = paths["loop"] / "validation.json"
+        if not proposed.exists():
+            return {"ok": True, "skipped": True, "reason": "no_proposed_loop_script"}
+        text = proposed.read_text("utf-8", errors="replace")
+        try:
+            ir = parse_aaps_v1(text)
+        except ParseError as e:
+            err = e.to_dict()
+            result = {"ok": False, "error": "invalid_aaps", "detail": err, "proposed": str(proposed)}
+            validation_json.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", "utf-8")
+            self._set_state("loop", {"state": "invalid", "validation": result})
+            if not repair_once:
+                return result
+            repair_prompt = f"""The assistant proposed an AutoNovelWriter/AutoAppDev AAPS loop script, but backend grammar validation rejected it.
+
+You must repair only this file:
+{proposed}
+
+Validation error:
+{json.dumps(err, ensure_ascii=False, indent=2)}
+
+Strict rules:
+- The file must parse with backend parse_aaps_v1.
+- The first non-comment line must be AUTOAPPDEV_PIPELINE 1.
+- Keep a Scratch-like task/step/action structure.
+- Do not edit unrelated files.
+- Preserve the existing proposed script's intent as much as possible while making it parse.
+
+After repairing, save the complete corrected AAPS script back to {proposed}."""
+            await _run_codex_session(
+                runtime_dir=self.runtime_dir,
+                role="writer",
+                prompt=repair_prompt,
+                model=options["assistant_model"],
+                reasoning=options["assistant_reasoning"],
+                full_auto=True,
+                timeout_s=420,
+            )
+            return await self._validate_loop_script(record, options, repair_once=False)
+
+        accepted.write_text(text, "utf-8")
+        script = await self.storage.create_pipeline_script(
+            title="AutoNovelWriter accepted autopilot loop",
+            script_text=text,
+            script_version=1,
+            script_format="aaps",
+            ir=ir,
+        )
+        result = {"ok": True, "state": "accepted", "accepted": str(accepted), "script_id": script.get("id")}
+        validation_json.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", "utf-8")
+        self._set_state("loop", {"state": "accepted", "validation": result})
+        return result
+
+    async def _run_writer(self, content: str, record: dict[str, str], options: dict[str, Any]) -> None:
         async with self.writer_lock:
             self._set_state("writer", {"state": "running", "latest_input": record.get("interaction_path")})
             prompt = f"""You are AutoNovelWriter's long-running surrogate novel writer.
@@ -1309,6 +1391,13 @@ Your goal is to organize the user's idea into durable material and write concret
 
 Project context:
 {self._shared_context(record)}
+
+Autopilot loop strict grammar target:
+- If the user asks to change the Autopilot Loop layout/script, write a complete AAPS v1 script to:
+  {_novel_paths(self.runtime_dir)["loop"] / "proposed.aaps"}
+- The first non-comment line must be AUTOAPPDEV_PIPELINE 1.
+- The backend will parse it with parse_aaps_v1. If it fails, the backend will feed the parse error back for one repair pass.
+- Do not mutate the frontend program directly. Treat the AAPS script as the schema-checked source.
 
 Recent chat:
 {await self._recent_chat(limit=30)}
@@ -1324,21 +1413,27 @@ Required behavior:
 5. Keep character names realistic, beautiful, distinguishable, and suitable even for minor characters.
 6. Make plot, conversation, and emotional transitions reasonable, smooth, vivid, and intriguing.
 7. Do not modify AutoNovelWriter app code unless the user explicitly asks for app development.
-8. Commit and push tracked changes if you make any. Runtime files may be gitignored; still write them and summarize paths.
+8. For loop updates, only use the AAPS file described above; never random free-form JSON.
+9. Commit and push tracked changes if you make any. Runtime files may be gitignored; still write them and summarize paths.
 
 End with a concise summary of changed files and what the user should read next."""
             res = await _run_codex_session(
                 runtime_dir=self.runtime_dir,
                 role="writer",
                 prompt=prompt,
-                model=safe_env("AUTONOVELWRITER_CODEX_WRITER_MODEL", "gpt-5.5"),
-                reasoning="xhigh",
+                model=options["assistant_model"],
+                reasoning=options["assistant_reasoning"],
                 full_auto=True,
                 timeout_s=900,
             )
+            loop_validation = await self._validate_loop_script(record, options)
             text = str(res.get("text") or "").strip()
             if not text:
                 text = "Writer session finished without a readable summary. Check the agent log path in the monitor."
+            if loop_validation.get("ok") and not loop_validation.get("skipped"):
+                text += f"\n\nAutopilot loop script accepted: {loop_validation.get('accepted')}."
+            elif not loop_validation.get("ok"):
+                text += f"\n\nAutopilot loop script validation failed: {json.dumps(loop_validation, ensure_ascii=False)}"
             await self.storage.add_chat_message("assistant", text)
             self._set_state("writer", {"state": "idle" if res.get("ok") else "error", "last_result": res})
 
@@ -1360,11 +1455,16 @@ class ChatHandler(BaseHandler):
         if not content:
             self.write_json({"error": "empty"}, status=400)
             return
+        options = body.get("agent_options") if isinstance(body.get("agent_options"), dict) else {}
         await self.storage.add_chat_message("user", content)
         await self.storage.add_inbox_message("user", content)
         _write_inbox_message(self.runtime_dir, content)
         record = _write_novel_interaction(self.runtime_dir, content)
-        asyncio.create_task(self.novel_orchestrator.handle_user_message(content, record))
+        ack = "已收到。我会先保存这条输入；快速回复会尽快回来，复杂整理和写作会交给后台 assistant 任务继续处理。"
+        if str(options.get("mode") or "").strip() == "loop":
+            ack += " 如果需要改 Autopilot Loop，后台只会接受通过 AAPS 语法检查的脚本。"
+        await self.storage.add_chat_message("assistant", ack)
+        asyncio.create_task(self.novel_orchestrator.handle_user_message(content, record, options))
         self.write_json({"ok": True, "record": record, "agent_status": self.novel_orchestrator.status()})
 
 
@@ -1374,6 +1474,82 @@ class NovelAgentStatusHandler(BaseHandler):
 
     async def get(self) -> None:
         self.write_json({"ok": True, "status": self.novel_orchestrator.status()})
+
+
+def _read_text_preview(path: Path, max_chars: int = 8000) -> str:
+    try:
+        if not path.exists() or not path.is_file():
+            return ""
+        text = path.read_text("utf-8", errors="replace")
+        return text[-max_chars:]
+    except Exception:
+        return ""
+
+
+class NovelPreviewHandler(BaseHandler):
+    def initialize(self, runtime_dir: Path) -> None:
+        self.runtime_dir = runtime_dir
+
+    async def get(self) -> None:
+        paths = _novel_paths(self.runtime_dir)
+        chapters = []
+        try:
+            chapters = sorted([p for p in paths["chapters"].iterdir() if p.is_file()], key=lambda p: p.stat().st_mtime)
+        except Exception:
+            chapters = []
+        latest_chapter = chapters[-1] if chapters else None
+        validation = _load_json_file(paths["loop"] / "validation.json", {})
+        self.write_json(
+            {
+                "ok": True,
+                "beats": _read_text_preview(paths["materials"] / "beats_board.md") or _read_text_preview(paths["materials"] / "inbox_ideas.md"),
+                "story_state": _read_text_preview(paths["materials"] / "story_state.md"),
+                "draft": _read_text_preview(latest_chapter) if latest_chapter else "",
+                "draft_path": str(latest_chapter) if latest_chapter else "",
+                "loop_script": _read_text_preview(paths["loop"] / "accepted.aaps") or _read_text_preview(paths["loop"] / "proposed.aaps"),
+                "loop_validation": validation if isinstance(validation, dict) else {},
+            }
+        )
+
+
+class NovelCodexReplyHandler(BaseHandler):
+    def initialize(self, runtime_dir: Path) -> None:
+        self.runtime_dir = runtime_dir
+
+    async def post(self) -> None:
+        body = json.loads(self.request.body or b"{}")
+        prompt = str(body.get("prompt") or body.get("content") or "").strip()
+        if not prompt:
+            self.write_json({"ok": False, "error": "empty_prompt"}, status=400)
+            return
+        res = await _run_codex_session(
+            runtime_dir=self.runtime_dir,
+            role="reply",
+            prompt=prompt,
+            model=str(body.get("model") or "gpt-5.5"),
+            reasoning=str(body.get("reasoning") or "medium"),
+            full_auto=False,
+            timeout_s=float(body.get("timeout_s") or 90),
+        )
+        self.write_json({"ok": bool(res.get("ok")), "result": res}, status=200 if res.get("ok") else 500)
+
+
+class NovelAssistantTaskHandler(BaseHandler):
+    def initialize(self, runtime_dir: Path, novel_orchestrator: NovelCodexOrchestrator) -> None:
+        self.runtime_dir = runtime_dir
+        self.novel_orchestrator = novel_orchestrator
+
+    async def post(self) -> None:
+        body = json.loads(self.request.body or b"{}")
+        content = str(body.get("content") or "").strip()
+        if not content:
+            self.write_json({"ok": False, "error": "empty_content"}, status=400)
+            return
+        record = _write_novel_interaction(self.runtime_dir, content)
+        options = body.get("agent_options") if isinstance(body.get("agent_options"), dict) else {}
+        options = {**options, "assistant_enabled": True}
+        asyncio.create_task(self.novel_orchestrator.handle_user_message(content, record, options))
+        self.write_json({"ok": True, "queued": True, "record": record, "agent_status": self.novel_orchestrator.status()})
 
 
 class InboxHandler(BaseHandler):
@@ -1806,6 +1982,9 @@ async def make_app(runtime_dir: Path, log_dir: Path) -> tornado.web.Application:
             (r"/api/actions/update-readme", UpdateReadmeHandler, {"runtime_dir": runtime_dir}),
             (r"/api/chat", ChatHandler, {"storage": storage, "runtime_dir": runtime_dir, "novel_orchestrator": novel_orchestrator}),
             (r"/api/novel/agent/status", NovelAgentStatusHandler, {"novel_orchestrator": novel_orchestrator}),
+            (r"/api/novel/preview", NovelPreviewHandler, {"runtime_dir": runtime_dir}),
+            (r"/api/novel/codex/reply", NovelCodexReplyHandler, {"runtime_dir": runtime_dir}),
+            (r"/api/novel/codex/assistant", NovelAssistantTaskHandler, {"runtime_dir": runtime_dir, "novel_orchestrator": novel_orchestrator}),
             (r"/api/inbox", InboxHandler, {"storage": storage, "runtime_dir": runtime_dir}),
             (r"/api/outbox", OutboxHandler, {"storage": storage}),
             (r"/api/pipeline", PipelineStateHandler, {"storage": storage}),

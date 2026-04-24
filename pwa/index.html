@@ -43,8 +43,25 @@
         <div class="select">
           <label data-i18n="ui.label.model">Model</label>
           <select id="model-select">
+            <option value="gpt-5.5" selected>gpt-5.5</option>
             <option value="gpt-5.3-codex">gpt-5.3-codex</option>
             <option value="gpt-5.3-codex-mini" disabled>gpt-5.3-codex-mini</option>
+          </select>
+        </div>
+        <div class="select">
+          <label>Reply</label>
+          <select id="novel-reply-reasoning">
+            <option value="medium" selected>medium</option>
+            <option value="low">low</option>
+            <option value="high">high</option>
+          </select>
+        </div>
+        <div class="select">
+          <label>Assistant</label>
+          <select id="novel-assistant-reasoning">
+            <option value="high" selected>high</option>
+            <option value="medium">medium</option>
+            <option value="xhigh">xhigh</option>
           </select>
         </div>
 
@@ -73,7 +90,7 @@
       </div>
     </header>
 
-    <main class="layout">
+    <main class="layout workspace-panel" data-novel-panel="setup" hidden aria-label="Autopilot setup workspace">
       <section class="panel panel--toolbox">
         <div class="panel-head">
           <div class="panel-title" data-i18n="ui.panel.blocks.title">Blocks</div>
@@ -456,49 +473,81 @@
       </section>
     </main>
 
-    <section class="novel-dock" aria-label="Novel writing workspace">
-      <nav class="novel-tabs" aria-label="Novel workspace tabs">
-        <button class="novel-tab is-active" type="button" data-novel-tab="beats">Beats Board</button>
-        <button class="novel-tab" type="button" data-novel-tab="draft">Draft Studio</button>
-        <button class="novel-tab" type="button" data-novel-tab="loop">Autopilot Loop</button>
-        <button class="novel-tab" type="button" data-novel-tab="agent">Agent Monitor</button>
-      </nav>
-
-      <div class="novel-panel is-active" data-novel-panel="beats">
-        <div>
-          <strong>Beats Board</strong>
-          <span>Capture ideas, names, scenes, motifs, turns, and relationship beats.</span>
+    <section class="writing-screen workspace-panel is-active" data-novel-panel="beats" aria-label="Beats board workspace">
+      <div class="writing-preview">
+        <div class="writing-head">
+          <div>
+            <h2>Beats Board</h2>
+            <p>Ideas, names, motifs, relationship turns, and chapter beats update here asynchronously.</p>
+          </div>
+          <button class="btn btn--ghost" id="beats-refresh">Refresh</button>
         </div>
-        <textarea id="novel-beats" placeholder="Drop a scene idea, name, image, or line. It will be saved and organized into materials."></textarea>
-        <button class="btn btn--primary" id="novel-beats-send">Send to Board</button>
+        <pre id="beats-preview" class="preview-text">loading...</pre>
       </div>
-
-      <div class="novel-panel" data-novel-panel="draft">
-        <div>
-          <strong>Draft Studio</strong>
-          <span>Write chapter by chapter through the long-running writer session.</span>
+      <div class="writing-chat">
+        <div class="chatlog chatlog--large" id="novel-chatlog-beats"></div>
+        <div class="chatbar chatbar--large">
+          <textarea id="novel-beats" class="input" placeholder="Send a beat, name, scene idea, question, or memory."></textarea>
+          <button class="btn btn--primary" id="novel-beats-send">Send</button>
         </div>
-        <textarea id="novel-draft" placeholder="Ask for a chapter, scene, dialogue pass, revision, or continuation."></textarea>
-        <button class="btn btn--primary" id="novel-draft-send">Continue Draft</button>
-      </div>
-
-      <div class="novel-panel" data-novel-panel="loop">
-        <div>
-          <strong>Autopilot Loop</strong>
-          <span>Hand over a goal and let the writer organize, draft, critique, fix, summarize, and commit where applicable.</span>
-        </div>
-        <textarea id="novel-loop" placeholder="Describe the autonomous writing goal."></textarea>
-        <button class="btn btn--primary" id="novel-loop-send">Hand Over</button>
-      </div>
-
-      <div class="novel-panel" data-novel-panel="agent">
-        <div>
-          <strong>Agent Monitor</strong>
-          <span>Quick reply: gpt-5.5 medium. Writer: gpt-5.5 xhigh. Both reuse their own Codex sessions.</span>
-        </div>
-        <pre class="novel-agent-status" id="novel-agent-status">loading...</pre>
-        <button class="btn btn--ghost" id="novel-agent-refresh">Refresh</button>
       </div>
     </section>
+
+    <section class="writing-screen workspace-panel" data-novel-panel="draft" hidden aria-label="Draft studio workspace">
+      <div class="writing-preview">
+        <div class="writing-head">
+          <div>
+            <h2>Draft Studio</h2>
+            <p>Latest chapter draft preview stays above the chat so writing and guidance remain connected.</p>
+          </div>
+          <button class="btn btn--ghost" id="draft-refresh">Refresh</button>
+        </div>
+        <pre id="draft-preview" class="preview-text">loading...</pre>
+      </div>
+      <div class="writing-chat">
+        <div class="chatlog chatlog--large" id="novel-chatlog-draft"></div>
+        <div class="chatbar chatbar--large">
+          <textarea id="novel-draft" class="input" placeholder="Ask for a chapter, scene, dialogue pass, revision, or continuation."></textarea>
+          <button class="btn btn--primary" id="novel-draft-send">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="loop-screen workspace-panel" data-novel-panel="loop" hidden aria-label="Autopilot loop workspace">
+      <div class="loop-card">
+        <div class="writing-head">
+          <div>
+            <h2>Autopilot Loop</h2>
+            <p>Chat can revise the loop, but only schema-checked AAPS scripts are accepted and loaded.</p>
+          </div>
+          <button class="btn btn--ghost" type="button" data-novel-tab="setup">Autopilot Setup</button>
+        </div>
+        <pre id="loop-preview" class="preview-text">loading...</pre>
+        <div class="chatbar chatbar--large">
+          <textarea id="novel-loop" class="input" placeholder="Describe a loop change or autonomous writing goal."></textarea>
+          <button class="btn btn--primary" id="novel-loop-send">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <button class="agent-float" id="agent-float-toggle" type="button">Agent</button>
+    <aside class="agent-popover" id="agent-popover" hidden>
+      <div class="writing-head">
+        <div>
+          <h2>Agent Monitor</h2>
+          <p>Reply uses gpt-5.5 medium. Assistant defaults to high and runs as a background task.</p>
+        </div>
+        <button class="btn btn--ghost" id="agent-popover-close" type="button">Close</button>
+      </div>
+      <pre class="novel-agent-status" id="novel-agent-status">loading...</pre>
+      <button class="btn btn--ghost" id="novel-agent-refresh" type="button">Refresh</button>
+    </aside>
+
+    <nav class="novel-tabs bottom-nav" aria-label="Novel workspace tabs">
+      <button class="novel-tab is-active" type="button" data-novel-tab="beats">Beats</button>
+      <button class="novel-tab" type="button" data-novel-tab="draft">Draft</button>
+      <button class="novel-tab" type="button" data-novel-tab="loop">Autopilot</button>
+      <button class="novel-tab" type="button" data-novel-tab="setup">Loop Setup</button>
+    </nav>
   </body>
 </html>

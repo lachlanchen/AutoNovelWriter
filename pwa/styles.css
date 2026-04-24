@@ -35,6 +35,11 @@ html, body {
     linear-gradient(180deg, var(--bg), #ffffff);
 }
 
+body {
+  padding-bottom: 76px;
+  overflow: hidden;
+}
+
 body[data-theme="dark"] {
   --bg: #0c101a;
   --panel: rgba(20, 24, 33, 0.92);
@@ -168,38 +173,51 @@ select, input, textarea {
 }
 
 .layout {
-  height: calc(100% - 74px);
+  height: calc(100dvh - 150px);
   display: grid;
   grid-template-columns: 260px minmax(520px, 1fr) 360px;
   gap: 14px;
   padding: 14px;
 }
 
-.novel-dock {
-  margin: 0 14px 14px;
-  border: 1px solid var(--stroke);
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--panel) 94%, transparent);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+.workspace-panel {
+  min-height: 0;
 }
 
-.novel-tabs {
+.workspace-panel.is-active {
+  display: grid;
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: min(720px, calc(100vw - 24px));
+  min-height: 62px;
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--stroke);
-  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  border: 1px solid var(--stroke);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  box-shadow: 0 18px 50px rgba(12, 18, 28, 0.18);
+  backdrop-filter: blur(18px);
 }
 
 .novel-tab {
   border: 1px solid transparent;
-  border-radius: 999px;
-  padding: 8px 12px;
+  border-radius: 16px;
+  min-width: 0;
+  flex: 1;
+  padding: 11px 8px;
   background: transparent;
   color: var(--muted);
   font-weight: 900;
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -209,34 +227,139 @@ select, input, textarea {
   border-color: rgba(39, 103, 255, 0.20);
 }
 
-.novel-panel {
-  display: none;
-  grid-template-columns: minmax(190px, 260px) minmax(260px, 1fr) auto;
+.writing-screen {
+  height: calc(100dvh - 150px);
+  grid-template-rows: minmax(180px, 1fr) minmax(250px, 1fr);
+  gap: 14px;
+  padding: 14px;
+}
+
+.loop-screen {
+  height: calc(100dvh - 150px);
+  padding: 14px;
+}
+
+.writing-preview,
+.writing-chat,
+.loop-card {
+  min-height: 0;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  box-shadow: var(--shadow);
+}
+
+.writing-preview,
+.loop-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.writing-chat {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.writing-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 12px;
-  align-items: start;
-  padding: 12px;
+  padding: 14px;
+  border-bottom: 1px solid var(--stroke);
 }
 
-.novel-panel.is-active { display: grid; }
-
-.novel-panel strong {
-  display: block;
-  font-size: 14px;
-  font-weight: 950;
+.writing-head h2 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.2;
 }
 
-.novel-panel span {
-  display: block;
-  margin-top: 4px;
+.writing-head p {
+  margin: 5px 0 0;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.35;
 }
 
-.novel-panel textarea {
+.preview-text {
+  flex: 1;
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  color: color-mix(in srgb, var(--text) 88%, var(--muted));
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.chatlog--large {
+  min-height: 0;
+  padding: 14px;
+  overflow: auto;
+}
+
+.chatbar--large {
+  padding: 12px;
+}
+
+.chatbar--large textarea {
   width: 100%;
-  min-height: 88px;
+  min-height: 72px;
+  max-height: 180px;
   resize: vertical;
+}
+
+.loop-card {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.loop-card .chatbar--large {
+  border-top: 1px solid var(--stroke);
+}
+
+.agent-float {
+  position: fixed;
+  right: 18px;
+  bottom: 86px;
+  z-index: 42;
+  border: 1px solid color-mix(in srgb, var(--blue) 35%, var(--stroke));
+  border-radius: 999px;
+  padding: 11px 14px;
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+  color: var(--text);
+  box-shadow: 0 14px 40px rgba(12, 18, 28, 0.14);
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.agent-popover {
+  position: fixed;
+  right: 18px;
+  bottom: 136px;
+  z-index: 43;
+  width: min(460px, calc(100vw - 30px));
+  max-height: min(640px, calc(100dvh - 170px));
+  overflow: auto;
+  border: 1px solid var(--stroke);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--panel) 84%, transparent);
+  box-shadow: 0 24px 80px rgba(12, 18, 28, 0.24);
+  backdrop-filter: blur(18px);
+}
+
+.agent-popover .novel-agent-status {
+  margin: 12px;
+}
+
+.agent-popover > .btn {
+  margin: 0 12px 12px;
 }
 
 .novel-agent-status {
@@ -637,12 +760,43 @@ html[dir="rtl"] .msg--system {
 @media (max-width: 1200px) {
   .layout { grid-template-columns: 260px 1fr; grid-template-rows: 1fr 420px; }
   .panel--right { grid-column: 1 / -1; }
-  .novel-panel { grid-template-columns: 1fr; }
+  .bottom-nav { width: min(640px, calc(100vw - 18px)); }
 }
 
 @media (max-width: 780px) {
-  .layout { grid-template-columns: 1fr; grid-template-rows: auto auto auto; height: auto; }
+  body { overflow: auto; }
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    height: auto;
+    min-height: calc(100dvh - 150px);
+    padding: 10px;
+  }
+  .writing-screen,
+  .loop-screen {
+    height: calc(100dvh - 150px);
+    padding: 10px;
+    gap: 10px;
+  }
+  .writing-screen {
+    grid-template-rows: minmax(160px, 0.9fr) minmax(260px, 1.1fr);
+  }
   .brand { min-width: 0; }
   .controls { justify-content: flex-start; }
-  .novel-dock { margin: 0 10px 10px; }
+  .bottom-nav {
+    bottom: 8px;
+    border-radius: 20px;
+  }
+  .novel-tab {
+    font-size: 11px;
+    padding: 10px 4px;
+  }
+  .agent-float {
+    right: 12px;
+    bottom: 82px;
+  }
+  .agent-popover {
+    right: 10px;
+    bottom: 130px;
+  }
 }

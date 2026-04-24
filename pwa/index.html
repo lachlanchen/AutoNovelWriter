@@ -491,7 +491,10 @@
             <h2>Beats Board</h2>
             <p>Ideas, names, motifs, relationship turns, and chapter beats update here asynchronously.</p>
           </div>
-          <button class="btn btn--ghost" id="beats-refresh">Refresh</button>
+          <div class="writing-actions">
+            <button class="btn btn--ghost" type="button" data-agent-monitor>Agent</button>
+            <button class="btn btn--ghost" id="beats-refresh">Refresh</button>
+          </div>
         </div>
         <pre id="beats-preview" class="preview-text">loading...</pre>
       </div>
@@ -511,7 +514,10 @@
             <h2>Draft Studio</h2>
             <p>Latest chapter draft preview stays above the chat so writing and guidance remain connected.</p>
           </div>
-          <button class="btn btn--ghost" id="draft-refresh">Refresh</button>
+          <div class="writing-actions">
+            <button class="btn btn--ghost" type="button" data-agent-monitor>Agent</button>
+            <button class="btn btn--ghost" id="draft-refresh">Refresh</button>
+          </div>
         </div>
         <pre id="draft-preview" class="preview-text">loading...</pre>
       </div>
@@ -531,7 +537,10 @@
             <h2>Autopilot Loop</h2>
             <p>Chat can revise the loop, but only schema-checked AAPS scripts are accepted and loaded.</p>
           </div>
-          <button class="btn btn--ghost" type="button" data-novel-tab="setup">Autopilot Setup</button>
+          <div class="writing-actions">
+            <button class="btn btn--ghost" type="button" data-agent-monitor>Agent</button>
+            <button class="btn btn--ghost" type="button" data-novel-tab="setup">Autopilot Setup</button>
+          </div>
         </div>
         <pre id="loop-preview" class="preview-text">loading...</pre>
       </div>
@@ -544,7 +553,6 @@
       </div>
     </section>
 
-    <button class="agent-float" id="agent-float-toggle" type="button">Agent</button>
     <aside class="agent-popover" id="agent-popover" hidden>
       <div class="writing-head">
         <div>

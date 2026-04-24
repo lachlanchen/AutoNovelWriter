@@ -96,7 +96,7 @@ const els = {
   novelLoopSend: document.getElementById("novel-loop-send"),
   novelSetup: document.getElementById("novel-setup"),
   novelSetupSend: document.getElementById("novel-setup-send"),
-  agentFloatToggle: document.getElementById("agent-float-toggle"),
+  agentMonitorButtons: document.querySelectorAll("[data-agent-monitor]"),
   agentPopover: document.getElementById("agent-popover"),
   agentPopoverClose: document.getElementById("agent-popover-close"),
   novelAgentStatus: document.getElementById("novel-agent-status"),
@@ -2416,12 +2416,13 @@ function bindControls() {
       submitNovelText("Update the Autopilot Setup canvas or loop script carefully. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ", els.novelSetup)
     );
   }
-  if (els.agentFloatToggle && els.agentPopover) {
-    els.agentFloatToggle.addEventListener("click", () => {
+  els.agentMonitorButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (!els.agentPopover) return;
       els.agentPopover.hidden = !els.agentPopover.hidden;
       if (!els.agentPopover.hidden) refreshNovelAgentStatus();
     });
-  }
+  });
   if (els.agentPopoverClose && els.agentPopover) {
     els.agentPopoverClose.addEventListener("click", () => {
       els.agentPopover.hidden = true;

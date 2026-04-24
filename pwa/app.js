@@ -73,6 +73,17 @@ const els = {
   wsContextText: document.getElementById("ws-context-text"),
   wsContextPath: document.getElementById("ws-context-path"),
   wsMsg: document.getElementById("ws-msg"),
+
+  novelTabs: document.querySelectorAll(".novel-tab"),
+  novelPanels: document.querySelectorAll(".novel-panel"),
+  novelBeats: document.getElementById("novel-beats"),
+  novelBeatsSend: document.getElementById("novel-beats-send"),
+  novelDraft: document.getElementById("novel-draft"),
+  novelDraftSend: document.getElementById("novel-draft-send"),
+  novelLoop: document.getElementById("novel-loop"),
+  novelLoopSend: document.getElementById("novel-loop-send"),
+  novelAgentStatus: document.getElementById("novel-agent-status"),
+  novelAgentRefresh: document.getElementById("novel-agent-refresh"),
 };
 
 const UI_LANG_STORAGE_KEY = "autoappdev_ui_lang";
@@ -729,6 +740,41 @@ async function api(path, opts = {}) {
     throw new Error("api_client_not_loaded");
   }
   return await window.AutoAppDevApi.requestJson(path, opts);
+}
+
+function setNovelTab(key) {
+  const target = String(key || "beats");
+  els.novelTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.novelTab === target));
+  els.novelPanels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.novelPanel === target));
+  try {
+    localStorage.setItem("autonovelwriter_novel_tab", target);
+  } catch {}
+}
+
+async function refreshNovelAgentStatus() {
+  if (!els.novelAgentStatus) return;
+  try {
+    const res = await api("/api/novel/agent/status", { timeout_ms: 3000 });
+    els.novelAgentStatus.textContent = JSON.stringify(res.status || res, null, 2);
+  } catch (e) {
+    els.novelAgentStatus.textContent = `agent status unavailable: ${(e && e.message) || String(e)}`;
+  }
+}
+
+async function submitNovelText(prefix, textarea) {
+  const body = String((textarea && textarea.value) || "").trim();
+  if (!body) return;
+  const content = `${prefix}${body}`;
+  if (textarea) textarea.value = "";
+  try {
+    await api("/api/chat", { method: "POST", timeout_ms: 8000, body: JSON.stringify({ content }) });
+    await Promise.all([loadChat(), refreshNovelAgentStatus()]);
+  } catch (e) {
+    if (els.ctrlMsg) {
+      els.ctrlMsg.textContent = (e && e.message) || String(e);
+      els.ctrlMsg.classList.add("is-error");
+    }
+  }
 }
 
 function canSelectValue(selectEl, value) {
@@ -1993,16 +2039,16 @@ function bindTabs() {
 
 async function loadChat() {
   try {
-    const [inboxRes, outboxRes] = await Promise.all([
-      api("/api/inbox?limit=80").catch(() => ({ messages: [] })),
-      api("/api/outbox?limit=80").catch(() => ({ messages: [] })),
+    const [chatRes, outboxRes] = await Promise.all([
+      api("/api/chat?limit=120").catch(() => ({ messages: [] })),
+      api("/api/outbox?limit=40").catch(() => ({ messages: [] })),
     ]);
 
-    const inbox = Array.isArray(inboxRes && inboxRes.messages) ? inboxRes.messages : [];
+    const chat = Array.isArray(chatRes && chatRes.messages) ? chatRes.messages : [];
     const outbox = Array.isArray(outboxRes && outboxRes.messages) ? outboxRes.messages : [];
     const merged = [];
     let idx = 0;
-    inbox.forEach((m) => merged.push({ m, idx: idx++ }));
+    chat.forEach((m) => merged.push({ m, idx: idx++ }));
     outbox.forEach((m) => merged.push({ m, idx: idx++ }));
 
     const parseTs = (it) => {
@@ -2038,11 +2084,11 @@ async function sendChat() {
   if (!content) return;
   els.chatInput.value = "";
   try {
-    await api("/api/inbox", { method: "POST", body: JSON.stringify({ content }) });
+    await api("/api/chat", { method: "POST", timeout_ms: 8000, body: JSON.stringify({ content }) });
   } catch (e) {
     console.warn(e);
   }
-  await loadChat();
+  await Promise.all([loadChat(), refreshNovelAgentStatus()]);
 }
 
 function scrollLogsToBottom() {
@@ -2241,6 +2287,28 @@ function bindControls() {
       if (ev.key === "Enter") loadWorkspaceConfig(els.wsSlug.value);
     });
   }
+
+  els.novelTabs.forEach((tab) => {
+    tab.addEventListener("click", () => setNovelTab(tab.dataset.novelTab || "beats"));
+  });
+  if (els.novelBeatsSend) {
+    els.novelBeatsSend.addEventListener("click", () =>
+      submitNovelText("Add this to the beats board and organize it into durable material: ", els.novelBeats)
+    );
+  }
+  if (els.novelDraftSend) {
+    els.novelDraftSend.addEventListener("click", () =>
+      submitNovelText("Continue or revise the novel draft with natural, vivid, readable prose. My instruction: ", els.novelDraft)
+    );
+  }
+  if (els.novelLoopSend) {
+    els.novelLoopSend.addEventListener("click", () =>
+      submitNovelText("Start an autonomous novel-writing loop from this goal; organize, write, critique, fix, summarize, and commit/push where applicable: ", els.novelLoop)
+    );
+  }
+  if (els.novelAgentRefresh) {
+    els.novelAgentRefresh.addEventListener("click", refreshNovelAgentStatus);
+  }
 }
 
 function boot() {
@@ -2264,6 +2332,7 @@ function boot() {
   setTheme(savedTheme === "dark" ? "dark" : "light");
 
   loadSettings();
+  setNovelTab(localStorage.getItem("autonovelwriter_novel_tab") || "beats");
   const savedWs = loadWorkspaceSlugFromStorage();
   if (els.wsSlug && savedWs) els.wsSlug.value = savedWs;
   if (savedWs) loadWorkspaceConfig(savedWs);
@@ -2271,6 +2340,7 @@ function boot() {
   refreshHealth();
   refreshStatus();
   loadChat();
+  refreshNovelAgentStatus();
   refreshLogs({ reset: true });
   updateActionsButtons();
   refreshActionsList({ keepSelection: true });
@@ -2281,6 +2351,7 @@ function boot() {
     // keep logs reasonably fresh while running
     if (!els.tabLogs.hidden) refreshLogs();
     if (!els.tabChat.hidden) loadChat();
+    refreshNovelAgentStatus();
   }, 2500);
 }
 

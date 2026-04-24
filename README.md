@@ -287,6 +287,13 @@ scripts/run_autonovelwriter_tmux.sh --no-attach
 tmux attach -t autonovelwriter_app
 ```
 
+Enable browser-triggered Codex writing agents:
+```bash
+scripts/run_autonovelwriter_tmux.sh --kill --no-attach --enable-codex
+```
+
+With Codex enabled, every browser chat message is stored, mirrored into the active project, answered by a quick `gpt-5.5` medium reply session, and queued to a separate `gpt-5.5` xhigh writer session for material organization and novel drafting.
+
 Conda env helper:
 
 ```bash
@@ -384,6 +391,7 @@ Use `autonovelwriter/backend/.env.example` as template. Key variables used by ba
   - `GET /api/pipeline/reference_writer` (reads and parses `../scripts/auto-xiyouzhiyuan-writer.sh` as reference)
   - `POST /api/pipeline/reference_writer/load` (loads parsed result into runtime pipeline; never edits source script)
 - Chat: `GET /api/chat/history`, `POST /api/chat/send`
+- Browser Codex writing agents: `GET /api/agent/sessions/status` (quick reply + long writer session state)
 - Latest novel PDF:
   - `GET /api/novel/latest` (metadata)
   - `GET /api/novel/latest/pdf` (inline PDF stream for viewer)
@@ -489,11 +497,15 @@ It can also show batch details (`GET /api/tasks/batches/<batch_id>`) and activat
 
 The PWA Settings panel persists agent settings via `/api/settings` under `autonovelwriter/runtime/state/settings.json`.
 
-For safety, the backend will not spawn the `codex` CLI unless both are true:
+For safety, the backend Agent Test and pipeline runner will not spawn the `codex` CLI unless both are true:
 - `settings.agent.enabled=true` and `settings.agent.sdk="codex"`
 - `AUTONOVELWRITER_ENABLE_CODEX=1` is set in the environment
 
 Never commit secrets. Use `autonovelwriter/backend/.env.example` as a template for local env vars.
+
+The browser writing workspace uses two reusable Codex sessions when `AUTONOVELWRITER_ENABLE_CODEX=1` is set:
+- Quick reply agent: `gpt-5.5`, medium reasoning, no file edits; it answers chat quickly.
+- Writer agent: `gpt-5.5`, xhigh reasoning, full-auto; it organizes materials and writes drafts under the active project runtime paths.
 
 ## 🌐 PWA I18N (UI Language)
 

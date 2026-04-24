@@ -175,6 +175,82 @@ select, input, textarea {
   padding: 14px;
 }
 
+.novel-dock {
+  margin: 0 14px 14px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.novel-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--stroke);
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+}
+
+.novel-tab {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.novel-tab.is-active {
+  color: white;
+  background: linear-gradient(180deg, rgba(39, 103, 255, 0.96), rgba(39, 103, 255, 0.84));
+  border-color: rgba(39, 103, 255, 0.20);
+}
+
+.novel-panel {
+  display: none;
+  grid-template-columns: minmax(190px, 260px) minmax(260px, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+}
+
+.novel-panel.is-active { display: grid; }
+
+.novel-panel strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.novel-panel span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.novel-panel textarea {
+  width: 100%;
+  min-height: 88px;
+  resize: vertical;
+}
+
+.novel-agent-status {
+  min-height: 88px;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel) 88%, var(--bg));
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow: auto;
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--stroke);
@@ -561,10 +637,12 @@ html[dir="rtl"] .msg--system {
 @media (max-width: 1200px) {
   .layout { grid-template-columns: 260px 1fr; grid-template-rows: 1fr 420px; }
   .panel--right { grid-column: 1 / -1; }
+  .novel-panel { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 780px) {
   .layout { grid-template-columns: 1fr; grid-template-rows: auto auto auto; height: auto; }
   .brand { min-width: 0; }
   .controls { justify-content: flex-start; }
+  .novel-dock { margin: 0 10px 10px; }
 }

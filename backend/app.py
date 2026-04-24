@@ -8,6 +8,7 @@ import re
 import signal
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +48,179 @@ def _write_inbox_message(runtime_dir: Path, content: str) -> None:
     ts = int(asyncio.get_event_loop().time() * 1000)
     p = inbox / f"{ts}_user.md"
     p.write_text(content, "utf-8")
+
+
+def _codex_gate_enabled() -> bool:
+    raw = safe_env("AUTONOVELWRITER_ENABLE_CODEX", "") or safe_env("AUTOAPPDEV_ENABLE_CODEX", "")
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _novel_workspace_root() -> Path:
+    return Path(safe_env("AUTONOVELWRITER_WORKSPACE_ROOT", str(REPO_ROOT.parent))).resolve()
+
+
+def _novel_paths(runtime_dir: Path) -> dict[str, Path]:
+    root = runtime_dir / "novel"
+    state = root / "state"
+    logs = root / "logs"
+    materials = root / "materials"
+    outputs = root / "outputs"
+    paths = {
+        "root": root,
+        "state": state,
+        "logs": logs,
+        "materials": materials,
+        "interactions": root / "interactions",
+        "outputs": outputs,
+        "chapters": outputs / "chapters",
+        "reply_session": state / "codex_reply_session.txt",
+        "writer_session": state / "codex_writer_session.txt",
+        "agent_state": state / "codex_agent_state.json",
+        "external_input": Path(
+            safe_env(
+                "AUTONOVELWRITER_EXTERNAL_INPUT_DIR",
+                str(REPO_ROOT.parent / "references" / "xiyouzhiyuan" / "input"),
+            )
+        ).resolve(),
+    }
+    for p in paths.values():
+        if p.suffix:
+            p.parent.mkdir(parents=True, exist_ok=True)
+        else:
+            p.mkdir(parents=True, exist_ok=True)
+    return paths
+
+
+def _load_json_file(path: Path, default: Any) -> Any:
+    try:
+        return json.loads(path.read_text("utf-8")) if path.exists() else default
+    except Exception:
+        return default
+
+
+def _write_json_file(path: Path, obj: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "\n", "utf-8")
+    tmp.replace(path)
+
+
+def _write_novel_interaction(runtime_dir: Path, content: str) -> dict[str, str]:
+    paths = _novel_paths(runtime_dir)
+    ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    msg_id = uuid.uuid4().hex[:10]
+    body = str(content or "").strip()
+    md = "\n".join(["# Browser Writing Message", "", f"- id: {msg_id}", f"- utc: {ts}", "", body, ""])
+
+    interaction_path = paths["interactions"] / f"{ts}_{msg_id}.md"
+    interaction_path.write_text(md, "utf-8")
+
+    inbox_path = paths["materials"] / "inbox_ideas.md"
+    with inbox_path.open("a", encoding="utf-8") as f:
+        f.write(f"\n## {ts} {msg_id}\n\n{body}\n")
+
+    external_path = paths["external_input"] / f"browser_{ts}_{msg_id}.md"
+    external_path.write_text(md, "utf-8")
+
+    return {
+        "id": msg_id,
+        "interaction_path": str(interaction_path),
+        "materials_inbox": str(inbox_path),
+        "external_input_path": str(external_path),
+        "materials_root": str(paths["materials"]),
+        "outputs_root": str(paths["outputs"]),
+        "chapters_root": str(paths["chapters"]),
+        "workspace_root": str(_novel_workspace_root()),
+    }
+
+
+def _extract_codex_jsonl(jsonl_text: str) -> dict[str, Any]:
+    thread_id = ""
+    messages: list[str] = []
+    errors: list[Any] = []
+    for raw in str(jsonl_text or "").splitlines():
+        raw = raw.strip()
+        if not raw:
+            continue
+        try:
+            obj = json.loads(raw)
+        except Exception:
+            continue
+        if not isinstance(obj, dict):
+            continue
+        if obj.get("type") == "thread.started" and isinstance(obj.get("thread_id"), str):
+            thread_id = obj.get("thread_id") or thread_id
+        item = obj.get("item")
+        if isinstance(item, dict) and item.get("type") in {"agent_message", "assistant_message"}:
+            txt = item.get("text")
+            if isinstance(txt, str) and txt.strip():
+                messages.append(txt.strip())
+        if obj.get("type") in {"error", "turn.failed"}:
+            errors.append(obj)
+    return {"thread_id": thread_id, "text": "\n\n".join(messages).strip(), "errors": errors}
+
+
+async def _run_codex_session(
+    *,
+    runtime_dir: Path,
+    role: str,
+    prompt: str,
+    model: str,
+    reasoning: str,
+    full_auto: bool,
+    timeout_s: float,
+) -> dict[str, Any]:
+    if not _codex_gate_enabled():
+        return {"ok": False, "disabled": True, "error": "codex_gate_disabled"}
+
+    paths = _novel_paths(runtime_dir)
+    role_key = "reply" if role == "reply" else "writer"
+    session_path = paths["reply_session"] if role_key == "reply" else paths["writer_session"]
+    sid = session_path.read_text("utf-8").strip() if session_path.exists() else ""
+    log_path = paths["logs"] / f"codex_{role_key}_{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}_{uuid.uuid4().hex[:8]}.jsonl"
+
+    cli = safe_env("AUTONOVELWRITER_CODEX_CLI_PATH", "codex") or "codex"
+    common = ["--json", "-m", model, "-c", f'model_reasoning_effort="{reasoning}"']
+    if full_auto:
+        common.append("--full-auto")
+    cmd = [cli, "exec", "resume", *common, sid, "-"] if sid else [cli, "exec", *common, "-"]
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            cwd=str(_novel_workspace_root()),
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=os.environ.copy(),
+        )
+    except Exception as e:
+        return {"ok": False, "error": "spawn_failed", "detail": f"{type(e).__name__}: {e}", "role": role_key, "cmd": cmd}
+    try:
+        out_b, err_b = await asyncio.wait_for(proc.communicate(prompt.encode("utf-8")), timeout=timeout_s)
+    except asyncio.TimeoutError:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+        return {"ok": False, "error": "timeout", "role": role_key, "timeout_s": timeout_s, "cmd": cmd}
+
+    stdout = out_b.decode("utf-8", errors="replace")
+    stderr = err_b.decode("utf-8", errors="replace")
+    log_path.write_text(stdout + ("\n" + stderr if stderr else ""), "utf-8")
+    summary = _extract_codex_jsonl(stdout)
+    if summary.get("thread_id"):
+        session_path.write_text(str(summary["thread_id"]) + "\n", "utf-8")
+    return {
+        "ok": int(proc.returncode or 0) == 0,
+        "role": role_key,
+        "returncode": int(proc.returncode or 0),
+        "thread_id": summary.get("thread_id") or sid,
+        "text": summary.get("text") or "",
+        "errors": summary.get("errors") or [],
+        "stderr_tail": stderr[-2000:],
+        "log_path": str(log_path),
+    }
 
 
 def _parse_outbox_role(raw: Any) -> str:
@@ -1006,10 +1180,171 @@ class ActionCloneHandler(BaseHandler):
         self.write_json({"ok": True, "action": dict(action, readonly=False)})
 
 
-class ChatHandler(BaseHandler):
-    def initialize(self, storage: Storage, runtime_dir: Path) -> None:
+class NovelCodexOrchestrator:
+    def __init__(self, *, storage: Storage, runtime_dir: Path):
         self.storage = storage
         self.runtime_dir = runtime_dir
+        self.reply_lock = asyncio.Lock()
+        self.writer_lock = asyncio.Lock()
+
+    def status(self) -> dict[str, Any]:
+        paths = _novel_paths(self.runtime_dir)
+        state = _load_json_file(paths["agent_state"], {})
+        if not isinstance(state, dict):
+            state = {}
+        reply_state = state.get("reply") if isinstance(state.get("reply"), dict) else {}
+        writer_state = state.get("writer") if isinstance(state.get("writer"), dict) else {}
+        reply_sid = paths["reply_session"].read_text("utf-8").strip() if paths["reply_session"].exists() else ""
+        writer_sid = paths["writer_session"].read_text("utf-8").strip() if paths["writer_session"].exists() else ""
+        return {
+            "enabled": _codex_gate_enabled(),
+            "reply": {
+                **reply_state,
+                "session_id": reply_sid,
+                "model": safe_env("AUTONOVELWRITER_CODEX_REPLY_MODEL", "gpt-5.5"),
+                "reasoning": "medium",
+            },
+            "writer": {
+                **writer_state,
+                "session_id": writer_sid,
+                "model": safe_env("AUTONOVELWRITER_CODEX_WRITER_MODEL", "gpt-5.5"),
+                "reasoning": "xhigh",
+            },
+            "paths": {k: str(v) for k, v in paths.items() if k in {"materials", "outputs", "chapters", "external_input", "logs"}},
+        }
+
+    def _set_state(self, role: str, patch: dict[str, Any]) -> None:
+        paths = _novel_paths(self.runtime_dir)
+        state = _load_json_file(paths["agent_state"], {})
+        if not isinstance(state, dict):
+            state = {}
+        cur = state.get(role) if isinstance(state.get(role), dict) else {}
+        cur.update(patch)
+        cur["updated_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        state[role] = cur
+        _write_json_file(paths["agent_state"], state)
+
+    async def handle_user_message(self, content: str, record: dict[str, str]) -> None:
+        if not _codex_gate_enabled():
+            await self.storage.add_chat_message(
+                "assistant",
+                "Codex browser writing agents are disabled. Start the server with AUTONOVELWRITER_ENABLE_CODEX=1 to enable quick reply and writer sessions.",
+            )
+            return
+
+        self._set_state("writer", {"state": "queued", "latest_input": record.get("interaction_path")})
+        asyncio.create_task(self._run_writer(content, record))
+        await self._run_reply(content, record)
+
+    async def _recent_chat(self, limit: int = 18) -> str:
+        try:
+            items = await self.storage.list_chat_messages(limit=limit)
+        except Exception:
+            items = []
+        lines = []
+        for it in items[-limit:]:
+            role = str(it.get("role") or "unknown")
+            text = str(it.get("content") or "").strip().replace("\n", " ")
+            if len(text) > 600:
+                text = text[:600] + "..."
+            if text:
+                lines.append(f"- {role}: {text}")
+        return "\n".join(lines) if lines else "- (no recent browser chat)"
+
+    def _shared_context(self, record: dict[str, str]) -> str:
+        return "\n".join(
+            [
+                f"- workspace_root: {record.get('workspace_root', str(_novel_workspace_root()))}",
+                f"- materials_root: {record.get('materials_root', '')}",
+                f"- chapters_root: {record.get('chapters_root', '')}",
+                f"- outputs_root: {record.get('outputs_root', '')}",
+                f"- external_input_path: {record.get('external_input_path', '')}",
+                f"- interaction_path: {record.get('interaction_path', '')}",
+            ]
+        )
+
+    async def _run_reply(self, content: str, record: dict[str, str]) -> None:
+        async with self.reply_lock:
+            self._set_state("reply", {"state": "running", "latest_input": record.get("interaction_path")})
+            prompt = f"""You are AutoNovelWriter's quick browser reply agent.
+
+You answer quickly in the browser. Do not edit files. The separate writer agent has been queued and will do the real organization and drafting.
+Use the same language as the user when obvious. Keep the answer short, practical, and natural.
+
+Project context:
+{self._shared_context(record)}
+
+Recent chat:
+{await self._recent_chat()}
+
+Latest user message:
+{content}
+
+Reply in 2-5 concise sentences. Mention that the writer session is handling the material and where the next draft/material will appear."""
+            res = await _run_codex_session(
+                runtime_dir=self.runtime_dir,
+                role="reply",
+                prompt=prompt,
+                model=safe_env("AUTONOVELWRITER_CODEX_REPLY_MODEL", "gpt-5.5"),
+                reasoning="medium",
+                full_auto=False,
+                timeout_s=180,
+            )
+            text = str(res.get("text") or "").strip()
+            if not text:
+                text = "I saved your note and queued the writer session. The detailed writing pass will update the novel materials and draft outputs."
+            await self.storage.add_chat_message("assistant", text)
+            self._set_state("reply", {"state": "idle" if res.get("ok") else "error", "last_result": res})
+
+    async def _run_writer(self, content: str, record: dict[str, str]) -> None:
+        async with self.writer_lock:
+            self._set_state("writer", {"state": "running", "latest_input": record.get("interaction_path")})
+            prompt = f"""You are AutoNovelWriter's long-running surrogate novel writer.
+
+You are paired with a browser UI. Reuse this Codex session over time, but ground every turn in files.
+Your goal is to organize the user's idea into durable material and write concrete novel prose when appropriate.
+
+Project context:
+{self._shared_context(record)}
+
+Recent chat:
+{await self._recent_chat(limit=30)}
+
+Latest user message:
+{content}
+
+Required behavior:
+1. Read the latest user message and treat it as live writing guidance.
+2. Update useful markdown material files under the materials root, especially beats_board.md and story_state.md.
+3. If the user asks to continue, revise, write, or gives a story idea, write a concrete scene/chapter fragment under chapters_root or outputs_root.
+4. Write naturally. Avoid strange phrasing, abstract jargon, stiff dialogue, and over-complicated sentences.
+5. Keep character names realistic, beautiful, distinguishable, and suitable even for minor characters.
+6. Make plot, conversation, and emotional transitions reasonable, smooth, vivid, and intriguing.
+7. Do not modify AutoNovelWriter app code unless the user explicitly asks for app development.
+8. Commit and push tracked changes if you make any. Runtime files may be gitignored; still write them and summarize paths.
+
+End with a concise summary of changed files and what the user should read next."""
+            res = await _run_codex_session(
+                runtime_dir=self.runtime_dir,
+                role="writer",
+                prompt=prompt,
+                model=safe_env("AUTONOVELWRITER_CODEX_WRITER_MODEL", "gpt-5.5"),
+                reasoning="xhigh",
+                full_auto=True,
+                timeout_s=900,
+            )
+            text = str(res.get("text") or "").strip()
+            if not text:
+                text = "Writer session finished without a readable summary. Check the agent log path in the monitor."
+            await self.storage.add_chat_message("assistant", text)
+            self._set_state("writer", {"state": "idle" if res.get("ok") else "error", "last_result": res})
+
+
+class ChatHandler(BaseHandler):
+    def initialize(self, storage: Storage, runtime_dir: Path, novel_orchestrator: NovelCodexOrchestrator) -> None:
+        self.storage = storage
+        self.runtime_dir = runtime_dir
+        self.novel_orchestrator = novel_orchestrator
 
     async def get(self) -> None:
         limit = int(self.get_query_argument("limit", "50"))
@@ -1023,8 +1358,19 @@ class ChatHandler(BaseHandler):
             self.write_json({"error": "empty"}, status=400)
             return
         await self.storage.add_chat_message("user", content)
+        await self.storage.add_inbox_message("user", content)
         _write_inbox_message(self.runtime_dir, content)
-        self.write_json({"ok": True})
+        record = _write_novel_interaction(self.runtime_dir, content)
+        asyncio.create_task(self.novel_orchestrator.handle_user_message(content, record))
+        self.write_json({"ok": True, "record": record, "agent_status": self.novel_orchestrator.status()})
+
+
+class NovelAgentStatusHandler(BaseHandler):
+    def initialize(self, novel_orchestrator: NovelCodexOrchestrator) -> None:
+        self.novel_orchestrator = novel_orchestrator
+
+    async def get(self) -> None:
+        self.write_json({"ok": True, "status": self.novel_orchestrator.status()})
 
 
 class InboxHandler(BaseHandler):
@@ -1408,6 +1754,7 @@ async def make_app(runtime_dir: Path, log_dir: Path) -> tornado.web.Application:
     print(f"DB time: {db_time}")
 
     controller = PipelineControl(storage=storage, runtime_dir=runtime_dir, log_dir=log_dir)
+    novel_orchestrator = NovelCodexOrchestrator(storage=storage, runtime_dir=runtime_dir)
     tornado.ioloop.PeriodicCallback(lambda: asyncio.create_task(controller.maybe_collect_exit()), 500).start()
 
     log_buffer = LogBuffer(max_entries=2000)
@@ -1456,7 +1803,8 @@ async def make_app(runtime_dir: Path, log_dir: Path) -> tornado.web.Application:
             (r"/api/actions/([0-9]+)/clone", ActionCloneHandler, {"storage": storage}),
             (r"/api/actions/([0-9]+)", ActionHandler, {"storage": storage}),
             (r"/api/actions/update-readme", UpdateReadmeHandler, {"runtime_dir": runtime_dir}),
-            (r"/api/chat", ChatHandler, {"storage": storage, "runtime_dir": runtime_dir}),
+            (r"/api/chat", ChatHandler, {"storage": storage, "runtime_dir": runtime_dir, "novel_orchestrator": novel_orchestrator}),
+            (r"/api/novel/agent/status", NovelAgentStatusHandler, {"novel_orchestrator": novel_orchestrator}),
             (r"/api/inbox", InboxHandler, {"storage": storage, "runtime_dir": runtime_dir}),
             (r"/api/outbox", OutboxHandler, {"storage": storage}),
             (r"/api/pipeline", PipelineStateHandler, {"storage": storage}),

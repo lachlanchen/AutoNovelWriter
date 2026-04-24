@@ -26,7 +26,7 @@
 
   const PACK = {
     en: {
-      "ui.brand.name": "AutoAppDev Studio",
+      "ui.brand.name": "AutoNovelWriter Studio",
       "ui.brand.sub": "Scratch-like pipeline controller",
 
       "ui.label.agent": "Agent",
@@ -166,7 +166,7 @@
     },
 
     "zh-Hans": {
-      "ui.brand.name": "AutoAppDev 工作室",
+      "ui.brand.name": "AutoNovelWriter 工作室",
       "ui.brand.sub": "类 Scratch 的流水线控制台",
 
       "ui.label.agent": "智能体",
@@ -298,7 +298,7 @@
     },
 
     "zh-Hant": {
-      "ui.brand.name": "AutoAppDev 工作室",
+      "ui.brand.name": "AutoNovelWriter 工作室",
       "ui.brand.sub": "類 Scratch 的流程控制台",
 
       "ui.label.agent": "智能體",
@@ -430,7 +430,7 @@
     },
 
     ja: {
-      "ui.brand.name": "AutoAppDev Studio",
+      "ui.brand.name": "AutoNovelWriter Studio",
       "ui.brand.sub": "Scratch風パイプラインコントローラ",
 
       "ui.label.agent": "エージェント",
@@ -562,7 +562,7 @@
     },
 
     ko: {
-      "ui.brand.name": "AutoAppDev Studio",
+      "ui.brand.name": "AutoNovelWriter Studio",
       "ui.brand.sub": "스크래치 스타일 파이프라인 컨트롤러",
 
       "ui.label.agent": "에이전트",
@@ -694,7 +694,7 @@
     },
 
     vi: {
-      "ui.brand.name": "AutoAppDev Studio",
+      "ui.brand.name": "AutoNovelWriter Studio",
       "ui.brand.sub": "Bộ điều khiển pipeline kiểu Scratch",
 
       "ui.label.agent": "Tác nhân",
@@ -826,7 +826,7 @@
     },
 
     ar: {
-      "ui.brand.name": "استوديو AutoAppDev",
+      "ui.brand.name": "استوديو AutoNovelWriter",
       "ui.brand.sub": "متحكم خط أنابيب بأسلوب Scratch",
 
       "ui.label.agent": "الوكيل",
@@ -958,7 +958,7 @@
     },
 
     fr: {
-      "ui.brand.name": "AutoAppDev Studio",
+      "ui.brand.name": "AutoNovelWriter Studio",
       "ui.brand.sub": "Contrôleur de pipeline type Scratch",
 
       "ui.label.agent": "Agent",
@@ -1090,7 +1090,7 @@
     },
 
     es: {
-      "ui.brand.name": "AutoAppDev Studio",
+      "ui.brand.name": "AutoNovelWriter Studio",
       "ui.brand.sub": "Controlador de pipeline estilo Scratch",
 
       "ui.label.agent": "Agente",

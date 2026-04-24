@@ -1,6 +1,6 @@
 {
-  "name": "AutoAppDev Studio",
-  "short_name": "AutoAppDev",
+  "name": "AutoNovelWriter Studio",
+  "short_name": "AutoNovel",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

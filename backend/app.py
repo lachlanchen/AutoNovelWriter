@@ -390,8 +390,11 @@ class HealthHandler(BaseHandler):
     async def get(self) -> None:
         db: dict[str, Any]
         try:
-            t = await self.storage.get_server_time_iso()
-            db = {"ok": True, "time": t}
+            if getattr(self.storage, "_pool", None):
+                t = await self.storage.get_server_time_iso()
+                db = {"ok": True, "mode": "postgres", "time": t}
+            else:
+                db = {"ok": True, "mode": "local_json"}
         except Exception as e:
             db = {"ok": False, "error": f"{type(e).__name__}: {e}"}
         self.write_json({"ok": True, "service": "autoappdev-backend", "db": db})

@@ -2449,9 +2449,18 @@ function boot() {
   setLogFollow(true);
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./service-worker.js").catch((e) => {
-      console.warn("service worker registration failed", e);
+    let refreshedForServiceWorker = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshedForServiceWorker) return;
+      refreshedForServiceWorker = true;
+      window.location.reload();
     });
+    navigator.serviceWorker
+      .register("./service-worker.js")
+      .then((registration) => registration.update().catch(() => {}))
+      .catch((e) => {
+        console.warn("service worker registration failed", e);
+      });
   }
 
   const savedTheme = localStorage.getItem("autoappdev_theme");

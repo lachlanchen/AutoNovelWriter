@@ -3,7 +3,7 @@
    useful for quick offline reloads in modern browsers.
 */
 
-const CACHE_NAME = "autoappdev-shell-v9";
+const CACHE_NAME = "autoappdev-shell-v10";
 const PRECACHE_URLS = [
   "./index.html",
   "./styles.css",
@@ -49,11 +49,17 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache-first for known shell assets.
+  // Network-first for known shell assets so normal refreshes pick up active UI edits.
   const isPrecached = PRECACHE_URLS.some((p) => url.pathname.endsWith(p.replace("./", "")));
   if (isPrecached) {
     event.respondWith(
-      caches.match(req, { ignoreSearch: true }).then((hit) => hit || fetch(req))
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(req, { ignoreSearch: true }))
     );
     return;
   }

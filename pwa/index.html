@@ -471,6 +471,17 @@
           </div>
         </div>
       </section>
+      <section class="setup-chat writing-chat" aria-label="Autopilot setup chat">
+        <div class="chatlog chatlog--large" id="novel-chatlog-setup"></div>
+        <div class="chatbar chatbar--large">
+          <textarea
+            id="novel-setup"
+            class="input"
+            placeholder="Ask to edit the Scratch-like Autopilot Setup. Loop script changes must pass AAPS validation."
+          ></textarea>
+          <button class="btn btn--primary" id="novel-setup-send">Send</button>
+        </div>
+      </section>
     </main>
 
     <section class="writing-screen workspace-panel is-active" data-novel-panel="beats" aria-label="Beats board workspace">
@@ -513,8 +524,8 @@
       </div>
     </section>
 
-    <section class="loop-screen workspace-panel" data-novel-panel="loop" hidden aria-label="Autopilot loop workspace">
-      <div class="loop-card">
+    <section class="writing-screen workspace-panel" data-novel-panel="loop" hidden aria-label="Autopilot loop workspace">
+      <div class="writing-preview">
         <div class="writing-head">
           <div>
             <h2>Autopilot Loop</h2>
@@ -523,6 +534,9 @@
           <button class="btn btn--ghost" type="button" data-novel-tab="setup">Autopilot Setup</button>
         </div>
         <pre id="loop-preview" class="preview-text">loading...</pre>
+      </div>
+      <div class="writing-chat">
+        <div class="chatlog chatlog--large" id="novel-chatlog-loop"></div>
         <div class="chatbar chatbar--large">
           <textarea id="novel-loop" class="input" placeholder="Describe a loop change or autonomous writing goal."></textarea>
           <button class="btn btn--primary" id="novel-loop-send">Send</button>
@@ -544,10 +558,10 @@
     </aside>
 
     <nav class="novel-tabs bottom-nav" aria-label="Novel workspace tabs">
-      <button class="novel-tab is-active" type="button" data-novel-tab="beats">Beats</button>
-      <button class="novel-tab" type="button" data-novel-tab="draft">Draft</button>
-      <button class="novel-tab" type="button" data-novel-tab="loop">Autopilot</button>
-      <button class="novel-tab" type="button" data-novel-tab="setup">Loop Setup</button>
+      <button class="novel-tab is-active" type="button" data-novel-tab="beats">Beats Board</button>
+      <button class="novel-tab" type="button" data-novel-tab="draft">Draft Studio</button>
+      <button class="novel-tab" type="button" data-novel-tab="loop">Autopilot Loop</button>
+      <button class="novel-tab" type="button" data-novel-tab="setup">Autopilot Setup</button>
     </nav>
   </body>
 </html>

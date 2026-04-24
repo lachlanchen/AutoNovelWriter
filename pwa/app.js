@@ -1,4 +1,5 @@
 const els = {
+  topbar: document.querySelector(".topbar"),
   themeBtn: document.getElementById("btn-theme"),
   agentSelect: document.getElementById("agent-select"),
   modelSelect: document.getElementById("model-select"),
@@ -85,12 +86,16 @@ const els = {
   draftRefresh: document.getElementById("draft-refresh"),
   novelChatlogBeats: document.getElementById("novel-chatlog-beats"),
   novelChatlogDraft: document.getElementById("novel-chatlog-draft"),
+  novelChatlogLoop: document.getElementById("novel-chatlog-loop"),
+  novelChatlogSetup: document.getElementById("novel-chatlog-setup"),
   novelBeats: document.getElementById("novel-beats"),
   novelBeatsSend: document.getElementById("novel-beats-send"),
   novelDraft: document.getElementById("novel-draft"),
   novelDraftSend: document.getElementById("novel-draft-send"),
   novelLoop: document.getElementById("novel-loop"),
   novelLoopSend: document.getElementById("novel-loop-send"),
+  novelSetup: document.getElementById("novel-setup"),
+  novelSetupSend: document.getElementById("novel-setup-send"),
   agentFloatToggle: document.getElementById("agent-float-toggle"),
   agentPopover: document.getElementById("agent-popover"),
   agentPopoverClose: document.getElementById("agent-popover-close"),
@@ -754,6 +759,11 @@ async function api(path, opts = {}) {
   return await window.AutoAppDevApi.requestJson(path, opts);
 }
 
+function setViewportVars() {
+  const topbarHeight = els.topbar ? Math.ceil(els.topbar.getBoundingClientRect().height) : 74;
+  document.documentElement.style.setProperty("--topbar-h", `${Math.max(64, topbarHeight)}px`);
+}
+
 function setNovelTab(key) {
   const target = String(key || "beats");
   els.novelTabs.forEach((tab) => {
@@ -769,7 +779,7 @@ function setNovelTab(key) {
   try {
     localStorage.setItem("autonovelwriter_novel_tab", target);
   } catch {}
-  if (target === "beats" || target === "draft" || target === "loop") loadNovelPreview();
+  if (target === "beats" || target === "draft" || target === "loop" || target === "setup") loadNovelPreview();
 }
 
 async function refreshNovelAgentStatus() {
@@ -2157,6 +2167,8 @@ async function loadChat() {
     renderChatInto(els.chatlog);
     renderChatInto(els.novelChatlogBeats);
     renderChatInto(els.novelChatlogDraft);
+    renderChatInto(els.novelChatlogLoop);
+    renderChatInto(els.novelChatlogSetup);
   } catch {
     // ignore
   }
@@ -2399,6 +2411,11 @@ function bindControls() {
       submitNovelText("Revise or run the Autopilot Loop from this goal. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ", els.novelLoop)
     );
   }
+  if (els.novelSetupSend) {
+    els.novelSetupSend.addEventListener("click", () =>
+      submitNovelText("Update the Autopilot Setup canvas or loop script carefully. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ", els.novelSetup)
+    );
+  }
   if (els.agentFloatToggle && els.agentPopover) {
     els.agentFloatToggle.addEventListener("click", () => {
       els.agentPopover.hidden = !els.agentPopover.hidden;
@@ -2416,7 +2433,11 @@ function bindControls() {
 }
 
 function boot() {
+  setViewportVars();
+  window.addEventListener("resize", setViewportVars);
+
   setUiLang(loadUiLangFromStorage(), { persist: false });
+  setViewportVars();
 
   loadProgram();
   renderProgram();
@@ -2458,7 +2479,7 @@ function boot() {
     if (!els.tabChat.hidden) loadChat();
     refreshNovelAgentStatus();
     const active = activeNovelMode();
-    if (active === "beats" || active === "draft" || active === "loop") loadNovelPreview();
+    if (active === "beats" || active === "draft" || active === "loop" || active === "setup") loadNovelPreview();
   }, 2500);
 }
 

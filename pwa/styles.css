@@ -18,6 +18,8 @@
   --b-release: #2f2f2f;
   --b-loop: #00a1ff;
   --b-input: #ffd6e7;
+  --topbar-h: 74px;
+  --bottom-nav-h: 78px;
 }
 
 [hidden] { display: none !important; }
@@ -36,7 +38,7 @@ html, body {
 }
 
 body {
-  padding-bottom: 76px;
+  padding-bottom: var(--bottom-nav-h);
   overflow: hidden;
 }
 
@@ -173,9 +175,10 @@ select, input, textarea {
 }
 
 .layout {
-  height: calc(100dvh - 150px);
+  height: calc(100dvh - var(--topbar-h) - var(--bottom-nav-h));
   display: grid;
   grid-template-columns: 260px minmax(520px, 1fr) 360px;
+  grid-template-rows: minmax(0, 1fr) minmax(180px, 0.34fr);
   gap: 14px;
   padding: 14px;
 }
@@ -190,19 +193,20 @@ select, input, textarea {
 
 .bottom-nav {
   position: fixed;
-  left: 50%;
-  bottom: 10px;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 40;
-  width: min(720px, calc(100vw - 24px));
-  min-height: 62px;
+  width: 100%;
+  min-height: var(--bottom-nav-h);
   display: flex;
   gap: 8px;
   align-items: center;
   justify-content: space-between;
-  padding: 8px;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   border: 1px solid var(--stroke);
-  border-radius: 22px;
+  border-bottom: 0;
+  border-radius: 22px 22px 0 0;
   background: color-mix(in srgb, var(--panel) 90%, transparent);
   box-shadow: 0 18px 50px rgba(12, 18, 28, 0.18);
   backdrop-filter: blur(18px);
@@ -218,6 +222,8 @@ select, input, textarea {
   color: var(--muted);
   font-weight: 900;
   font-size: 12px;
+  line-height: 1.12;
+  white-space: normal;
   cursor: pointer;
 }
 
@@ -228,14 +234,14 @@ select, input, textarea {
 }
 
 .writing-screen {
-  height: calc(100dvh - 150px);
-  grid-template-rows: minmax(180px, 1fr) minmax(250px, 1fr);
+  height: calc(100dvh - var(--topbar-h) - var(--bottom-nav-h));
+  grid-template-rows: minmax(170px, 1fr) minmax(250px, 0.72fr);
   gap: 14px;
   padding: 14px;
 }
 
 .loop-screen {
-  height: calc(100dvh - 150px);
+  height: calc(100dvh - var(--topbar-h) - var(--bottom-nav-h));
   padding: 14px;
 }
 
@@ -260,6 +266,11 @@ select, input, textarea {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   overflow: hidden;
+}
+
+.setup-chat {
+  grid-column: 1 / -1;
+  min-height: 0;
 }
 
 .writing-head {
@@ -326,7 +337,7 @@ select, input, textarea {
 .agent-float {
   position: fixed;
   right: 18px;
-  bottom: 86px;
+  bottom: calc(var(--bottom-nav-h) + 12px);
   z-index: 42;
   border: 1px solid color-mix(in srgb, var(--blue) 35%, var(--stroke));
   border-radius: 999px;
@@ -342,7 +353,7 @@ select, input, textarea {
 .agent-popover {
   position: fixed;
   right: 18px;
-  bottom: 136px;
+  bottom: calc(var(--bottom-nav-h) + 62px);
   z-index: 43;
   width: min(460px, calc(100vw - 30px));
   max-height: min(640px, calc(100dvh - 170px));
@@ -758,23 +769,22 @@ html[dir="rtl"] .msg--system {
 }
 
 @media (max-width: 1200px) {
-  .layout { grid-template-columns: 260px 1fr; grid-template-rows: 1fr 420px; }
+  .layout { grid-template-columns: 260px 1fr; grid-template-rows: minmax(0, 1fr) 420px minmax(180px, 0.35fr); }
   .panel--right { grid-column: 1 / -1; }
-  .bottom-nav { width: min(640px, calc(100vw - 18px)); }
 }
 
 @media (max-width: 780px) {
   body { overflow: auto; }
   .layout {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto minmax(260px, auto);
     height: auto;
-    min-height: calc(100dvh - 150px);
+    min-height: calc(100dvh - var(--topbar-h) - var(--bottom-nav-h));
     padding: 10px;
   }
   .writing-screen,
   .loop-screen {
-    height: calc(100dvh - 150px);
+    height: calc(100dvh - var(--topbar-h) - var(--bottom-nav-h));
     padding: 10px;
     gap: 10px;
   }
@@ -784,19 +794,21 @@ html[dir="rtl"] .msg--system {
   .brand { min-width: 0; }
   .controls { justify-content: flex-start; }
   .bottom-nav {
-    bottom: 8px;
-    border-radius: 20px;
+    border-radius: 18px 18px 0 0;
+    gap: 6px;
+    padding-left: 8px;
+    padding-right: 8px;
   }
   .novel-tab {
-    font-size: 11px;
+    font-size: 10px;
     padding: 10px 4px;
   }
   .agent-float {
     right: 12px;
-    bottom: 82px;
+    bottom: calc(var(--bottom-nav-h) + 10px);
   }
   .agent-popover {
     right: 10px;
-    bottom: 130px;
+    bottom: calc(var(--bottom-nav-h) + 58px);
   }
 }

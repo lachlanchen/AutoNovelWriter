@@ -96,6 +96,17 @@ On small screens the header collapses controls:
 
 `pwa/app.js` updates the CSS variable `--topbar-h` through `setViewportVars()` so workspace heights adapt to the compact mobile header. On mobile, writing previews start collapsed and open from the top-left app button; on desktop, preview cards keep their own fold button.
 
+### Mobile Header Revision Notes
+
+The v28 design still had two hamburger-style controls on mobile: one in the global app header and one inside each preview card. The v29 design intentionally merges those responsibilities. The global top-left button is the only mobile hamburger and controls the active writing preview. This keeps the top of the screen from becoming a stack of headers and leaves more vertical space for chat.
+
+The behavior is deliberately different by viewport:
+
+- Mobile: top-left app button opens or closes the active preview; preview-card fold buttons are hidden.
+- Desktop: top-left app button controls app chrome detail, while preview-card fold buttons remain available.
+
+`Autopilot Loop` no longer places an `Autopilot Setup` shortcut in its preview header. The bottom navigation is the canonical route to Setup, which keeps mobile header actions limited to `New Chat` and `History`.
+
 ## Agent Monitor
 
 The monitor is a shared popover opened from the dedicated Settings page.

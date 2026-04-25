@@ -195,6 +195,27 @@ Settings is now a dedicated workspace page instead of an expandable topbar secti
 
 The app title shown in the browser shell is now `AutoNovel Studio`. The topbar defaults to compact chrome: a left three-line button, centered title, and right gear Settings button. On desktop, the left button expands or hides logo/subtitle details. On mobile, the same left button owns preview visibility for the active writing tab, so there is only one three-line control on screen. Monitor buttons were removed from writing preview headers and the Autopilot Setup program header; the Agent Monitor now lives in Settings.
 
+### 10. Delta Since Previous Documentation Pass
+
+The previous documentation pass described the v28 state: compact app header, writing preview cards expanded by default, preview-card hamburger buttons, and a Settings-only Agent Monitor.
+
+The v29 revision changed the mobile interaction model:
+
+- Mobile no longer shows a second hamburger inside the Beats Board, Draft Studio, or Autopilot Loop preview card.
+- The single top-left app hamburger is now the preview toggle for the currently active writing tab on mobile.
+- Mobile writing previews now start collapsed so chat has room first; tapping the top-left hamburger opens the preview, and tapping it again closes the preview.
+- Desktop keeps the preview-card fold controls, because the two-column layout has enough room and the header chrome still acts as a chrome detail toggle there.
+- The Autopilot Loop header no longer includes the `Autopilot Setup` shortcut button. Setup remains available from the bottom navigation, avoiding a cramped mobile toolbar.
+- The mobile preview panel is visually pulled up against the app header with reduced top spacing, so the global header and preview feel like one surface instead of two stacked headers.
+- `pwa/service-worker.js` moved from `autoappdev-shell-v28` to `autoappdev-shell-v29`; normal refreshes should pick up the revised shell after the worker updates.
+
+Implementation files for this delta:
+
+- `pwa/app.js`: added mobile viewport helpers and routed the global hamburger to active-preview toggling on mobile.
+- `pwa/styles.css`: hid per-card preview toggles on mobile, collapsed preview cards completely, tightened mobile preview/header spacing.
+- `pwa/index.html`: removed the Loop header's `Autopilot Setup` shortcut.
+- `pwa/service-worker.js`: cache version bump.
+
 ## Files Changed in These Updates
 
 Primary frontend files:
@@ -248,7 +269,7 @@ Possible transfer targets:
 2. Mobile topbar height recalculation after settings collapse.
 3. Bottom navigation spacing and safe-area handling.
 4. Desktop split workspace where a preview/status area stays visible next to chat/logs.
-5. Mobile foldable preview panels with stable header actions.
+5. Mobile foldable preview panels controlled by one global app-header button, with stable per-panel actions.
 6. Chat bubble styling and durable-message rules.
 7. Toast channel for fixed mechanical acknowledgements.
 8. Cross-device polling or WebSocket live sync for chat/status/log surfaces.

@@ -62,6 +62,33 @@ This repo also vendors `AutoAppDev/` as a submodule (reusable auto-development s
 | WebSocket URL | `ws://127.0.0.1:8787/ws` |
 | Backend host/port | `127.0.0.1:8787` |
 
+### Public authenticated launch
+
+For ngrok or other public tunnels, use the authenticated same-origin proxy:
+
+```bash
+mkdir -p ~/.config/autonovelwriter
+chmod 700 ~/.config/autonovelwriter
+cat > ~/.config/autonovelwriter/public.env <<'EOF'
+AUTONOVELWRITER_PUBLIC_USERNAME=lachlan
+AUTONOVELWRITER_PUBLIC_TOKEN=replace-with-a-long-random-token
+EOF
+chmod 600 ~/.config/autonovelwriter/public.env
+
+scripts/run_autonovelwriter_public_tmux.sh --kill
+```
+
+This starts one tmux session named `autonovelwriter_public`:
+
+| Pane | Service |
+|---|---|
+| 0 | Tornado backend on `127.0.0.1:8788` |
+| 1 | Login-protected PWA/API proxy on `127.0.0.1:18080` |
+| 2 | `ngrok http --url=dullish-amee-multiovulate.ngrok-free.dev 18080` |
+| 3 | backend log tail |
+
+The proxy serves the PWA and forwards `/api/*` through the same protected origin, so remote browsers do not need direct access to localhost backend ports.
+
 ## Table of Contents
 
 - [Overview](#-overview)

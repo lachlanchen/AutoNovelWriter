@@ -90,14 +90,15 @@ It also has a setup chat area below the three columns. The `Agent` monitor butto
 
 On small screens the header collapses controls:
 
-- first row: logo/title plus `Settings`,
-- second row, only when expanded: Agent, Model, Reply reasoning, Assistant reasoning, Language, Start/Pause/Resume/Stop, Theme.
+- compact default: left three-line chrome button, centered `AutoNovel Studio` title, and right gear Settings button,
+- expanded chrome: logo/subtitle details become visible,
+- Settings page: Agent, Model, Reply reasoning, Assistant reasoning, Language, Theme, Share Session, and Start/Pause/Resume/Stop.
 
 `pwa/app.js` updates the CSS variable `--topbar-h` through `setViewportVars()` so workspace heights adapt when the settings row opens or closes.
 
 ## Agent Monitor
 
-The monitor is a shared popover. It is opened by any button with `data-agent-monitor`.
+The monitor is a shared popover opened from the dedicated Settings page.
 
 It displays `/api/novel/agent/status`, including:
 
@@ -292,7 +293,7 @@ Key functions in `pwa/app.js`:
 - `refreshNovelAgentStatus()`: fills the Agent Monitor.
 - `setViewportVars()`: measures the topbar and updates `--topbar-h`.
 
-The browser must not mirror the same chat history into every writing tab. Beats Board, Draft Studio, Autopilot Loop, and AP Setup each have a mode-specific active session. The old global outbox merge remains limited to the internal Chat tab.
+The browser must not mirror the same chat history into every writing tab. Beats Board, Draft Studio, Autopilot Loop, and Autopilot Setup each have a mode-specific active session. The old global outbox merge remains limited to the internal Chat tab.
 
 ## PWA Cache Strategy
 
@@ -300,7 +301,7 @@ The service worker previously used cache-first shell assets. That caused normal 
 
 Current strategy:
 
-- cache name is versioned, currently `autoappdev-shell-v11`,
+- cache name is versioned, currently `autoappdev-shell-v28`,
 - install precaches shell files,
 - activate deletes older shell caches,
 - navigation is network-first with cached shell fallback,

@@ -1,5 +1,6 @@
 const els = {
   topbar: document.querySelector(".topbar"),
+  chromeToggle: document.getElementById("chrome-toggle"),
   settingsToggle: document.getElementById("settings-toggle"),
   themeBtn: document.getElementById("btn-theme"),
   agentSelect: document.getElementById("agent-select"),
@@ -775,11 +776,6 @@ async function api(path, opts = {}) {
 
 function setViewportVars() {
   const mobile = window.matchMedia && window.matchMedia("(max-width: 780px)").matches;
-  const settingsOpen = Boolean(els.topbar && els.topbar.classList.contains("is-settings-open"));
-  if (mobile && !settingsOpen) {
-    document.documentElement.style.setProperty("--topbar-h", "64px");
-    return;
-  }
   const topbarHeight = els.topbar ? Math.ceil(els.topbar.getBoundingClientRect().height) : mobile ? 64 : 92;
   document.documentElement.style.setProperty("--topbar-h", `${Math.max(mobile ? 64 : 76, topbarHeight)}px`);
 }
@@ -790,8 +786,9 @@ function setPreviewExpanded(screen, expanded, { touched = true } = {}) {
   screen.classList.toggle("is-preview-expanded", Boolean(expanded));
   screen.classList.toggle("is-preview-collapsed", !expanded);
   screen.querySelectorAll("[data-preview-toggle]").forEach((btn) => {
-    btn.textContent = expanded ? "Hide" : "Show";
     btn.setAttribute("aria-expanded", expanded ? "true" : "false");
+    btn.setAttribute("title", expanded ? "Hide preview" : "Show preview");
+    btn.setAttribute("aria-label", expanded ? "Hide preview" : "Show preview");
   });
 }
 
@@ -803,7 +800,7 @@ function syncPreviewLayoutForViewport() {
       return;
     }
     const touched = screen.dataset.previewTouched === "1";
-    const expanded = touched ? screen.classList.contains("is-preview-expanded") : false;
+    const expanded = touched ? screen.classList.contains("is-preview-expanded") : true;
     setPreviewExpanded(screen, expanded, { touched });
   });
 }
@@ -821,7 +818,7 @@ function chatModeLabel(mode) {
     beats: "Beats Board",
     draft: "Draft Studio",
     loop: "Autopilot Loop",
-    setup: "AP Setup",
+    setup: "Autopilot Setup",
     chat: "Chat",
   }[mode] || "Chat";
 }
@@ -2756,7 +2753,7 @@ function bindControls() {
   }
   if (els.novelSetupSend) {
     els.novelSetupSend.addEventListener("click", () =>
-      submitNovelText("Update the AP Setup canvas or loop script carefully. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ", els.novelSetup)
+      submitNovelText("Update the Autopilot Setup canvas or loop script carefully. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ", els.novelSetup)
     );
   }
   els.previewToggleButtons.forEach((btn) => {
@@ -2816,6 +2813,12 @@ function bindControls() {
   if (els.settingsToggle && els.topbar) {
     els.settingsToggle.addEventListener("click", () => {
       setNovelTab("settings");
+    });
+  }
+  if (els.chromeToggle) {
+    els.chromeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("chrome-compact");
+      window.requestAnimationFrame(setViewportVars);
     });
   }
 }

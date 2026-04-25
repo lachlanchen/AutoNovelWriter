@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
     />
-    <title>AutoNovelWriter Studio</title>
+    <title>AutoNovel Studio</title>
     <link rel="icon" href="autonovelwriter-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="autonovelwriter-icon-192.png" />
     <link rel="manifest" href="manifest.json" />
@@ -30,20 +30,23 @@
     <script src="i18n.js" defer></script>
     <script src="app.js" defer></script>
   </head>
-  <body data-theme="light">
+  <body data-theme="light" class="chrome-compact">
     <header class="topbar">
+      <button class="btn btn--ghost icon-btn chrome-toggle" id="chrome-toggle" type="button" aria-label="Toggle header details" title="Toggle header details">
+        <span class="hamburger-lines" aria-hidden="true"></span>
+      </button>
       <div class="brand">
         <div class="logo">
           <img src="autonovelwriter-icon.svg" alt="AutoNovelWriter icon" />
         </div>
         <div class="brand-text">
-          <div class="brand-name" data-i18n="ui.brand.name">AutoNovelWriter Studio</div>
+          <div class="brand-name" data-i18n="ui.brand.name">AutoNovel Studio</div>
           <div class="brand-sub" data-i18n="ui.brand.sub">Scratch-like pipeline controller</div>
         </div>
       </div>
 
-      <button class="btn btn--ghost settings-toggle" id="settings-toggle" type="button" data-novel-tab="settings">
-        Settings
+      <button class="btn btn--ghost icon-btn settings-toggle" id="settings-toggle" type="button" data-novel-tab="settings" aria-label="Settings" title="Settings">
+        <span class="gear-icon" aria-hidden="true"></span>
       </button>
     </header>
 
@@ -86,7 +89,6 @@
         <div class="panel-head">
           <div class="panel-title" data-i18n="ui.panel.program.title">Program</div>
           <div class="panel-actions">
-            <button class="btn btn--ghost" type="button" data-agent-monitor>Monitor</button>
             <button class="btn btn--ghost" id="btn-clear" data-i18n="ui.btn.clear">Clear</button>
             <button class="btn btn--ghost" id="btn-export" data-i18n="ui.btn.export_json">Export JSON</button>
             <button class="btn btn--ghost" id="btn-send-plan" data-i18n="ui.btn.send_plan">Send Plan</button>
@@ -435,7 +437,7 @@
           <textarea
             id="novel-setup"
             class="input"
-            placeholder="Ask to edit the Scratch-like AP Setup. Loop script changes must pass AAPS validation."
+            placeholder="Ask to edit the Scratch-like Autopilot Setup. Loop script changes must pass AAPS validation."
           ></textarea>
           <button class="btn btn--primary" id="novel-setup-send">Send</button>
         </div>
@@ -443,7 +445,7 @@
     </main>
 
     <section
-      class="writing-screen workspace-panel is-active is-preview-collapsed"
+      class="writing-screen workspace-panel is-active is-preview-expanded"
       data-novel-panel="beats"
       aria-label="Beats board workspace"
     >
@@ -454,9 +456,10 @@
             <p>Ideas, names, motifs, relationship turns, and chapter beats update here asynchronously.</p>
           </div>
           <div class="writing-actions">
-            <button class="btn btn--ghost preview-toggle" type="button" data-preview-toggle aria-expanded="false">Show</button>
+            <button class="btn btn--ghost icon-btn preview-toggle" type="button" data-preview-toggle aria-expanded="true" aria-label="Toggle preview" title="Toggle preview">
+              <span class="hamburger-lines" aria-hidden="true"></span>
+            </button>
             <button class="btn btn--ghost" type="button" data-new-chat>New Chat</button>
-            <button class="btn btn--ghost" type="button" data-agent-monitor>Monitor</button>
             <button class="btn btn--ghost" type="button" data-chat-history>History</button>
           </div>
         </div>
@@ -472,7 +475,7 @@
     </section>
 
     <section
-      class="writing-screen workspace-panel is-preview-collapsed"
+      class="writing-screen workspace-panel is-preview-expanded"
       data-novel-panel="draft"
       hidden
       aria-label="Draft studio workspace"
@@ -484,9 +487,10 @@
             <p>Latest chapter draft preview stays above the chat so writing and guidance remain connected.</p>
           </div>
           <div class="writing-actions">
-            <button class="btn btn--ghost preview-toggle" type="button" data-preview-toggle aria-expanded="false">Show</button>
+            <button class="btn btn--ghost icon-btn preview-toggle" type="button" data-preview-toggle aria-expanded="true" aria-label="Toggle preview" title="Toggle preview">
+              <span class="hamburger-lines" aria-hidden="true"></span>
+            </button>
             <button class="btn btn--ghost" type="button" data-new-chat>New Chat</button>
-            <button class="btn btn--ghost" type="button" data-agent-monitor>Monitor</button>
             <button class="btn btn--ghost" type="button" data-chat-history>History</button>
           </div>
         </div>
@@ -502,7 +506,7 @@
     </section>
 
     <section
-      class="writing-screen workspace-panel is-preview-collapsed"
+      class="writing-screen workspace-panel is-preview-expanded"
       data-novel-panel="loop"
       hidden
       aria-label="Autopilot loop workspace"
@@ -514,10 +518,12 @@
             <p>Chat can revise the loop, but only schema-checked AAPS scripts are accepted and loaded.</p>
           </div>
           <div class="writing-actions">
-            <button class="btn btn--ghost preview-toggle" type="button" data-preview-toggle aria-expanded="false">Show</button>
+            <button class="btn btn--ghost icon-btn preview-toggle" type="button" data-preview-toggle aria-expanded="true" aria-label="Toggle preview" title="Toggle preview">
+              <span class="hamburger-lines" aria-hidden="true"></span>
+            </button>
             <button class="btn btn--ghost" type="button" data-new-chat>New Chat</button>
             <button class="btn btn--ghost" type="button" data-chat-history>History</button>
-            <button class="btn btn--ghost" type="button" data-novel-tab="setup">AP Setup</button>
+            <button class="btn btn--ghost" type="button" data-novel-tab="setup">Autopilot Setup</button>
           </div>
         </div>
         <pre id="loop-preview" class="preview-text">loading...</pre>
@@ -591,7 +597,7 @@
           <label class="toggle-row">
             <span>
               <strong>Share Session</strong>
-              <small>On by default. Beats, Draft, Loop, and AP Setup use the same active chat.</small>
+              <small>On by default. Beats, Draft, Loop, and Autopilot Setup use the same active chat.</small>
             </span>
             <input id="share-sessions-toggle" type="checkbox" checked />
           </label>
@@ -664,7 +670,7 @@
       <button class="novel-tab is-active" type="button" data-novel-tab="beats">Beats Board</button>
       <button class="novel-tab" type="button" data-novel-tab="draft">Draft Studio</button>
       <button class="novel-tab" type="button" data-novel-tab="loop">Autopilot Loop</button>
-      <button class="novel-tab" type="button" data-novel-tab="setup">AP Setup</button>
+      <button class="novel-tab" type="button" data-novel-tab="setup">Autopilot Setup</button>
       <button class="novel-tab" type="button" data-novel-tab="settings">Settings</button>
     </nav>
   </body>

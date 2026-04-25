@@ -78,11 +78,11 @@ body[data-theme="dark"] {
   position: sticky;
   top: 0;
   z-index: 10;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 18px;
+  gap: 12px;
+  padding: 12px 14px;
   min-height: var(--topbar-h);
   backdrop-filter: blur(12px);
   background: color-mix(in srgb, var(--panel) 80%, transparent);
@@ -92,8 +92,10 @@ body[data-theme="dark"] {
 .brand {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  min-width: 260px;
+  min-width: 0;
+  text-align: center;
 }
 
 .logo {
@@ -124,6 +126,82 @@ body[data-theme="dark"] {
 .brand-sub {
   font-size: var(--font-xs);
   color: var(--muted);
+}
+
+.chrome-compact .logo,
+.chrome-compact .brand-sub {
+  display: none;
+}
+
+.icon-btn {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 14px;
+}
+
+.hamburger-lines,
+.hamburger-lines::before,
+.hamburger-lines::after {
+  display: block;
+  width: 19px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.hamburger-lines {
+  position: relative;
+}
+
+.hamburger-lines::before,
+.hamburger-lines::after {
+  content: "";
+  position: absolute;
+  left: 0;
+}
+
+.hamburger-lines::before {
+  top: -6px;
+}
+
+.hamburger-lines::after {
+  top: 6px;
+}
+
+.gear-icon {
+  width: 19px;
+  height: 19px;
+  display: block;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  position: relative;
+}
+
+.gear-icon::before {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.gear-icon::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  background:
+    linear-gradient(currentColor, currentColor) 50% 0 / 2px 5px no-repeat,
+    linear-gradient(currentColor, currentColor) 50% 100% / 2px 5px no-repeat,
+    linear-gradient(90deg, currentColor, currentColor) 0 50% / 5px 2px no-repeat,
+    linear-gradient(90deg, currentColor, currentColor) 100% 50% / 5px 2px no-repeat;
 }
 
 .controls {
@@ -270,7 +348,7 @@ select, input, textarea {
 
 .writing-screen {
   height: calc(100dvh - var(--topbar-h) - var(--bottom-nav-h));
-  grid-template-columns: minmax(360px, 0.94fr) minmax(420px, 1.06fr);
+  grid-template-columns: minmax(380px, 1.04fr) minmax(400px, 0.96fr);
   grid-template-rows: minmax(0, 1fr);
   gap: 14px;
   padding: 14px;
@@ -515,7 +593,7 @@ select, input, textarea {
 }
 
 .preview-toggle {
-  display: none;
+  display: inline-grid;
 }
 
 .loop-card {
@@ -1075,7 +1153,7 @@ html[dir="rtl"] .msg--system {
   }
   .topbar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 6px 8px;
     min-height: var(--topbar-h);
@@ -1156,8 +1234,8 @@ html[dir="rtl"] .msg--system {
     overflow: hidden;
   }
   .logo {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 12px;
     flex: 0 0 auto;
   }
@@ -1174,8 +1252,6 @@ html[dir="rtl"] .msg--system {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 38px;
-    padding: 8px 11px;
   }
   .controls {
     grid-column: 1 / -1;
@@ -1268,10 +1344,10 @@ html[dir="rtl"] .msg--system {
   }
   .writing-actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(68px, 1fr));
+    grid-template-columns: 32px repeat(2, minmax(68px, 1fr));
     gap: 5px;
-    flex: 0 0 min(66vw, 168px);
-    max-width: min(66vw, 168px);
+    flex: 0 0 min(70vw, 184px);
+    max-width: min(70vw, 184px);
   }
   .writing-actions .btn {
     width: 100%;
@@ -1286,7 +1362,11 @@ html[dir="rtl"] .msg--system {
     text-overflow: ellipsis;
   }
   .preview-toggle {
-    display: inline-flex;
+    display: inline-grid;
+    min-width: 32px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
   }
   .writing-screen.is-preview-collapsed {
     grid-template-rows: auto minmax(0, 1fr);
@@ -1298,7 +1378,7 @@ html[dir="rtl"] .msg--system {
     display: none;
   }
   .writing-screen.is-preview-expanded {
-    grid-template-rows: minmax(168px, 0.42fr) minmax(0, 1fr);
+    grid-template-rows: minmax(230px, 0.52fr) minmax(0, 1fr);
   }
   .writing-screen.is-preview-expanded .preview-text {
     display: block;

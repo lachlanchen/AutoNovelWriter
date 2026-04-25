@@ -34,8 +34,8 @@ Desktop:
 Mobile:
 
 - The bottom tabs remain full width, mobile-app style.
-- Preview starts folded to preserve vertical room for chat.
-- `Preview` expands the preview; `Hide` folds it again.
+- Preview now starts expanded, with a compact three-line icon to fold it when chat needs more room.
+- The old text `Preview` / `Hide` button was replaced by an icon button to reduce header width.
 - Subtitles are hidden or ellipsized on narrow screens.
 - Chat and input get most of the height.
 - Padding, gaps, and bottom navigation height were reduced.
@@ -138,6 +138,7 @@ Recent shell cache bumps:
 - `autoappdev-shell-v25`: clickable History popover and Beats Board legacy-history recovery.
 - `autoappdev-shell-v26`: lazy chat message paging and cleaner Autopilot Loop toolbar.
 - `autoappdev-shell-v27`: dedicated Settings page and default shared writing sessions.
+- `autoappdev-shell-v28`: AutoNovel Studio title, compact header chrome, expanded previews, and Settings-only monitor access.
 
 When shell behavior changes, bump `pwa/service-worker.js` again.
 
@@ -173,7 +174,7 @@ This keeps a new browser chat from automatically continuing the old Codex conver
 
 Session title behavior follows the LazyBlog Studio pattern: create the session as `Untitled chat`, then rename it from the first user message. AutoNovelWriter strips its internal instruction prefixes before deriving the title, so a Beats Board message such as `Add this to...: 太多整天是非對錯的蠢貨了` becomes a readable title based on the actual note. The backend also exposes `POST /api/chat/sessions` with `{"action":"rename", ...}` for explicit local title updates.
 
-Important rendering rule: each writing tab must render only its own mode/session chat. Beats Board messages should not be painted into Draft Studio, Autopilot Loop, or AP Setup. Global outbox messages remain limited to the older internal chat panel.
+Important rendering rule: each writing tab must render only its own mode/session chat. Beats Board messages should not be painted into Draft Studio, Autopilot Loop, or Autopilot Setup. Global outbox messages remain limited to the older internal chat panel.
 
 The History button now opens an in-app clickable session list rather than a browser `prompt()` with numbered choices. Each row shows the session title, timestamp, and current-session marker. This avoids the awkward `1. Probe Session` flow and works better on mobile.
 
@@ -181,15 +182,17 @@ Beats Board also exposes the older `legacy` shared chat as `Legacy Chat (previou
 
 Writing-tab chat logs now lazy-load message history. `GET /api/chat` accepts `limit` and `offset`; the frontend first loads the newest 10 raw messages, renders a top `More earlier messages` control when older history exists, and automatically loads the next batch when the user scrolls near the top. The renderer preserves scroll position when prepending older messages, so reading back through history should not jump.
 
-Autopilot Loop no longer shows the shared Monitor button in its toolbar. The freed slot keeps `AP Setup` visible as the primary path into the Scratch-like pipeline editor. Other tabs still expose Monitor where it is useful.
+Autopilot Loop no longer shows the shared Monitor button in its toolbar. The freed slot keeps `Autopilot Setup` visible as the primary path into the Scratch-like pipeline editor. Monitor access is centralized in Settings.
 
-Settings is now a dedicated workspace page instead of an expandable topbar section. The topbar `Settings` button and bottom `Settings` tab open the same page. Controls are grouped into panels:
+Settings is now a dedicated workspace page instead of an expandable topbar section. The topbar uses a right-side gear button and the bottom `Settings` tab opens the same page. Controls are grouped into panels:
 
 - Agent: agent, model, reply reasoning, assistant reasoning.
 - Session: `Share Session`, language, theme.
 - Pipeline: Start, Pause, Resume, Stop with equal button height and a separated status/message area.
 
-`Share Session` defaults on. When enabled, `Beats Board`, `Draft Studio`, `Autopilot Loop`, and `AP Setup` resolve to the same active backend chat session. When disabled, each tab keeps its own active session, but the backend still injects all tab session ids and Codex resume file paths into reply/writer prompts so agents stay aware of adjacent tab context.
+`Share Session` defaults on. When enabled, `Beats Board`, `Draft Studio`, `Autopilot Loop`, and `Autopilot Setup` resolve to the same active backend chat session. When disabled, each tab keeps its own active session, but the backend still injects all tab session ids and Codex resume file paths into reply/writer prompts so agents stay aware of adjacent tab context.
+
+The app title shown in the browser shell is now `AutoNovel Studio`. The topbar defaults to compact chrome: a left three-line button, centered title, and right gear Settings button. The left button expands or hides logo/subtitle details. Monitor buttons were removed from writing preview headers and the Autopilot Setup program header; the Agent Monitor now lives in Settings.
 
 ## Files Changed in These Updates
 

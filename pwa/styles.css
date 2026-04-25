@@ -1160,6 +1160,8 @@ html[dir="rtl"] .msg--system {
     padding: 6px 10px;
     max-width: 100vw;
     overflow-x: hidden;
+    border-bottom-color: transparent;
+    box-shadow: 0 12px 30px rgba(12, 18, 28, 0.06);
   }
   .layout {
     grid-template-columns: 1fr;
@@ -1227,7 +1229,8 @@ html[dir="rtl"] .msg--system {
   }
   .writing-screen {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    padding-top: 0;
   }
   .brand {
     min-width: 0;
@@ -1320,6 +1323,10 @@ html[dir="rtl"] .msg--system {
   .panel {
     border-radius: 14px;
   }
+  .writing-preview {
+    border-top: 0;
+    border-radius: 0 0 14px 14px;
+  }
   .writing-head {
     align-items: center;
     gap: 8px;
@@ -1344,10 +1351,10 @@ html[dir="rtl"] .msg--system {
   }
   .writing-actions {
     display: grid;
-    grid-template-columns: 32px repeat(2, minmax(68px, 1fr));
+    grid-template-columns: repeat(2, minmax(68px, 1fr));
     gap: 5px;
-    flex: 0 0 min(70vw, 184px);
-    max-width: min(70vw, 184px);
+    flex: 0 0 min(58vw, 152px);
+    max-width: min(58vw, 152px);
   }
   .writing-actions .btn {
     width: 100%;
@@ -1362,14 +1369,13 @@ html[dir="rtl"] .msg--system {
     text-overflow: ellipsis;
   }
   .preview-toggle {
-    display: inline-grid;
-    min-width: 32px;
-    width: 32px;
-    height: 32px;
-    padding: 0;
+    display: none;
   }
   .writing-screen.is-preview-collapsed {
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .writing-screen.is-preview-collapsed .writing-preview {
+    display: none;
   }
   .writing-screen.is-preview-collapsed .preview-text {
     display: none;

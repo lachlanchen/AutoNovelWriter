@@ -91,10 +91,10 @@ It also has a setup chat area below the three columns. The `Agent` monitor butto
 On small screens the header collapses controls:
 
 - compact default: left three-line chrome button, centered `AutoNovel Studio` title, and right gear Settings button,
-- expanded chrome: logo/subtitle details become visible,
+- the same left three-line button toggles the active writing preview instead of adding a second preview button inside the card,
 - Settings page: Agent, Model, Reply reasoning, Assistant reasoning, Language, Theme, Share Session, and Start/Pause/Resume/Stop.
 
-`pwa/app.js` updates the CSS variable `--topbar-h` through `setViewportVars()` so workspace heights adapt when the settings row opens or closes.
+`pwa/app.js` updates the CSS variable `--topbar-h` through `setViewportVars()` so workspace heights adapt to the compact mobile header. On mobile, writing previews start collapsed and open from the top-left app button; on desktop, preview cards keep their own fold button.
 
 ## Agent Monitor
 

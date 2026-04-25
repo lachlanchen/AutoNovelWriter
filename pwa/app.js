@@ -775,9 +775,19 @@ async function api(path, opts = {}) {
 }
 
 function setViewportVars() {
-  const mobile = window.matchMedia && window.matchMedia("(max-width: 780px)").matches;
+  const mobile = isMobileViewport();
   const topbarHeight = els.topbar ? Math.ceil(els.topbar.getBoundingClientRect().height) : mobile ? 64 : 92;
   document.documentElement.style.setProperty("--topbar-h", `${Math.max(mobile ? 64 : 76, topbarHeight)}px`);
+}
+
+function isMobileViewport() {
+  return Boolean(window.matchMedia && window.matchMedia("(max-width: 780px)").matches);
+}
+
+function activeWritingScreen() {
+  return Array.from(document.querySelectorAll(".writing-screen") || []).find(
+    (screen) => screen && !screen.hidden && screen.classList.contains("is-active")
+  );
 }
 
 function setPreviewExpanded(screen, expanded, { touched = true } = {}) {
@@ -793,16 +803,25 @@ function setPreviewExpanded(screen, expanded, { touched = true } = {}) {
 }
 
 function syncPreviewLayoutForViewport() {
-  const mobile = window.matchMedia && window.matchMedia("(max-width: 780px)").matches;
+  const mobile = isMobileViewport();
   document.querySelectorAll(".writing-screen").forEach((screen) => {
     if (!mobile) {
       setPreviewExpanded(screen, true, { touched: false });
       return;
     }
     const touched = screen.dataset.previewTouched === "1";
-    const expanded = touched ? screen.classList.contains("is-preview-expanded") : true;
+    const expanded = touched ? screen.classList.contains("is-preview-expanded") : false;
     setPreviewExpanded(screen, expanded, { touched });
   });
+}
+
+function toggleMobilePreviewFromChrome() {
+  const screen = activeWritingScreen();
+  if (!screen) return false;
+  setPreviewExpanded(screen, !screen.classList.contains("is-preview-expanded"));
+  document.body.classList.add("chrome-compact");
+  window.requestAnimationFrame(setViewportVars);
+  return true;
 }
 
 function closeAgentPopover() {
@@ -884,6 +903,8 @@ function setNovelTab(key) {
     localStorage.setItem("autonovelwriter_novel_tab", target);
   } catch {}
   if (target === "beats" || target === "draft" || target === "loop" || target === "setup") {
+    syncPreviewLayoutForViewport();
+    window.requestAnimationFrame(setViewportVars);
     loadNovelPreview();
     loadChat();
   } else if (target === "settings") {
@@ -2817,6 +2838,7 @@ function bindControls() {
   }
   if (els.chromeToggle) {
     els.chromeToggle.addEventListener("click", () => {
+      if (isMobileViewport() && toggleMobilePreviewFromChrome()) return;
       document.body.classList.toggle("chrome-compact");
       window.requestAnimationFrame(setViewportVars);
     });

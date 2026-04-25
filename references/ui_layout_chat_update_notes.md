@@ -34,8 +34,8 @@ Desktop:
 Mobile:
 
 - The bottom tabs remain full width, mobile-app style.
-- Preview now starts expanded, with a compact three-line icon to fold it when chat needs more room.
-- The old text `Preview` / `Hide` button was replaced by an icon button to reduce header width.
+- Mobile preview is controlled by the single top-left app chrome button, so preview panels no longer add a second three-line icon on narrow screens.
+- The old text `Preview` / `Hide` button was replaced by icon-only controls on desktop and by the global app chrome toggle on mobile.
 - Subtitles are hidden or ellipsized on narrow screens.
 - Chat and input get most of the height.
 - Padding, gaps, and bottom navigation height were reduced.
@@ -139,6 +139,7 @@ Recent shell cache bumps:
 - `autoappdev-shell-v26`: lazy chat message paging and cleaner Autopilot Loop toolbar.
 - `autoappdev-shell-v27`: dedicated Settings page and default shared writing sessions.
 - `autoappdev-shell-v28`: AutoNovel Studio title, compact header chrome, expanded previews, and Settings-only monitor access.
+- `autoappdev-shell-v29`: mobile preview merged with the global header control, preview-card hamburger hidden on mobile, and Loop header setup shortcut removed.
 
 When shell behavior changes, bump `pwa/service-worker.js` again.
 
@@ -192,7 +193,7 @@ Settings is now a dedicated workspace page instead of an expandable topbar secti
 
 `Share Session` defaults on. When enabled, `Beats Board`, `Draft Studio`, `Autopilot Loop`, and `Autopilot Setup` resolve to the same active backend chat session. When disabled, each tab keeps its own active session, but the backend still injects all tab session ids and Codex resume file paths into reply/writer prompts so agents stay aware of adjacent tab context.
 
-The app title shown in the browser shell is now `AutoNovel Studio`. The topbar defaults to compact chrome: a left three-line button, centered title, and right gear Settings button. The left button expands or hides logo/subtitle details. Monitor buttons were removed from writing preview headers and the Autopilot Setup program header; the Agent Monitor now lives in Settings.
+The app title shown in the browser shell is now `AutoNovel Studio`. The topbar defaults to compact chrome: a left three-line button, centered title, and right gear Settings button. On desktop, the left button expands or hides logo/subtitle details. On mobile, the same left button owns preview visibility for the active writing tab, so there is only one three-line control on screen. Monitor buttons were removed from writing preview headers and the Autopilot Setup program header; the Agent Monitor now lives in Settings.
 
 ## Files Changed in These Updates
 

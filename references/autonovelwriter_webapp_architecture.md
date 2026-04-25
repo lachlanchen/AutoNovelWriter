@@ -161,9 +161,9 @@ Browser chat now supports backend-owned sessions. Each writing mode can have its
 
 The first three writing tabs expose `New Chat` and `History` buttons. `New Chat` calls `POST /api/chat/sessions`, creates a new session for the current mode, marks it active on the backend, and reloads the chat. Because the active session is backend-owned, another open browser can pick it up on the next live sync for the same mode.
 
-New chat sessions also get separate Codex resume files under `runtime/novel/state/chat_sessions/<session_id>/`, so the quick reply and assistant writer do not have to keep using the legacy Codex thread. The `legacy` session preserves older global chat behavior.
+New chat sessions also get separate Codex resume files under `runtime/novel/state/chat_sessions/<session_id>/`, so the quick reply and assistant writer do not have to keep using the legacy Codex thread. The `legacy` session preserves older global chat behavior and appears in Beats Board history when it contains earlier Beats-style notes.
 
-Like LazyBlog Studio, session titles start as `Untitled chat` and are renamed from the first user message. AutoNovelWriter strips internal mode prefixes before deriving the title. `POST /api/chat/sessions` also supports `action=rename` for explicit local title changes. Each writing tab renders only its own mode/session chat; cross-tab painting is treated as a UI bug.
+Like LazyBlog Studio, session titles start as `Untitled chat` and are renamed from the first user message. AutoNovelWriter strips internal mode prefixes before deriving the title. `POST /api/chat/sessions` also supports `action=rename` for explicit local title changes. The frontend History control is a clickable popover list, not a browser number prompt. Each writing tab renders only its own mode/session chat; cross-tab painting is treated as a UI bug.
 
 ## Backend API Reference
 
@@ -279,11 +279,12 @@ Key functions in `pwa/app.js`:
 - `novelAgentOptions(mode)`: reads model and reasoning controls and sends them with chat.
 - `submitNovelText(prefix, textarea)`: prefixes the user text by workspace intent, posts to `/api/chat`, refreshes chat/status/preview.
 - `loadNovelPreview()`: pulls `/api/novel/preview` and fills Beats, Draft, and Loop preview panes.
-- `loadChat()`: merges chat and outbox messages and renders them into all relevant workspace chat logs.
+- `loadChat()`: loads only the active mode/session and renders it into that tab's chat log.
+- `showChatHistory(mode)`: opens the clickable history popover, lists session titles, and selects the requested backend-owned session.
 - `refreshNovelAgentStatus()`: fills the Agent Monitor.
 - `setViewportVars()`: measures the topbar and updates `--topbar-h`.
 
-The browser intentionally mirrors the same chat history in multiple tabs. The active tab changes the instruction prefix and `agent_options.mode`, not the underlying conversation stream.
+The browser must not mirror the same chat history into every writing tab. Beats Board, Draft Studio, Autopilot Loop, and AP Setup each have a mode-specific active session. The old global outbox merge remains limited to the internal Chat tab.
 
 ## PWA Cache Strategy
 

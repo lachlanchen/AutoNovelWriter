@@ -576,6 +576,7 @@
             <button class="btn btn--ghost preview-toggle" type="button" data-preview-toggle aria-expanded="false">Show</button>
             <button class="btn btn--ghost" type="button" data-new-chat>New Chat</button>
             <button class="btn btn--ghost" type="button" data-agent-monitor>Monitor</button>
+            <button class="btn btn--ghost" type="button" data-chat-history>History</button>
             <button class="btn btn--ghost" type="button" data-novel-tab="setup">AP Setup</button>
           </div>
         </div>
@@ -600,6 +601,17 @@
       </div>
       <pre class="novel-agent-status" id="novel-agent-status">loading...</pre>
       <button class="btn btn--ghost" id="novel-agent-refresh" type="button">Refresh</button>
+    </aside>
+
+    <aside class="history-popover" id="history-popover" hidden>
+      <div class="writing-head">
+        <div>
+          <h2>Chat History</h2>
+          <p id="history-popover-meta">Open a saved session for this tab.</p>
+        </div>
+        <button class="btn btn--ghost" id="history-popover-close" type="button">Close</button>
+      </div>
+      <div class="history-list" id="history-list"></div>
     </aside>
 
     <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="false"></div>

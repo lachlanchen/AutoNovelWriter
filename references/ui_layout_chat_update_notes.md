@@ -135,6 +135,7 @@ Recent shell cache bumps:
 - `autoappdev-shell-v19`: preview action overflow fix and toast-based mechanical ack.
 - `autoappdev-shell-v20`: backend-owned chat sessions and `New Chat` buttons on the writing tabs.
 - `autoappdev-shell-v24`: session titles from first user message, per-tab chat rendering, toolbar label updates, and History session switching.
+- `autoappdev-shell-v25`: clickable History popover and Beats Board legacy-history recovery.
 
 When shell behavior changes, bump `pwa/service-worker.js` again.
 
@@ -171,6 +172,10 @@ This keeps a new browser chat from automatically continuing the old Codex conver
 Session title behavior follows the LazyBlog Studio pattern: create the session as `Untitled chat`, then rename it from the first user message. AutoNovelWriter strips its internal instruction prefixes before deriving the title, so a Beats Board message such as `Add this to...: 太多整天是非對錯的蠢貨了` becomes a readable title based on the actual note. The backend also exposes `POST /api/chat/sessions` with `{"action":"rename", ...}` for explicit local title updates.
 
 Important rendering rule: each writing tab must render only its own mode/session chat. Beats Board messages should not be painted into Draft Studio, Autopilot Loop, or AP Setup. Global outbox messages remain limited to the older internal chat panel.
+
+The History button now opens an in-app clickable session list rather than a browser `prompt()` with numbered choices. Each row shows the session title, timestamp, and current-session marker. This avoids the awkward `1. Probe Session` flow and works better on mobile.
+
+Beats Board also exposes the older `legacy` shared chat as `Legacy Chat (previous Beats history)` when that legacy stream has messages. This preserves notes created before per-tab sessions existed while still allowing fresh Beats, Draft, Loop, and Setup chats to stay separate.
 
 ## Files Changed in These Updates
 

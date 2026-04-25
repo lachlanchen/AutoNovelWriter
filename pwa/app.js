@@ -101,6 +101,10 @@ const els = {
   agentMonitorButtons: document.querySelectorAll("[data-agent-monitor]"),
   agentPopover: document.getElementById("agent-popover"),
   agentPopoverClose: document.getElementById("agent-popover-close"),
+  historyPopover: document.getElementById("history-popover"),
+  historyPopoverClose: document.getElementById("history-popover-close"),
+  historyPopoverMeta: document.getElementById("history-popover-meta"),
+  historyList: document.getElementById("history-list"),
   novelAgentStatus: document.getElementById("novel-agent-status"),
   novelAgentRefresh: document.getElementById("novel-agent-refresh"),
   toastStack: document.getElementById("toast-stack"),
@@ -801,6 +805,37 @@ function syncPreviewLayoutForViewport() {
 
 function closeAgentPopover() {
   if (els.agentPopover) els.agentPopover.hidden = true;
+}
+
+function closeHistoryPopover() {
+  if (els.historyPopover) els.historyPopover.hidden = true;
+}
+
+function chatModeLabel(mode) {
+  return {
+    beats: "Beats Board",
+    draft: "Draft Studio",
+    loop: "Autopilot Loop",
+    setup: "AP Setup",
+    chat: "Chat",
+  }[mode] || "Chat";
+}
+
+function sessionTitle(session) {
+  return String((session && (session.title || session.id)) || "Untitled chat").trim() || "Untitled chat";
+}
+
+function sessionDateLabel(session) {
+  const raw = String((session && (session.updated_at || session.created_at)) || "").trim();
+  if (!raw) return "No timestamp";
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw;
+  return date.toLocaleString([], {
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function isMechanicalAckMessage(message) {
@@ -2280,34 +2315,60 @@ async function startNewChat(mode = activeChatMode()) {
 async function showChatHistory(mode = activeChatMode()) {
   const cleanMode = ["beats", "draft", "loop", "setup"].includes(mode) ? mode : "chat";
   try {
-    const res = await api(`/api/chat/sessions?limit=10&mode=${encodeURIComponent(cleanMode)}`, { timeout_ms: 6000 });
-    const sessions = Array.isArray(res && res.sessions) ? res.sessions : [];
+    const res = await api(`/api/chat/sessions?limit=20&mode=${encodeURIComponent(cleanMode)}`, { timeout_ms: 6000 });
+    const sessions = (Array.isArray(res && res.sessions) ? res.sessions : []).filter(
+      (session) => String(session && session.title ? session.title : "").trim().toLowerCase() !== "probe session"
+    );
     if (!sessions.length) {
       showToast("No chat history for this tab yet.", { kind: "notice" });
       return;
     }
-    const lines = sessions.map((session, idx) => {
-      const title = String(session.title || session.id || "Untitled").trim();
-      const active = session.id === res.active_session_id ? " *" : "";
-      return `${idx + 1}. ${title}${active}`;
-    });
-    const choice = window.prompt(`Chat history\n\n${lines.join("\n")}\n\nEnter number to open:`, "1");
-    if (choice === null) return;
-    const n = Number.parseInt(String(choice).trim(), 10);
-    if (!Number.isFinite(n) || n < 1 || n > sessions.length) {
-      showToast("History selection ignored.", { kind: "notice" });
+
+    if (!els.historyPopover || !els.historyList) {
+      showToast("History list unavailable.", { kind: "notice" });
       return;
     }
-    const selected = sessions[n - 1];
-    if (!selected || !selected.id) return;
-    await api("/api/chat/sessions", {
-      method: "POST",
-      timeout_ms: 6000,
-      body: JSON.stringify({ action: "select", mode: cleanMode, session_id: selected.id }),
+
+    if (els.historyPopoverMeta) {
+      els.historyPopoverMeta.textContent = `${chatModeLabel(cleanMode)} sessions`;
+    }
+    els.historyList.innerHTML = "";
+    sessions.forEach((session) => {
+      const id = String(session && session.id ? session.id : "").trim();
+      if (!id) return;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "history-item";
+      if (id === res.active_session_id) btn.classList.add("is-active");
+      btn.innerHTML = "";
+
+      const title = document.createElement("span");
+      title.className = "history-item__title";
+      title.textContent = sessionTitle(session);
+      const meta = document.createElement("span");
+      meta.className = "history-item__meta";
+      meta.textContent = `${sessionDateLabel(session)}${id === res.active_session_id ? " · current" : ""}`;
+      btn.append(title, meta);
+
+      btn.addEventListener("click", async () => {
+        try {
+          await api("/api/chat/sessions", {
+            method: "POST",
+            timeout_ms: 6000,
+            body: JSON.stringify({ action: "select", mode: cleanMode, session_id: id }),
+          });
+          activeChatSessions[cleanMode] = id;
+          closeHistoryPopover();
+          showToast(`Opened ${sessionTitle(session)}.`, { kind: "notice" });
+          await loadChatMode(cleanMode);
+        } catch (e) {
+          showToast(`Open history failed: ${(e && e.message) || String(e)}`, { kind: "notice", timeout: 6500 });
+        }
+      });
+      els.historyList.appendChild(btn);
     });
-    activeChatSessions[cleanMode] = String(selected.id);
-    showToast(`Opened ${selected.title || "chat session"}.`, { kind: "notice" });
-    await loadChat();
+
+    els.historyPopover.hidden = false;
   } catch (e) {
     showToast(`History failed: ${(e && e.message) || String(e)}`, { kind: "notice", timeout: 6500 });
   }
@@ -2579,15 +2640,29 @@ function bindControls() {
       closeAgentPopover();
     });
   }
+  if (els.historyPopoverClose && els.historyPopover) {
+    els.historyPopoverClose.addEventListener("click", () => {
+      closeHistoryPopover();
+    });
+  }
   document.addEventListener("pointerdown", (ev) => {
-    if (!els.agentPopover || els.agentPopover.hidden) return;
     const target = ev.target;
-    if (els.agentPopover.contains(target)) return;
-    if (target && target.closest && target.closest("[data-agent-monitor]")) return;
-    closeAgentPopover();
+    if (els.agentPopover && !els.agentPopover.hidden) {
+      if (!els.agentPopover.contains(target) && !(target && target.closest && target.closest("[data-agent-monitor]"))) {
+        closeAgentPopover();
+      }
+    }
+    if (els.historyPopover && !els.historyPopover.hidden) {
+      if (!els.historyPopover.contains(target) && !(target && target.closest && target.closest("[data-chat-history]"))) {
+        closeHistoryPopover();
+      }
+    }
   });
   document.addEventListener("keydown", (ev) => {
-    if (ev.key === "Escape") closeAgentPopover();
+    if (ev.key === "Escape") {
+      closeAgentPopover();
+      closeHistoryPopover();
+    }
   });
   if (els.novelAgentRefresh) {
     els.novelAgentRefresh.addEventListener("click", refreshNovelAgentStatus);

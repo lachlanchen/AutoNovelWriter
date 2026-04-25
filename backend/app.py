@@ -101,8 +101,6 @@ async def _active_chat_session_id(storage: Storage, mode: str) -> str:
         sid = _normalize_chat_session_id(active.get(clean_mode) or default_session)
     else:
         sid = default_session
-    if clean_mode != "chat" and sid == "legacy":
-        sid = default_session
     return sid
 
 
@@ -1585,6 +1583,29 @@ class ChatSessionsHandler(BaseHandler):
         mode = _normalize_chat_mode(self.get_query_argument("mode", "chat"))
         active_session_id = await _active_chat_session_id(self.storage, mode)
         sessions = await self.storage.list_chat_sessions(limit=limit, mode=mode)
+        sessions = [
+            session
+            for session in sessions
+            if str(session.get("title") or "").strip().lower() != "probe session"
+        ]
+        if mode == "beats" and not any(str(session.get("id") or "") == "legacy" for session in sessions):
+            legacy_messages = await self.storage.list_chat_messages(limit=1, session_id="legacy")
+            if legacy_messages:
+                legacy_rows = await self.storage.list_chat_sessions(limit=50, mode="chat")
+                legacy = next((dict(row) for row in legacy_rows if str(row.get("id") or "") == "legacy"), None)
+                if legacy is None:
+                    legacy = {
+                        "id": "legacy",
+                        "title": "Legacy Chat",
+                        "mode": "chat",
+                        "created_at": None,
+                        "updated_at": None,
+                    }
+                if str(legacy.get("title") or "").strip() == "Legacy Chat":
+                    legacy["title"] = "Legacy Chat (previous Beats history)"
+                if not legacy.get("updated_at"):
+                    legacy["updated_at"] = legacy_messages[-1].get("created_at")
+                sessions = [legacy] + sessions
         self.write_json({"ok": True, "mode": mode, "active_session_id": active_session_id, "sessions": sessions})
 
     async def post(self) -> None:

@@ -810,16 +810,23 @@ class Storage:
         st["outbox"] = st["outbox"][-200:]
         self._write_state(st)
 
-    async def list_chat_messages(self, limit: int = 50, session_id: str | None = None) -> list[dict[str, Any]]:
+    async def list_chat_messages(
+        self,
+        limit: int = 50,
+        session_id: str | None = None,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
         lim = max(1, min(500, int(limit)))
+        off = max(0, int(offset))
         sid = str(session_id or "legacy").strip() or "legacy"
         if self._pool:
             async with self._pool.acquire() as conn:
                 rows = await conn.fetch(
                     "select id, session_id, role, content, created_at from chat_messages "
-                    "where session_id=$1 order by id desc limit $2",
+                    "where session_id=$1 order by id desc limit $2 offset $3",
                     sid,
                     lim,
+                    off,
                 )
                 items = [
                     {
@@ -844,8 +851,13 @@ class Storage:
             item_sid = str(it.get("session_id") or "legacy")
             if item_sid != sid:
                 continue
-            out.append(it)
-        return out[-lim:]
+            item = dict(it)
+            item.setdefault("id", len(out) + 1)
+            item.setdefault("session_id", item_sid)
+            out.append(item)
+        end = max(0, len(out) - off)
+        start = max(0, end - lim)
+        return out[start:end]
 
     async def list_inbox_messages(self, limit: int = 50) -> list[dict[str, Any]]:
         lim = max(1, min(500, int(limit)))

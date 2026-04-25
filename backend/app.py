@@ -1527,13 +1527,26 @@ class ChatHandler(BaseHandler):
         self.novel_orchestrator = novel_orchestrator
 
     async def get(self) -> None:
-        limit = int(self.get_query_argument("limit", "50"))
+        limit = max(1, min(120, int(self.get_query_argument("limit", "50"))))
+        offset = max(0, int(self.get_query_argument("offset", "0")))
         mode = _normalize_chat_mode(self.get_query_argument("mode", "chat"))
         requested_session = self.get_query_argument("session_id", "").strip()
         session_id = _normalize_chat_session_id(requested_session) if requested_session else await _active_chat_session_id(self.storage, mode)
-        items = await self.storage.list_chat_messages(limit=limit, session_id=session_id)
+        page = await self.storage.list_chat_messages(limit=limit + 1, session_id=session_id, offset=offset)
+        has_more = len(page) > limit
+        items = page[1:] if has_more else page
         sessions = await self.storage.list_chat_sessions(limit=30, mode=mode)
-        self.write_json({"messages": items, "session_id": session_id, "mode": mode, "sessions": sessions})
+        self.write_json(
+            {
+                "messages": items,
+                "session_id": session_id,
+                "mode": mode,
+                "sessions": sessions,
+                "offset": offset,
+                "next_offset": offset + len(items),
+                "has_more": has_more,
+            }
+        )
 
     async def post(self) -> None:
         body = json.loads(self.request.body or b"{}")

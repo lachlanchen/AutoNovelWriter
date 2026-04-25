@@ -114,6 +114,10 @@ const UI_LANG_STORAGE_KEY = "autoappdev_ui_lang";
 let uiLang = "en";
 let liveSyncBusy = false;
 let activeChatSessions = {};
+const CHAT_PAGE_SIZE = 10;
+const WRITING_CHAT_MODES = new Set(["beats", "draft", "loop", "setup"]);
+let chatPaging = {};
+let chatOlderBusy = {};
 
 function normalizeUiLang(raw) {
   const i18n = window.AutoAppDevI18n && typeof window.AutoAppDevI18n === "object" ? window.AutoAppDevI18n : null;
@@ -967,7 +971,7 @@ async function submitNovelText(prefix, textarea) {
     if (res && res.notice && res.notice.kind === "mechanical_ack") {
       showToast(res.notice.text, { kind: "notice" });
     }
-    await Promise.all([loadChat(), refreshNovelAgentStatus(), loadNovelPreview()]);
+    await Promise.all([loadChatMode(mode, { scrollBottom: true }), refreshNovelAgentStatus(), loadNovelPreview()]);
   } catch (e) {
     if (els.ctrlMsg) {
       els.ctrlMsg.textContent = (e && e.message) || String(e);
@@ -2253,25 +2257,85 @@ function chatContainerForMode(mode) {
   return els.chatlog;
 }
 
-function renderMessagesInto(container, messages) {
+function resetChatPaging(mode) {
+  delete chatPaging[mode];
+}
+
+function chatPageState(mode) {
+  if (!chatPaging[mode]) {
+    chatPaging[mode] = { sessionId: "", rawMessages: [], nextOffset: 0, hasMore: false };
+  }
+  return chatPaging[mode];
+}
+
+function messageKey(message, idx = 0) {
+  if (message && message.id !== undefined && message.id !== null) return `id:${message.id}`;
+  return [
+    message && message.session_id ? message.session_id : "",
+    message && message.created_at ? message.created_at : "",
+    message && message.role ? message.role : "",
+    message && message.content ? message.content : "",
+    idx,
+  ].join("|");
+}
+
+function mergeMessages(oldMessages, newMessages) {
+  const seen = new Set();
+  const out = [];
+  [...(newMessages || []), ...(oldMessages || [])].forEach((message, idx) => {
+    const key = messageKey(message, idx);
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(message);
+  });
+  return out;
+}
+
+function visibleChatMessages(messages) {
+  return (Array.isArray(messages) ? messages : []).filter((m) => !isMechanicalAckMessage(m));
+}
+
+function renderMessagesInto(container, messages, { mode = "chat", hasMore = false } = {}) {
   if (!container) return;
   container.innerHTML = "";
+  if (hasMore) {
+    const moreWrap = document.createElement("div");
+    moreWrap.className = "chat-more-wrap";
+    const more = document.createElement("button");
+    more.type = "button";
+    more.className = "btn btn--ghost chat-more";
+    more.textContent = "More earlier messages";
+    more.addEventListener("click", () => loadOlderChat(mode));
+    moreWrap.appendChild(more);
+    container.appendChild(moreWrap);
+  }
   messages.forEach((m) => {
     const div = document.createElement("div");
     div.className = `msg ${m.role === "user" ? "msg--user" : "msg--system"}`;
     div.textContent = m.content || "";
     container.appendChild(div);
   });
-  container.scrollTop = container.scrollHeight;
 }
 
-async function loadChatMode(mode) {
+async function loadOlderChat(mode = activeChatMode()) {
   const cleanMode = ["beats", "draft", "loop", "setup"].includes(mode) ? mode : "chat";
-  const chatRes = await api(`/api/chat?limit=120&mode=${encodeURIComponent(cleanMode)}`).catch(() => ({ messages: [] }));
-  if (chatRes && chatRes.session_id) activeChatSessions[cleanMode] = String(chatRes.session_id);
-  const chat = Array.isArray(chatRes && chatRes.messages) ? chatRes.messages : [];
-  const messages = chat.filter((m) => !isMechanicalAckMessage(m));
+  const state = chatPageState(cleanMode);
+  if (!WRITING_CHAT_MODES.has(cleanMode) || !state.hasMore || chatOlderBusy[cleanMode]) return;
+  chatOlderBusy[cleanMode] = true;
+  try {
+    await loadChatMode(cleanMode, { loadOlder: true });
+  } finally {
+    chatOlderBusy[cleanMode] = false;
+  }
+}
+
+async function loadChatMode(mode, { loadOlder = false, forceReset = false, scrollBottom = false } = {}) {
+  const cleanMode = ["beats", "draft", "loop", "setup"].includes(mode) ? mode : "chat";
+  const container = chatContainerForMode(cleanMode);
   if (cleanMode === "chat") {
+    const chatRes = await api(`/api/chat?limit=120&mode=${encodeURIComponent(cleanMode)}`).catch(() => ({ messages: [] }));
+    if (chatRes && chatRes.session_id) activeChatSessions[cleanMode] = String(chatRes.session_id);
+    const messages = visibleChatMessages(chatRes && chatRes.messages);
     const outboxRes = await api("/api/outbox?limit=40").catch(() => ({ messages: [] }));
     const outbox = Array.isArray(outboxRes && outboxRes.messages) ? outboxRes.messages : [];
     messages.push(...outbox);
@@ -2280,9 +2344,60 @@ async function loadChatMode(mode) {
       const tb = Date.parse(b.created_at || "") || 0;
       return ta - tb;
     });
+    renderMessagesInto(container, messages, { mode: cleanMode, hasMore: false });
+    if (container) container.scrollTop = container.scrollHeight;
+    return chatRes;
   }
-  renderMessagesInto(chatContainerForMode(cleanMode), messages);
+
+  const state = chatPageState(cleanMode);
+  const offset = loadOlder && !forceReset ? state.nextOffset || 0 : 0;
+  const limit = loadOlder || forceReset ? CHAT_PAGE_SIZE : Math.max(CHAT_PAGE_SIZE, state.nextOffset || CHAT_PAGE_SIZE);
+  const oldHeight = container ? container.scrollHeight : 0;
+  const oldTop = container ? container.scrollTop : 0;
+  const nearBottom = container ? oldHeight - oldTop - container.clientHeight < 96 : true;
+  const chatRes = await api(
+    `/api/chat?limit=${limit}&offset=${offset}&mode=${encodeURIComponent(cleanMode)}`
+  ).catch(() => ({ messages: [], has_more: false, next_offset: 0 }));
+
+  const sessionId = chatRes && chatRes.session_id ? String(chatRes.session_id) : "";
+  if (sessionId) activeChatSessions[cleanMode] = sessionId;
+  if (forceReset || !loadOlder || (state.sessionId && sessionId && state.sessionId !== sessionId)) {
+    state.rawMessages = Array.isArray(chatRes && chatRes.messages) ? chatRes.messages : [];
+  } else {
+    state.rawMessages = mergeMessages(state.rawMessages, Array.isArray(chatRes && chatRes.messages) ? chatRes.messages : []);
+  }
+  state.sessionId = sessionId;
+  state.nextOffset = Number.isFinite(Number(chatRes && chatRes.next_offset))
+    ? Number(chatRes.next_offset)
+    : state.rawMessages.length;
+  state.hasMore = Boolean(chatRes && chatRes.has_more);
+
+  renderMessagesInto(container, visibleChatMessages(state.rawMessages), {
+    mode: cleanMode,
+    hasMore: state.hasMore,
+  });
+  if (container) {
+    if (loadOlder) {
+      container.scrollTop = Math.max(0, container.scrollHeight - oldHeight + oldTop);
+    } else if (scrollBottom || nearBottom || forceReset) {
+      container.scrollTop = container.scrollHeight;
+    } else {
+      container.scrollTop = oldTop;
+    }
+  }
   return chatRes;
+}
+
+function bindChatLazyLoading() {
+  WRITING_CHAT_MODES.forEach((mode) => {
+    const container = chatContainerForMode(mode);
+    if (!container) return;
+    container.addEventListener("scroll", () => {
+      const state = chatPageState(mode);
+      if (!state.hasMore || chatOlderBusy[mode]) return;
+      if (container.scrollTop <= 80) loadOlderChat(mode);
+    });
+  });
 }
 
 async function liveSync({ force = false } = {}) {
@@ -2305,8 +2420,9 @@ async function startNewChat(mode = activeChatMode()) {
       body: JSON.stringify({ action: "new", mode: cleanMode }),
     });
     if (res && res.active_session_id) activeChatSessions[cleanMode] = String(res.active_session_id);
+    resetChatPaging(cleanMode);
     showToast("New chat session started.", { kind: "notice" });
-    await loadChat();
+    await loadChatMode(cleanMode, { forceReset: true, scrollBottom: true });
   } catch (e) {
     showToast(`New chat failed: ${(e && e.message) || String(e)}`, { kind: "notice", timeout: 6500 });
   }
@@ -2358,9 +2474,10 @@ async function showChatHistory(mode = activeChatMode()) {
             body: JSON.stringify({ action: "select", mode: cleanMode, session_id: id }),
           });
           activeChatSessions[cleanMode] = id;
+          resetChatPaging(cleanMode);
           closeHistoryPopover();
           showToast(`Opened ${sessionTitle(session)}.`, { kind: "notice" });
-          await loadChatMode(cleanMode);
+          await loadChatMode(cleanMode, { forceReset: true, scrollBottom: true });
         } catch (e) {
           showToast(`Open history failed: ${(e && e.message) || String(e)}`, { kind: "notice", timeout: 6500 });
         }
@@ -2593,6 +2710,7 @@ function bindControls() {
   els.novelTabs.forEach((tab) => {
     tab.addEventListener("click", () => setNovelTab(tab.dataset.novelTab || "beats"));
   });
+  bindChatLazyLoading();
   if (els.novelBeatsSend) {
     els.novelBeatsSend.addEventListener("click", () =>
       submitNovelText("Add this to the beats board and organize it into durable material: ", els.novelBeats)

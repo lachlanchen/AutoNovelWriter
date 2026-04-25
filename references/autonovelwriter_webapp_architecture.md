@@ -165,6 +165,8 @@ New chat sessions also get separate Codex resume files under `runtime/novel/stat
 
 Like LazyBlog Studio, session titles start as `Untitled chat` and are renamed from the first user message. AutoNovelWriter strips internal mode prefixes before deriving the title. `POST /api/chat/sessions` also supports `action=rename` for explicit local title changes. The frontend History control is a clickable popover list, not a browser number prompt. Each writing tab renders only its own mode/session chat; cross-tab painting is treated as a UI bug.
 
+Message history is paged separately from session history. `GET /api/chat?mode=beats&limit=10&offset=0` returns the newest page plus `has_more` and `next_offset`. The writing tabs prepend older pages when the user clicks `More earlier messages` or scrolls near the top, preserving the scroll position after each prepend.
+
 ## Backend API Reference
 
 ### Health and Config
@@ -280,6 +282,7 @@ Key functions in `pwa/app.js`:
 - `submitNovelText(prefix, textarea)`: prefixes the user text by workspace intent, posts to `/api/chat`, refreshes chat/status/preview.
 - `loadNovelPreview()`: pulls `/api/novel/preview` and fills Beats, Draft, and Loop preview panes.
 - `loadChat()`: loads only the active mode/session and renders it into that tab's chat log.
+- `loadOlderChat(mode)`: fetches the next older 10-message page and prepends it without disturbing the reader's position.
 - `showChatHistory(mode)`: opens the clickable history popover, lists session titles, and selects the requested backend-owned session.
 - `refreshNovelAgentStatus()`: fills the Agent Monitor.
 - `setViewportVars()`: measures the topbar and updates `--topbar-h`.

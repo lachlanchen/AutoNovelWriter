@@ -367,6 +367,20 @@ select, input, textarea {
   overflow: auto;
 }
 
+.chat-more-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 2px 0 10px;
+}
+
+.chat-more {
+  min-height: 32px;
+  padding: 6px 12px;
+  font-size: var(--font-sm);
+  color: var(--muted);
+  background: color-mix(in srgb, var(--panel) 82%, var(--bg));
+}
+
 .chatbar--large {
   padding: 12px;
 }
@@ -1127,6 +1141,14 @@ html[dir="rtl"] .msg--system {
   }
   .chatlog--large {
     padding: 8px;
+  }
+  .chat-more-wrap {
+    padding-bottom: 7px;
+  }
+  .chat-more {
+    min-height: 30px;
+    padding: 5px 10px;
+    font-size: 12px;
   }
   .chatbar--large {
     padding: 6px;

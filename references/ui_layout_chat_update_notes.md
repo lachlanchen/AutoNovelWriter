@@ -136,6 +136,7 @@ Recent shell cache bumps:
 - `autoappdev-shell-v20`: backend-owned chat sessions and `New Chat` buttons on the writing tabs.
 - `autoappdev-shell-v24`: session titles from first user message, per-tab chat rendering, toolbar label updates, and History session switching.
 - `autoappdev-shell-v25`: clickable History popover and Beats Board legacy-history recovery.
+- `autoappdev-shell-v26`: lazy chat message paging and cleaner Autopilot Loop toolbar.
 
 When shell behavior changes, bump `pwa/service-worker.js` again.
 
@@ -176,6 +177,10 @@ Important rendering rule: each writing tab must render only its own mode/session
 The History button now opens an in-app clickable session list rather than a browser `prompt()` with numbered choices. Each row shows the session title, timestamp, and current-session marker. This avoids the awkward `1. Probe Session` flow and works better on mobile.
 
 Beats Board also exposes the older `legacy` shared chat as `Legacy Chat (previous Beats history)` when that legacy stream has messages. This preserves notes created before per-tab sessions existed while still allowing fresh Beats, Draft, Loop, and Setup chats to stay separate.
+
+Writing-tab chat logs now lazy-load message history. `GET /api/chat` accepts `limit` and `offset`; the frontend first loads the newest 10 raw messages, renders a top `More earlier messages` control when older history exists, and automatically loads the next batch when the user scrolls near the top. The renderer preserves scroll position when prepending older messages, so reading back through history should not jump.
+
+Autopilot Loop no longer shows the shared Monitor button in its toolbar. The freed slot keeps `AP Setup` visible as the primary path into the Scratch-like pipeline editor. Other tabs still expose Monitor where it is useful.
 
 ## Files Changed in These Updates
 

@@ -84,26 +84,29 @@ This tab contains the original Scratch-like three-column editor:
 - Program canvas,
 - right panel for Status, Inbox, Logs, Actions, and Script.
 
-It also has a setup chat area below the three columns. The `Agent` monitor button is in the Program panel header, immediately before `Clear`.
+It also has a setup chat area below the three columns. Agent Monitor access is centralized in Settings rather than repeated in the Program panel header.
 
-## Mobile Header
+## App Header
 
-On small screens the header collapses controls:
+The header keeps the AutoNovel Studio brand visible. The logo, title, and subtitle are not controlled by a hamburger or any other fold state.
 
-- compact default: left three-line chrome button, centered `AutoNovel Studio` title, and right gear Settings button,
-- the same left three-line button toggles the active writing preview instead of adding a second preview button inside the card,
-- Settings page: Agent, Model, Reply reasoning, Assistant reasoning, Language, Theme, Share Session, and Start/Pause/Resume/Stop.
+Desktop:
 
-`pwa/app.js` updates the CSS variable `--topbar-h` through `setViewportVars()` so workspace heights adapt to the compact mobile header. On mobile, writing previews start collapsed and open from the top-left app button; on desktop, preview cards keep their own fold button.
+- logo, title, and subtitle stay visible,
+- gear Settings button sits at the right,
+- no hamburger button is shown,
+- preview panels do not have fold buttons.
 
-### Mobile Header Revision Notes
+Mobile:
 
-The v28 design still had two hamburger-style controls on mobile: one in the global app header and one inside each preview card. The v29 design intentionally merges those responsibilities. The global top-left button is the only mobile hamburger and controls the active writing preview. This keeps the top of the screen from becoming a stack of headers and leaves more vertical space for chat.
+- one top-left hamburger button is shown,
+- that hamburger opens or closes the active writing preview,
+- it does not hide the logo, title, or subtitle,
+- preview cards do not have their own hamburger controls.
 
-The behavior is deliberately different by viewport:
+Settings remains a dedicated page opened by the gear button or bottom Settings tab. It contains Agent, Model, Reply reasoning, Assistant reasoning, Language, Theme, Share Session, and Start/Pause/Resume/Stop.
 
-- Mobile: top-left app button opens or closes the active preview; preview-card fold buttons are hidden.
-- Desktop: top-left app button controls app chrome detail, while preview-card fold buttons remain available.
+`pwa/app.js` updates the CSS variable `--topbar-h` through `setViewportVars()` so workspace heights adapt to the mobile header. On mobile, writing previews start collapsed and open from the top-left app button.
 
 `Autopilot Loop` no longer places an `Autopilot Setup` shortcut in its preview header. The bottom navigation is the canonical route to Setup, which keeps mobile header actions limited to `New Chat` and `History`.
 

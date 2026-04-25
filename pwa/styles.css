@@ -79,7 +79,7 @@ body[data-theme="dark"] {
   top: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
@@ -92,10 +92,10 @@ body[data-theme="dark"] {
 .brand {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 12px;
   min-width: 0;
-  text-align: center;
+  text-align: left;
 }
 
 .logo {
@@ -128,11 +128,6 @@ body[data-theme="dark"] {
   color: var(--muted);
 }
 
-.chrome-compact .logo,
-.chrome-compact .brand-sub {
-  display: none;
-}
-
 .icon-btn {
   width: 44px;
   min-width: 44px;
@@ -141,6 +136,10 @@ body[data-theme="dark"] {
   display: inline-grid;
   place-items: center;
   border-radius: 14px;
+}
+
+.chrome-toggle {
+  display: none;
 }
 
 .hamburger-lines,
@@ -590,10 +589,6 @@ select, input, textarea {
   min-height: 96px;
   max-height: 180px;
   resize: vertical;
-}
-
-.preview-toggle {
-  display: inline-grid;
 }
 
 .loop-card {
@@ -1163,6 +1158,9 @@ html[dir="rtl"] .msg--system {
     border-bottom-color: transparent;
     box-shadow: 0 12px 30px rgba(12, 18, 28, 0.06);
   }
+  .chrome-toggle {
+    display: inline-grid;
+  }
   .layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto minmax(260px, auto);
@@ -1367,9 +1365,6 @@ html[dir="rtl"] .msg--system {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-  .preview-toggle {
-    display: none;
   }
   .writing-screen.is-preview-collapsed {
     grid-template-rows: minmax(0, 1fr);

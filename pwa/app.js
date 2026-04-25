@@ -97,7 +97,6 @@ const els = {
   novelLoopSend: document.getElementById("novel-loop-send"),
   novelSetup: document.getElementById("novel-setup"),
   novelSetupSend: document.getElementById("novel-setup-send"),
-  previewToggleButtons: document.querySelectorAll("[data-preview-toggle]"),
   newChatButtons: document.querySelectorAll("[data-new-chat]"),
   chatHistoryButtons: document.querySelectorAll("[data-chat-history]"),
   agentMonitorButtons: document.querySelectorAll("[data-agent-monitor]"),
@@ -795,11 +794,6 @@ function setPreviewExpanded(screen, expanded, { touched = true } = {}) {
   if (touched) screen.dataset.previewTouched = "1";
   screen.classList.toggle("is-preview-expanded", Boolean(expanded));
   screen.classList.toggle("is-preview-collapsed", !expanded);
-  screen.querySelectorAll("[data-preview-toggle]").forEach((btn) => {
-    btn.setAttribute("aria-expanded", expanded ? "true" : "false");
-    btn.setAttribute("title", expanded ? "Hide preview" : "Show preview");
-    btn.setAttribute("aria-label", expanded ? "Hide preview" : "Show preview");
-  });
 }
 
 function syncPreviewLayoutForViewport() {
@@ -819,7 +813,6 @@ function toggleMobilePreviewFromChrome() {
   const screen = activeWritingScreen();
   if (!screen) return false;
   setPreviewExpanded(screen, !screen.classList.contains("is-preview-expanded"));
-  document.body.classList.add("chrome-compact");
   window.requestAnimationFrame(setViewportVars);
   return true;
 }
@@ -2777,14 +2770,6 @@ function bindControls() {
       submitNovelText("Update the Autopilot Setup canvas or loop script carefully. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ", els.novelSetup)
     );
   }
-  els.previewToggleButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const screen = btn.closest(".writing-screen");
-      if (!screen) return;
-      setPreviewExpanded(screen, !screen.classList.contains("is-preview-expanded"));
-      window.requestAnimationFrame(setViewportVars);
-    });
-  });
   els.newChatButtons.forEach((btn) => {
     btn.addEventListener("click", () => startNewChat(activeChatMode()));
   });
@@ -2839,7 +2824,6 @@ function bindControls() {
   if (els.chromeToggle) {
     els.chromeToggle.addEventListener("click", () => {
       if (isMobileViewport() && toggleMobilePreviewFromChrome()) return;
-      document.body.classList.toggle("chrome-compact");
       window.requestAnimationFrame(setViewportVars);
     });
   }

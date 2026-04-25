@@ -140,6 +140,7 @@ Recent shell cache bumps:
 - `autoappdev-shell-v27`: dedicated Settings page and default shared writing sessions.
 - `autoappdev-shell-v28`: AutoNovel Studio title, compact header chrome, expanded previews, and Settings-only monitor access.
 - `autoappdev-shell-v29`: mobile preview merged with the global header control, preview-card hamburger hidden on mobile, and Loop header setup shortcut removed.
+- `autoappdev-shell-v30`: desktop hamburger controls removed, preview-card fold buttons removed everywhere, and logo/title/subtitle made persistent.
 
 When shell behavior changes, bump `pwa/service-worker.js` again.
 
@@ -183,7 +184,7 @@ Beats Board also exposes the older `legacy` shared chat as `Legacy Chat (previou
 
 Writing-tab chat logs now lazy-load message history. `GET /api/chat` accepts `limit` and `offset`; the frontend first loads the newest 10 raw messages, renders a top `More earlier messages` control when older history exists, and automatically loads the next batch when the user scrolls near the top. The renderer preserves scroll position when prepending older messages, so reading back through history should not jump.
 
-Autopilot Loop no longer shows the shared Monitor button in its toolbar. The freed slot keeps `Autopilot Setup` visible as the primary path into the Scratch-like pipeline editor. Monitor access is centralized in Settings.
+Autopilot Loop no longer shows the shared Monitor button or the `Autopilot Setup` shortcut in its toolbar. Setup remains available from the bottom navigation, and Monitor access is centralized in Settings.
 
 Settings is now a dedicated workspace page instead of an expandable topbar section. The topbar uses a right-side gear button and the bottom `Settings` tab opens the same page. Controls are grouped into panels:
 
@@ -193,27 +194,28 @@ Settings is now a dedicated workspace page instead of an expandable topbar secti
 
 `Share Session` defaults on. When enabled, `Beats Board`, `Draft Studio`, `Autopilot Loop`, and `Autopilot Setup` resolve to the same active backend chat session. When disabled, each tab keeps its own active session, but the backend still injects all tab session ids and Codex resume file paths into reply/writer prompts so agents stay aware of adjacent tab context.
 
-The app title shown in the browser shell is now `AutoNovel Studio`. The topbar defaults to compact chrome: a left three-line button, centered title, and right gear Settings button. On desktop, the left button expands or hides logo/subtitle details. On mobile, the same left button owns preview visibility for the active writing tab, so there is only one three-line control on screen. Monitor buttons were removed from writing preview headers and the Autopilot Setup program header; the Agent Monitor now lives in Settings.
+The app title shown in the browser shell is now `AutoNovel Studio`. The desktop topbar keeps the logo, title, and subtitle visible, with the gear Settings button at the right. Desktop no longer has any hamburger controls. On mobile, the only hamburger is the top-left preview fold button for the active writing tab; it does not hide or alter the logo/title/subtitle. Monitor buttons were removed from writing preview headers and the Autopilot Setup program header; the Agent Monitor now lives in Settings.
 
 ### 10. Delta Since Previous Documentation Pass
 
-The previous documentation pass described the v28 state: compact app header, writing preview cards expanded by default, preview-card hamburger buttons, and a Settings-only Agent Monitor.
+The previous documentation pass described the v28/v29 state: compact app header, writing preview cards, preview-card hamburger buttons on desktop, mobile preview controlled by the global hamburger, and a Settings-only Agent Monitor.
 
-The v29 revision changed the mobile interaction model:
+The latest v30 revision simplified the header model further:
 
-- Mobile no longer shows a second hamburger inside the Beats Board, Draft Studio, or Autopilot Loop preview card.
-- The single top-left app hamburger is now the preview toggle for the currently active writing tab on mobile.
-- Mobile writing previews now start collapsed so chat has room first; tapping the top-left hamburger opens the preview, and tapping it again closes the preview.
-- Desktop keeps the preview-card fold controls, because the two-column layout has enough room and the header chrome still acts as a chrome detail toggle there.
-- The Autopilot Loop header no longer includes the `Autopilot Setup` shortcut button. Setup remains available from the bottom navigation, avoiding a cramped mobile toolbar.
+- Desktop no longer shows a global hamburger button.
+- Desktop no longer shows preview-card hamburger buttons in Beats Board, Draft Studio, or Autopilot Loop.
+- The logo, title, and subtitle are persistent on desktop and mobile; no control toggles brand visibility anymore.
+- Mobile still shows one top-left hamburger, but it only opens or closes the active writing preview.
+- Mobile writing previews start collapsed so chat has room first; tapping the top-left hamburger opens the preview, and tapping it again closes the preview.
+- The Autopilot Loop header does not include the `Autopilot Setup` shortcut button. Setup remains available from the bottom navigation, avoiding a cramped toolbar.
 - The mobile preview panel is visually pulled up against the app header with reduced top spacing, so the global header and preview feel like one surface instead of two stacked headers.
-- `pwa/service-worker.js` moved from `autoappdev-shell-v28` to `autoappdev-shell-v29`; normal refreshes should pick up the revised shell after the worker updates.
+- `pwa/service-worker.js` moved to `autoappdev-shell-v30`; normal refreshes should pick up the revised shell after the worker updates.
 
 Implementation files for this delta:
 
-- `pwa/app.js`: added mobile viewport helpers and routed the global hamburger to active-preview toggling on mobile.
-- `pwa/styles.css`: hid per-card preview toggles on mobile, collapsed preview cards completely, tightened mobile preview/header spacing.
-- `pwa/index.html`: removed the Loop header's `Autopilot Setup` shortcut.
+- `pwa/app.js`: decoupled the hamburger from brand visibility and kept it as a mobile-only active-preview toggle.
+- `pwa/styles.css`: hides the global hamburger on desktop, keeps brand elements visible, and removes preview-card fold controls.
+- `pwa/index.html`: removed preview-card hamburger buttons and the Loop header's `Autopilot Setup` shortcut.
 - `pwa/service-worker.js`: cache version bump.
 
 ## Files Changed in These Updates

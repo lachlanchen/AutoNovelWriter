@@ -2204,54 +2204,50 @@ function bindTabs() {
 async function loadChat() {
   try {
     const mode = activeChatMode();
-    const [chatRes, outboxRes] = await Promise.all([
-      api(`/api/chat?limit=120&mode=${encodeURIComponent(mode)}`).catch(() => ({ messages: [] })),
-      api("/api/outbox?limit=40").catch(() => ({ messages: [] })),
-    ]);
-    if (chatRes && chatRes.session_id) activeChatSessions[mode] = String(chatRes.session_id);
-
-    const chat = Array.isArray(chatRes && chatRes.messages) ? chatRes.messages : [];
-    const outbox = Array.isArray(outboxRes && outboxRes.messages) ? outboxRes.messages : [];
-    const merged = [];
-    let idx = 0;
-    chat.filter((m) => !isMechanicalAckMessage(m)).forEach((m) => merged.push({ m, idx: idx++ }));
-    outbox.forEach((m) => merged.push({ m, idx: idx++ }));
-
-    const parseTs = (it) => {
-      const obj = it && typeof it === "object" ? it : {};
-      const raw = obj.created_at;
-      if (typeof raw !== "string") return 0;
-      const n = Date.parse(raw);
-      return Number.isFinite(n) ? n : 0;
-    };
-
-    merged.sort((a, b) => {
-      const ta = parseTs(a.m);
-      const tb = parseTs(b.m);
-      if (ta !== tb) return ta - tb;
-      return a.idx - b.idx;
-    });
-
-    const renderChatInto = (container) => {
-      if (!container) return;
-      container.innerHTML = "";
-      merged.forEach(({ m }) => {
-        const div = document.createElement("div");
-        div.className = `msg ${m.role === "user" ? "msg--user" : "msg--system"}`;
-        div.textContent = m.content || "";
-        container.appendChild(div);
-      });
-      container.scrollTop = container.scrollHeight;
-    };
-
-    renderChatInto(els.chatlog);
-    renderChatInto(els.novelChatlogBeats);
-    renderChatInto(els.novelChatlogDraft);
-    renderChatInto(els.novelChatlogLoop);
-    renderChatInto(els.novelChatlogSetup);
+    await loadChatMode(mode);
   } catch {
     // ignore
   }
+}
+
+function chatContainerForMode(mode) {
+  if (mode === "beats") return els.novelChatlogBeats;
+  if (mode === "draft") return els.novelChatlogDraft;
+  if (mode === "loop") return els.novelChatlogLoop;
+  if (mode === "setup") return els.novelChatlogSetup;
+  return els.chatlog;
+}
+
+function renderMessagesInto(container, messages) {
+  if (!container) return;
+  container.innerHTML = "";
+  messages.forEach((m) => {
+    const div = document.createElement("div");
+    div.className = `msg ${m.role === "user" ? "msg--user" : "msg--system"}`;
+    div.textContent = m.content || "";
+    container.appendChild(div);
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+async function loadChatMode(mode) {
+  const cleanMode = ["beats", "draft", "loop", "setup"].includes(mode) ? mode : "chat";
+  const chatRes = await api(`/api/chat?limit=120&mode=${encodeURIComponent(cleanMode)}`).catch(() => ({ messages: [] }));
+  if (chatRes && chatRes.session_id) activeChatSessions[cleanMode] = String(chatRes.session_id);
+  const chat = Array.isArray(chatRes && chatRes.messages) ? chatRes.messages : [];
+  const messages = chat.filter((m) => !isMechanicalAckMessage(m));
+  if (cleanMode === "chat") {
+    const outboxRes = await api("/api/outbox?limit=40").catch(() => ({ messages: [] }));
+    const outbox = Array.isArray(outboxRes && outboxRes.messages) ? outboxRes.messages : [];
+    messages.push(...outbox);
+    messages.sort((a, b) => {
+      const ta = Date.parse(a.created_at || "") || 0;
+      const tb = Date.parse(b.created_at || "") || 0;
+      return ta - tb;
+    });
+  }
+  renderMessagesInto(chatContainerForMode(cleanMode), messages);
+  return chatRes;
 }
 
 async function liveSync({ force = false } = {}) {

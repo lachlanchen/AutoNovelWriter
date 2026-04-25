@@ -134,6 +134,7 @@ Recent shell cache bumps:
 - `autoappdev-shell-v18`: desktop/mobile layout split and live chat sync.
 - `autoappdev-shell-v19`: preview action overflow fix and toast-based mechanical ack.
 - `autoappdev-shell-v20`: backend-owned chat sessions and `New Chat` buttons on the writing tabs.
+- `autoappdev-shell-v24`: session titles from first user message, per-tab chat rendering, toolbar label updates, and History session switching.
 
 When shell behavior changes, bump `pwa/service-worker.js` again.
 
@@ -166,6 +167,10 @@ runtime/novel/state/chat_sessions/<session_id>/codex_writer_session.txt
 ```
 
 This keeps a new browser chat from automatically continuing the old Codex conversation thread. The `legacy` session keeps old global behavior and old messages readable.
+
+Session title behavior follows the LazyBlog Studio pattern: create the session as `Untitled chat`, then rename it from the first user message. AutoNovelWriter strips its internal instruction prefixes before deriving the title, so a Beats Board message such as `Add this to...: 太多整天是非對錯的蠢貨了` becomes a readable title based on the actual note. The backend also exposes `POST /api/chat/sessions` with `{"action":"rename", ...}` for explicit local title updates.
+
+Important rendering rule: each writing tab must render only its own mode/session chat. Beats Board messages should not be painted into Draft Studio, Autopilot Loop, or AP Setup. Global outbox messages remain limited to the older internal chat panel.
 
 ## Files Changed in These Updates
 

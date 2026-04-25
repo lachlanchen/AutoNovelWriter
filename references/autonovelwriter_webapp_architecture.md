@@ -159,9 +159,11 @@ Browser chat now supports backend-owned sessions. Each writing mode can have its
 - `setup`
 - `chat`
 
-The first three writing tabs expose a `New Chat` button. Clicking it calls `POST /api/chat/sessions`, creates a new session for the current mode, marks it active on the backend, and reloads the chat. Because the active session is backend-owned, another open browser can pick it up on the next live sync for the same mode.
+The first three writing tabs expose `New Chat` and `History` buttons. `New Chat` calls `POST /api/chat/sessions`, creates a new session for the current mode, marks it active on the backend, and reloads the chat. Because the active session is backend-owned, another open browser can pick it up on the next live sync for the same mode.
 
 New chat sessions also get separate Codex resume files under `runtime/novel/state/chat_sessions/<session_id>/`, so the quick reply and assistant writer do not have to keep using the legacy Codex thread. The `legacy` session preserves older global chat behavior.
+
+Like LazyBlog Studio, session titles start as `Untitled chat` and are renamed from the first user message. AutoNovelWriter strips internal mode prefixes before deriving the title. `POST /api/chat/sessions` also supports `action=rename` for explicit local title changes. Each writing tab renders only its own mode/session chat; cross-tab painting is treated as a UI bug.
 
 ## Backend API Reference
 

@@ -618,6 +618,58 @@ class Storage:
         self._write_state(st)
         return dict(found)
 
+    async def update_chat_session_title(self, session_id: str, title: str, only_if_untitled: bool = True) -> dict[str, Any] | None:
+        sid = str(session_id or "legacy").strip() or "legacy"
+        clean_title = str(title or "").strip()
+        if not sid or not clean_title:
+            return None
+        untitled_prefixes = ("Untitled chat", "New Chat", "Beats Chat ", "Draft Chat ", "Loop Chat ", "Setup Chat ", "Chat Chat ")
+        if self._pool:
+            async with self._pool.acquire() as conn:
+                if only_if_untitled:
+                    row = await conn.fetchrow(
+                        "update chat_sessions set title=$2, updated_at=now() where id=$1 "
+                        "and (title='' or title='Untitled chat' or title='New Chat' "
+                        "or title like 'Beats Chat %' or title like 'Draft Chat %' "
+                        "or title like 'Loop Chat %' or title like 'Setup Chat %' or title like 'Chat Chat %') "
+                        "returning id, title, mode, created_at, updated_at",
+                        sid,
+                        clean_title,
+                    )
+                else:
+                    row = await conn.fetchrow(
+                        "update chat_sessions set title=$2, updated_at=now() where id=$1 "
+                        "returning id, title, mode, created_at, updated_at",
+                        sid,
+                        clean_title,
+                    )
+                if not row:
+                    return None
+                return {
+                    "id": str(row["id"] or ""),
+                    "title": str(row["title"] or ""),
+                    "mode": str(row["mode"] or ""),
+                    "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+                    "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
+                }
+        st = self._read_state()
+        items = st.get("chat_sessions", [])
+        if not isinstance(items, list):
+            return None
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        for it in items:
+            if not (isinstance(it, dict) and str(it.get("id") or "") == sid):
+                continue
+            old_title = str(it.get("title") or "").strip()
+            if only_if_untitled and old_title and not old_title.startswith(untitled_prefixes):
+                return None
+            it["title"] = clean_title
+            it["updated_at"] = now
+            st["chat_sessions"] = items[-200:]
+            self._write_state(st)
+            return dict(it)
+        return None
+
     async def list_chat_sessions(self, limit: int = 50, mode: str | None = None) -> list[dict[str, Any]]:
         lim = max(1, min(200, int(limit)))
         clean_mode = str(mode or "").strip()
@@ -708,6 +760,24 @@ class Storage:
         now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         st["chat"].append({"session_id": sid, "role": role, "content": content, "created_at": now})
         st["chat"] = st["chat"][-500:]
+        items = st.get("chat_sessions", [])
+        if not isinstance(items, list):
+            items = []
+        found = None
+        for it in items:
+            if isinstance(it, dict) and str(it.get("id") or "") == sid:
+                found = it
+                break
+        if found is None:
+            found = {
+                "id": sid,
+                "title": "Legacy Chat" if sid == "legacy" else "Untitled chat",
+                "mode": "chat",
+                "created_at": now,
+            }
+            items.append(found)
+        found["updated_at"] = now
+        st["chat_sessions"] = items[-200:]
         self._write_state(st)
 
     async def add_inbox_message(self, role: str, content: str) -> None:

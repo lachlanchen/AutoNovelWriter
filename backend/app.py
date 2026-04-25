@@ -68,13 +68,41 @@ def _normalize_chat_session_id(raw: Any) -> str:
     return cleaned or "legacy"
 
 
+def _chat_session_title_from_message(content: str, mode: str) -> str:
+    text = str(content or "").strip()
+    prefixes = [
+        "Add this to the beats board and organize it into durable material: ",
+        "Continue or revise the novel draft with natural, vivid, readable prose. My instruction: ",
+        "Revise or run the Autopilot Loop from this goal. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ",
+        "Update the AP Setup canvas or loop script carefully. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ",
+        "Update the Autopilot Setup canvas or loop script carefully. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ",
+    ]
+    for prefix in prefixes:
+        if text.startswith(prefix):
+            text = text[len(prefix):].strip()
+            break
+    first = re.sub(r"\s+", " ", text.splitlines()[0] if text else "").strip()
+    if first:
+        return first[:80]
+    return {
+        "beats": "Beats chat",
+        "draft": "Draft chat",
+        "loop": "Loop chat",
+        "setup": "AP Setup chat",
+    }.get(mode, "Untitled chat")
+
+
 async def _active_chat_session_id(storage: Storage, mode: str) -> str:
+    clean_mode = _normalize_chat_mode(mode)
+    default_session = "legacy" if clean_mode == "chat" else f"default_{clean_mode}"
     cfg = await storage.get_config()
     active = cfg.get("chat_active_sessions") if isinstance(cfg, dict) else {}
     if isinstance(active, dict):
-        sid = _normalize_chat_session_id(active.get(mode) or "legacy")
+        sid = _normalize_chat_session_id(active.get(clean_mode) or default_session)
     else:
-        sid = "legacy"
+        sid = default_session
+    if clean_mode != "chat" and sid == "legacy":
+        sid = default_session
     return sid
 
 
@@ -1519,7 +1547,13 @@ class ChatHandler(BaseHandler):
         mode = _normalize_chat_mode(options.get("mode") or body.get("mode") or "chat")
         requested_session = body.get("session_id") or body.get("chat_session_id") or options.get("session_id") or options.get("chat_session_id")
         session_id = _normalize_chat_session_id(requested_session) if requested_session else await _active_chat_session_id(self.storage, mode)
-        await self.storage.create_chat_session(session_id, "Legacy Chat" if session_id == "legacy" else "New Chat", mode)
+        await self.storage.create_chat_session(session_id, "Legacy Chat" if session_id == "legacy" else "Untitled chat", mode)
+        if session_id != "legacy":
+            await self.storage.update_chat_session_title(
+                session_id,
+                _chat_session_title_from_message(content, mode),
+                only_if_untitled=True,
+            )
         await self.storage.add_chat_message("user", content, session_id=session_id)
         await self.storage.add_inbox_message("user", content)
         _write_inbox_message(self.runtime_dir, content)
@@ -1568,13 +1602,24 @@ class ChatSessionsHandler(BaseHandler):
             await _set_active_chat_session_id(self.storage, mode, session_id)
             self.write_json({"ok": True, "mode": mode, "active_session_id": session_id})
             return
+        if action == "rename":
+            session_id = _normalize_chat_session_id(body.get("session_id") or "")
+            title = str(body.get("title") or "").strip()
+            if not session_id or not title:
+                self.write_json({"error": "missing_session_or_title"}, status=400)
+                return
+            session = await self.storage.update_chat_session_title(session_id, title, only_if_untitled=False)
+            if not session:
+                self.write_json({"error": "unknown_session"}, status=404)
+                return
+            self.write_json({"ok": True, "mode": mode, "active_session_id": await _active_chat_session_id(self.storage, mode), "session": session})
+            return
 
         ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         session_id = _normalize_chat_session_id(body.get("session_id") or f"chat_{mode}_{ts}_{uuid.uuid4().hex[:8]}")
         title = str(body.get("title") or "").strip()
         if not title:
-            label = {"beats": "Beats", "draft": "Draft", "loop": "Loop", "setup": "Setup"}.get(mode, "Chat")
-            title = f"{label} Chat {ts}"
+            title = "Untitled chat"
         session = await self.storage.create_chat_session(session_id, title, mode)
         await _set_active_chat_session_id(self.storage, mode, session_id)
         self.write_json({"ok": True, "mode": mode, "active_session_id": session_id, "session": session})

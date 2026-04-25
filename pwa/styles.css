@@ -77,16 +77,22 @@ body[data-theme="dark"] {
 }
 
 .logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
   display: grid;
   place-items: center;
-  font-weight: 900;
-  letter-spacing: 0.6px;
-  background: linear-gradient(135deg, rgba(39, 103, 255, 0.95), rgba(255, 191, 47, 0.95));
-  color: white;
-  box-shadow: 0 14px 40px rgba(39, 103, 255, 0.18);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--stroke) 70%, transparent);
+  box-shadow: 0 14px 38px rgba(75, 132, 55, 0.16);
+  overflow: hidden;
+}
+
+.logo img {
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+  display: block;
 }
 
 .brand-name {
@@ -799,9 +805,9 @@ html[dir="rtl"] .msg--system {
     overflow: hidden;
   }
   .logo {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
     flex: 0 0 auto;
   }
   .brand-text {

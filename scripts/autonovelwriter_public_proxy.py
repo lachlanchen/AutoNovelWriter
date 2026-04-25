@@ -157,6 +157,27 @@ def make_handler(*, pwa_dir: Path, backend_host: str, backend_port: int, usernam
                 return
             self._serve_pwa()
 
+        def do_HEAD(self) -> None:  # noqa: N802
+            if self.path.startswith("/login"):
+                body = _html_page("AutoNovelWriter Login", "")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("X-Frame-Options", "DENY")
+                self.send_header("X-Content-Type-Options", "nosniff")
+                self.end_headers()
+                return
+            if self.path.startswith("/logout"):
+                self._logout()
+                return
+            if not self._require_auth():
+                return
+            if self.path.startswith("/api/"):
+                self._proxy_to_backend(write_body=False)
+                return
+            self._serve_pwa_head()
+
         def do_POST(self) -> None:  # noqa: N802
             if self.path.startswith("/login"):
                 self._handle_login()
@@ -184,7 +205,7 @@ def make_handler(*, pwa_dir: Path, backend_host: str, backend_port: int, usernam
                 return
             self.send_error(404)
 
-        def _serve_pwa(self) -> None:
+        def _resolve_pwa_path(self) -> None:
             parsed = urllib.parse.urlparse(self.path)
             clean_path = posixpath.normpath(urllib.parse.unquote(parsed.path))
             if clean_path in ("", "/", "."):
@@ -193,9 +214,16 @@ def make_handler(*, pwa_dir: Path, backend_host: str, backend_port: int, usernam
                 candidate = pwa_dir / clean_path.lstrip("/")
                 if not candidate.exists() or candidate.is_dir():
                     self.path = "/index.html"
+
+        def _serve_pwa(self) -> None:
+            self._resolve_pwa_path()
             return super().do_GET()
 
-        def _proxy_to_backend(self) -> None:
+        def _serve_pwa_head(self) -> None:
+            self._resolve_pwa_path()
+            return super().do_HEAD()
+
+        def _proxy_to_backend(self, *, write_body: bool = True) -> None:
             body = b""
             if self.command in {"POST", "PUT", "PATCH"}:
                 length = int(self.headers.get("Content-Length", "0") or "0")
@@ -221,7 +249,8 @@ def make_handler(*, pwa_dir: Path, backend_host: str, backend_port: int, usernam
                     self.send_header(key, value)
                 self.send_header("Content-Length", str(len(data)))
                 self.end_headers()
-                self.wfile.write(data)
+                if write_body:
+                    self.wfile.write(data)
             except Exception as exc:  # pragma: no cover - operational fallback
                 msg = f"Backend proxy error: {type(exc).__name__}: {exc}".encode("utf-8")
                 self._send_bytes(502, msg, "text/plain; charset=utf-8")

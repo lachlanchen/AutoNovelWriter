@@ -21,6 +21,11 @@ from pathlib import Path
 
 
 COOKIE_NAME = "autonovelwriter_session"
+PUBLIC_ASSETS = {
+    "/favicon.svg",
+    "/lazyingart-logo.png",
+    "/manifest.json",
+}
 
 
 def _cookie_signature(username: str, token: str) -> str:
@@ -137,6 +142,9 @@ def make_handler(*, pwa_dir: Path, backend_host: str, backend_port: int, usernam
             if self.path.startswith("/login"):
                 return True
             if self.path.startswith("/logout"):
+                return True
+            parsed = urllib.parse.urlparse(self.path)
+            if parsed.path in PUBLIC_ASSETS:
                 return True
             if self._is_authenticated():
                 return True

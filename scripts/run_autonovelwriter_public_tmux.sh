@@ -89,6 +89,7 @@ EOF
 if tmux has-session -t "$session" 2>/dev/null; then
   if [ "$kill_existing" -eq 1 ]; then
     tmux kill-session -t "$session"
+    sleep 1
   else
     echo "tmux session already running: $session"
     if [ "$attach" -eq 1 ]; then
@@ -96,6 +97,13 @@ if tmux has-session -t "$session" 2>/dev/null; then
     fi
     exit 0
   fi
+fi
+
+if [ "$kill_existing" -eq 1 ]; then
+  while IFS= read -r pid; do
+    [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
+  done < <(pgrep -f "[n]grok http --url=${ngrok_url} ${public_port}" || true)
+  sleep 1
 fi
 
 backend_cmd=(
@@ -114,24 +122,24 @@ ngrok_cmd="if command -v ngrok >/dev/null 2>&1; then ngrok http --url=${ngrok_ur
 log_cmd="mkdir -p \"$repo_root/runtime/logs\" && touch \"$repo_root/runtime/logs/backend.log\" && tail -n +1 -f \"$repo_root/runtime/logs/backend.log\""
 proxy_cmd="set -a; . \"$env_file\"; set +a; env AUTOAPPDEV_HOST=\"$backend_host\" AUTOAPPDEV_PORT=\"$backend_port\" AUTONOVELWRITER_PUBLIC_HOST=\"$public_host\" AUTONOVELWRITER_PUBLIC_PORT=\"$public_port\" python3 scripts/autonovelwriter_public_proxy.py"
 
-tmux new-session -d -s "$session" -c "$repo_root" "bash"
+backend_pane="$(tmux new-session -d -s "$session" -c "$repo_root" -P -F "#{pane_id}" "bash")"
 tmux rename-window -t "$session:0" "autonovelwriter-public"
 tmux set-option -t "$session" -g mouse on
 
-tmux send-keys -t "$session:0.0" "cd \"$repo_root\"" C-m
-tmux send-keys -t "$session:0.0" "echo '[backend] http://$backend_host:$backend_port'" C-m
-tmux send-keys -t "$session:0.0" "$(printf '%q ' "${backend_cmd[@]}")" C-m
+tmux send-keys -t "$backend_pane" "cd \"$repo_root\"" C-m
+tmux send-keys -t "$backend_pane" "echo '[backend] http://$backend_host:$backend_port'" C-m
+tmux send-keys -t "$backend_pane" "$(printf '%q ' "${backend_cmd[@]}")" C-m
 
-tmux split-window -h -t "$session:0" -c "$repo_root" "bash"
-tmux send-keys -t "$session:0.1" "cd \"$repo_root\"" C-m
-tmux send-keys -t "$session:0.1" "echo '[public proxy] http://$public_host:$public_port -> backend :$backend_port'" C-m
-tmux send-keys -t "$session:0.1" "$proxy_cmd" C-m
+proxy_pane="$(tmux split-window -h -t "$backend_pane" -c "$repo_root" -P -F "#{pane_id}" "bash")"
+tmux send-keys -t "$proxy_pane" "cd \"$repo_root\"" C-m
+tmux send-keys -t "$proxy_pane" "echo '[public proxy] http://$public_host:$public_port -> backend :$backend_port'" C-m
+tmux send-keys -t "$proxy_pane" "$proxy_cmd" C-m
 
-tmux split-window -v -t "$session:0.1" -c "$repo_root" "bash"
-tmux send-keys -t "$session:0.2" "$ngrok_cmd" C-m
+ngrok_pane="$(tmux split-window -v -t "$proxy_pane" -c "$repo_root" -P -F "#{pane_id}" "bash")"
+tmux send-keys -t "$ngrok_pane" "$ngrok_cmd" C-m
 
-tmux split-window -v -t "$session:0.0" -c "$repo_root" "bash"
-tmux send-keys -t "$session:0.3" "$log_cmd" C-m
+log_pane="$(tmux split-window -v -t "$backend_pane" -c "$repo_root" -P -F "#{pane_id}" "bash")"
+tmux send-keys -t "$log_pane" "$log_cmd" C-m
 
 tmux select-layout -t "$session:0" tiled
 

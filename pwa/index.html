@@ -13,8 +13,14 @@
     </script>
     <script src="config.local.js"></script>
     <script>
-      window.__AUTOAPPDEV_CONFIG__.API_BASE_URL =
-        window.__AUTOAPPDEV_CONFIG__.API_BASE_URL || "http://127.0.0.1:8788";
+      (() => {
+        const cfg = window.__AUTOAPPDEV_CONFIG__;
+        const hasApiBase = Object.prototype.hasOwnProperty.call(cfg, "API_BASE_URL");
+        if (!hasApiBase || cfg.API_BASE_URL === undefined || cfg.API_BASE_URL === null) {
+          const localHosts = new Set(["127.0.0.1", "localhost", "::1"]);
+          cfg.API_BASE_URL = localHosts.has(window.location.hostname) ? "http://127.0.0.1:8788" : "";
+        }
+      })();
     </script>
     <script src="api-client.js" defer></script>
     <script src="i18n.js" defer></script>

@@ -3,7 +3,7 @@
    useful for quick offline reloads in modern browsers.
 */
 
-const CACHE_NAME = "autoappdev-shell-v13";
+const CACHE_NAME = "autoappdev-shell-v14";
 const PRECACHE_URLS = [
   "./index.html",
   "./styles.css",

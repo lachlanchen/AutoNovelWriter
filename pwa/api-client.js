@@ -2,7 +2,30 @@
 
 (function () {
   const cfg = window.__AUTOAPPDEV_CONFIG__ || {};
-  const API_BASE_URL = cfg.API_BASE_URL || "http://127.0.0.1:8788";
+  const localHosts = new Set(["127.0.0.1", "localhost", "::1"]);
+  const isLocalPage = localHosts.has(window.location.hostname);
+  const hasConfiguredBase = Object.prototype.hasOwnProperty.call(cfg, "API_BASE_URL");
+
+  function isUnsafeRemoteBase(base) {
+    if (!base || isLocalPage) return false;
+    try {
+      const url = new URL(base, window.location.href);
+      return url.protocol === "http:" || localHosts.has(url.hostname);
+    } catch (_err) {
+      return false;
+    }
+  }
+
+  let API_BASE_URL =
+    hasConfiguredBase && cfg.API_BASE_URL !== undefined && cfg.API_BASE_URL !== null
+      ? String(cfg.API_BASE_URL)
+      : isLocalPage
+        ? "http://127.0.0.1:8788"
+        : "";
+
+  if (isUnsafeRemoteBase(API_BASE_URL)) {
+    API_BASE_URL = "";
+  }
 
   async function requestJson(path, opts = {}) {
     const { timeout_ms, headers, ...rest } = opts || {};
@@ -43,4 +66,3 @@
     requestJson,
   };
 })();
-

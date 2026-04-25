@@ -143,6 +143,8 @@ autonovelwriter/runtime/ (mutable, local-first)
   └─ logs/ (runner.log)
 ```
 
+Detailed implementation reference: [`references/autonovelwriter_webapp_architecture.md`](references/autonovelwriter_webapp_architecture.md).
+
 ## 🗂️ Project Structure
 
 ```text

@@ -83,8 +83,6 @@ const els = {
   beatsPreview: document.getElementById("beats-preview"),
   draftPreview: document.getElementById("draft-preview"),
   loopPreview: document.getElementById("loop-preview"),
-  beatsRefresh: document.getElementById("beats-refresh"),
-  draftRefresh: document.getElementById("draft-refresh"),
   novelChatlogBeats: document.getElementById("novel-chatlog-beats"),
   novelChatlogDraft: document.getElementById("novel-chatlog-draft"),
   novelChatlogLoop: document.getElementById("novel-chatlog-loop"),
@@ -99,6 +97,7 @@ const els = {
   novelSetupSend: document.getElementById("novel-setup-send"),
   previewToggleButtons: document.querySelectorAll("[data-preview-toggle]"),
   newChatButtons: document.querySelectorAll("[data-new-chat]"),
+  chatHistoryButtons: document.querySelectorAll("[data-chat-history]"),
   agentMonitorButtons: document.querySelectorAll("[data-agent-monitor]"),
   agentPopover: document.getElementById("agent-popover"),
   agentPopoverClose: document.getElementById("agent-popover-close"),
@@ -782,7 +781,7 @@ function setPreviewExpanded(screen, expanded, { touched = true } = {}) {
   screen.classList.toggle("is-preview-expanded", Boolean(expanded));
   screen.classList.toggle("is-preview-collapsed", !expanded);
   screen.querySelectorAll("[data-preview-toggle]").forEach((btn) => {
-    btn.textContent = expanded ? "Hide" : "Preview";
+    btn.textContent = expanded ? "Hide" : "Show";
     btn.setAttribute("aria-expanded", expanded ? "true" : "false");
   });
 }
@@ -2282,6 +2281,42 @@ async function startNewChat(mode = activeChatMode()) {
   }
 }
 
+async function showChatHistory(mode = activeChatMode()) {
+  const cleanMode = ["beats", "draft", "loop", "setup"].includes(mode) ? mode : "chat";
+  try {
+    const res = await api(`/api/chat/sessions?limit=10&mode=${encodeURIComponent(cleanMode)}`, { timeout_ms: 6000 });
+    const sessions = Array.isArray(res && res.sessions) ? res.sessions : [];
+    if (!sessions.length) {
+      showToast("No chat history for this tab yet.", { kind: "notice" });
+      return;
+    }
+    const lines = sessions.map((session, idx) => {
+      const title = String(session.title || session.id || "Untitled").trim();
+      const active = session.id === res.active_session_id ? " *" : "";
+      return `${idx + 1}. ${title}${active}`;
+    });
+    const choice = window.prompt(`Chat history\n\n${lines.join("\n")}\n\nEnter number to open:`, "1");
+    if (choice === null) return;
+    const n = Number.parseInt(String(choice).trim(), 10);
+    if (!Number.isFinite(n) || n < 1 || n > sessions.length) {
+      showToast("History selection ignored.", { kind: "notice" });
+      return;
+    }
+    const selected = sessions[n - 1];
+    if (!selected || !selected.id) return;
+    await api("/api/chat/sessions", {
+      method: "POST",
+      timeout_ms: 6000,
+      body: JSON.stringify({ action: "select", mode: cleanMode, session_id: selected.id }),
+    });
+    activeChatSessions[cleanMode] = String(selected.id);
+    showToast(`Opened ${selected.title || "chat session"}.`, { kind: "notice" });
+    await loadChat();
+  } catch (e) {
+    showToast(`History failed: ${(e && e.message) || String(e)}`, { kind: "notice", timeout: 6500 });
+  }
+}
+
 async function sendChat() {
   const content = (els.chatInput.value || "").trim();
   if (!content) return;
@@ -2501,12 +2536,6 @@ function bindControls() {
   els.novelTabs.forEach((tab) => {
     tab.addEventListener("click", () => setNovelTab(tab.dataset.novelTab || "beats"));
   });
-  if (els.beatsRefresh) {
-    els.beatsRefresh.addEventListener("click", loadNovelPreview);
-  }
-  if (els.draftRefresh) {
-    els.draftRefresh.addEventListener("click", loadNovelPreview);
-  }
   if (els.novelBeatsSend) {
     els.novelBeatsSend.addEventListener("click", () =>
       submitNovelText("Add this to the beats board and organize it into durable material: ", els.novelBeats)
@@ -2524,7 +2553,7 @@ function bindControls() {
   }
   if (els.novelSetupSend) {
     els.novelSetupSend.addEventListener("click", () =>
-      submitNovelText("Update the Autopilot Setup canvas or loop script carefully. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ", els.novelSetup)
+      submitNovelText("Update the AP Setup canvas or loop script carefully. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ", els.novelSetup)
     );
   }
   els.previewToggleButtons.forEach((btn) => {
@@ -2537,6 +2566,9 @@ function bindControls() {
   });
   els.newChatButtons.forEach((btn) => {
     btn.addEventListener("click", () => startNewChat(activeChatMode()));
+  });
+  els.chatHistoryButtons.forEach((btn) => {
+    btn.addEventListener("click", () => showChatHistory(activeChatMode()));
   });
   els.agentMonitorButtons.forEach((btn) => {
     btn.addEventListener("click", (ev) => {

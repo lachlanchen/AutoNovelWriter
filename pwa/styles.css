@@ -981,6 +981,25 @@ html[dir="rtl"] .msg--system {
     padding: 8px 3px;
     line-height: 1.08;
   }
+  .panel-head {
+    min-width: 0;
+    gap: 10px;
+  }
+  .panel--canvas .panel-actions {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .panel--canvas .panel-actions::-webkit-scrollbar {
+    display: none;
+  }
+  .panel--canvas .panel-actions .btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
   select,
   input,
   textarea {

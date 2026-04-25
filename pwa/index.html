@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
     <title>AutoNovelWriter Studio</title>
     <link rel="icon" href="autonovelwriter-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="autonovelwriter-icon-192.png" />
@@ -498,7 +501,11 @@
       </section>
     </main>
 
-    <section class="writing-screen workspace-panel is-active" data-novel-panel="beats" aria-label="Beats board workspace">
+    <section
+      class="writing-screen workspace-panel is-active is-preview-collapsed"
+      data-novel-panel="beats"
+      aria-label="Beats board workspace"
+    >
       <div class="writing-preview">
         <div class="writing-head">
           <div>
@@ -506,6 +513,7 @@
             <p>Ideas, names, motifs, relationship turns, and chapter beats update here asynchronously.</p>
           </div>
           <div class="writing-actions">
+            <button class="btn btn--ghost preview-toggle" type="button" data-preview-toggle aria-expanded="false">Preview</button>
             <button class="btn btn--ghost" type="button" data-agent-monitor>Agent</button>
             <button class="btn btn--ghost" id="beats-refresh">Refresh</button>
           </div>
@@ -521,7 +529,12 @@
       </div>
     </section>
 
-    <section class="writing-screen workspace-panel" data-novel-panel="draft" hidden aria-label="Draft studio workspace">
+    <section
+      class="writing-screen workspace-panel is-preview-collapsed"
+      data-novel-panel="draft"
+      hidden
+      aria-label="Draft studio workspace"
+    >
       <div class="writing-preview">
         <div class="writing-head">
           <div>
@@ -529,6 +542,7 @@
             <p>Latest chapter draft preview stays above the chat so writing and guidance remain connected.</p>
           </div>
           <div class="writing-actions">
+            <button class="btn btn--ghost preview-toggle" type="button" data-preview-toggle aria-expanded="false">Preview</button>
             <button class="btn btn--ghost" type="button" data-agent-monitor>Agent</button>
             <button class="btn btn--ghost" id="draft-refresh">Refresh</button>
           </div>
@@ -544,7 +558,12 @@
       </div>
     </section>
 
-    <section class="writing-screen workspace-panel" data-novel-panel="loop" hidden aria-label="Autopilot loop workspace">
+    <section
+      class="writing-screen workspace-panel is-preview-collapsed"
+      data-novel-panel="loop"
+      hidden
+      aria-label="Autopilot loop workspace"
+    >
       <div class="writing-preview">
         <div class="writing-head">
           <div>
@@ -552,6 +571,7 @@
             <p>Chat can revise the loop, but only schema-checked AAPS scripts are accepted and loaded.</p>
           </div>
           <div class="writing-actions">
+            <button class="btn btn--ghost preview-toggle" type="button" data-preview-toggle aria-expanded="false">Preview</button>
             <button class="btn btn--ghost" type="button" data-agent-monitor>Agent</button>
             <button class="btn btn--ghost" type="button" data-novel-tab="setup">Autopilot Setup</button>
           </div>

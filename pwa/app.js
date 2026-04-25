@@ -97,6 +97,7 @@ const els = {
   novelLoopSend: document.getElementById("novel-loop-send"),
   novelSetup: document.getElementById("novel-setup"),
   novelSetupSend: document.getElementById("novel-setup-send"),
+  previewToggleButtons: document.querySelectorAll("[data-preview-toggle]"),
   agentMonitorButtons: document.querySelectorAll("[data-agent-monitor]"),
   agentPopover: document.getElementById("agent-popover"),
   agentPopoverClose: document.getElementById("agent-popover-close"),
@@ -106,6 +107,7 @@ const els = {
 
 const UI_LANG_STORAGE_KEY = "autoappdev_ui_lang";
 let uiLang = "en";
+let liveSyncBusy = false;
 
 function normalizeUiLang(raw) {
   const i18n = window.AutoAppDevI18n && typeof window.AutoAppDevI18n === "object" ? window.AutoAppDevI18n : null;
@@ -761,8 +763,42 @@ async function api(path, opts = {}) {
 }
 
 function setViewportVars() {
-  const topbarHeight = els.topbar ? Math.ceil(els.topbar.getBoundingClientRect().height) : 74;
-  document.documentElement.style.setProperty("--topbar-h", `${Math.max(64, topbarHeight)}px`);
+  const mobile = window.matchMedia && window.matchMedia("(max-width: 780px)").matches;
+  const settingsOpen = Boolean(els.topbar && els.topbar.classList.contains("is-settings-open"));
+  if (mobile && !settingsOpen) {
+    document.documentElement.style.setProperty("--topbar-h", "64px");
+    return;
+  }
+  const topbarHeight = els.topbar ? Math.ceil(els.topbar.getBoundingClientRect().height) : mobile ? 64 : 92;
+  document.documentElement.style.setProperty("--topbar-h", `${Math.max(mobile ? 64 : 76, topbarHeight)}px`);
+}
+
+function setPreviewExpanded(screen, expanded, { touched = true } = {}) {
+  if (!screen) return;
+  if (touched) screen.dataset.previewTouched = "1";
+  screen.classList.toggle("is-preview-expanded", Boolean(expanded));
+  screen.classList.toggle("is-preview-collapsed", !expanded);
+  screen.querySelectorAll("[data-preview-toggle]").forEach((btn) => {
+    btn.textContent = expanded ? "Hide" : "Preview";
+    btn.setAttribute("aria-expanded", expanded ? "true" : "false");
+  });
+}
+
+function syncPreviewLayoutForViewport() {
+  const mobile = window.matchMedia && window.matchMedia("(max-width: 780px)").matches;
+  document.querySelectorAll(".writing-screen").forEach((screen) => {
+    if (!mobile) {
+      setPreviewExpanded(screen, true, { touched: false });
+      return;
+    }
+    const touched = screen.dataset.previewTouched === "1";
+    const expanded = touched ? screen.classList.contains("is-preview-expanded") : false;
+    setPreviewExpanded(screen, expanded, { touched });
+  });
+}
+
+function closeAgentPopover() {
+  if (els.agentPopover) els.agentPopover.hidden = true;
 }
 
 function setNovelTab(key) {
@@ -2175,6 +2211,17 @@ async function loadChat() {
   }
 }
 
+async function liveSync({ force = false } = {}) {
+  if (liveSyncBusy) return;
+  if (!force && document.visibilityState === "hidden") return;
+  liveSyncBusy = true;
+  try {
+    await Promise.all([loadChat(), loadNovelPreview(), refreshNovelAgentStatus()]);
+  } finally {
+    liveSyncBusy = false;
+  }
+}
+
 async function sendChat() {
   const content = (els.chatInput.value || "").trim();
   if (!content) return;
@@ -2417,8 +2464,17 @@ function bindControls() {
       submitNovelText("Update the Autopilot Setup canvas or loop script carefully. If changing the loop script, produce only a valid AAPS v1 script for backend validation: ", els.novelSetup)
     );
   }
-  els.agentMonitorButtons.forEach((btn) => {
+  els.previewToggleButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
+      const screen = btn.closest(".writing-screen");
+      if (!screen) return;
+      setPreviewExpanded(screen, !screen.classList.contains("is-preview-expanded"));
+      window.requestAnimationFrame(setViewportVars);
+    });
+  });
+  els.agentMonitorButtons.forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
       if (!els.agentPopover) return;
       els.agentPopover.hidden = !els.agentPopover.hidden;
       if (!els.agentPopover.hidden) refreshNovelAgentStatus();
@@ -2426,9 +2482,19 @@ function bindControls() {
   });
   if (els.agentPopoverClose && els.agentPopover) {
     els.agentPopoverClose.addEventListener("click", () => {
-      els.agentPopover.hidden = true;
+      closeAgentPopover();
     });
   }
+  document.addEventListener("pointerdown", (ev) => {
+    if (!els.agentPopover || els.agentPopover.hidden) return;
+    const target = ev.target;
+    if (els.agentPopover.contains(target)) return;
+    if (target && target.closest && target.closest("[data-agent-monitor]")) return;
+    closeAgentPopover();
+  });
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") closeAgentPopover();
+  });
   if (els.novelAgentRefresh) {
     els.novelAgentRefresh.addEventListener("click", refreshNovelAgentStatus);
   }
@@ -2438,13 +2504,19 @@ function bindControls() {
       els.topbar.classList.toggle("is-settings-open", open);
       els.settingsToggle.setAttribute("aria-expanded", open ? "true" : "false");
       window.requestAnimationFrame(setViewportVars);
+      window.requestAnimationFrame(() => window.requestAnimationFrame(setViewportVars));
+      window.setTimeout(setViewportVars, 120);
     });
   }
 }
 
 function boot() {
   setViewportVars();
-  window.addEventListener("resize", setViewportVars);
+  syncPreviewLayoutForViewport();
+  window.addEventListener("resize", () => {
+    setViewportVars();
+    syncPreviewLayoutForViewport();
+  });
 
   setUiLang(loadUiLangFromStorage(), { persist: false });
   setViewportVars();
@@ -2495,11 +2567,11 @@ function boot() {
   window.setInterval(() => {
     // keep logs reasonably fresh while running
     if (!els.tabLogs.hidden) refreshLogs();
-    if (!els.tabChat.hidden) loadChat();
-    refreshNovelAgentStatus();
-    const active = activeNovelMode();
-    if (active === "beats" || active === "draft" || active === "loop" || active === "setup") loadNovelPreview();
+    liveSync();
   }, 2500);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") liveSync({ force: true });
+  });
 }
 
 boot();

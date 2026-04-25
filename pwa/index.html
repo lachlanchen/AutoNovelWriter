@@ -42,68 +42,9 @@
         </div>
       </div>
 
-      <button class="btn btn--ghost settings-toggle" id="settings-toggle" type="button" aria-expanded="false" aria-controls="topbar-controls">
+      <button class="btn btn--ghost settings-toggle" id="settings-toggle" type="button" data-novel-tab="settings">
         Settings
       </button>
-
-      <div class="controls" id="topbar-controls">
-        <div class="select">
-          <label data-i18n="ui.label.agent">Agent</label>
-          <select id="agent-select">
-            <option value="codex">Codex</option>
-            <option value="copilot" disabled>Copilot (coming)</option>
-            <option value="gemini" disabled>Gemini (coming)</option>
-            <option value="claude" disabled>Claude (coming)</option>
-          </select>
-        </div>
-        <div class="select">
-          <label data-i18n="ui.label.model">Model</label>
-          <select id="model-select">
-            <option value="gpt-5.5" selected>gpt-5.5</option>
-            <option value="gpt-5.3-codex">gpt-5.3-codex</option>
-            <option value="gpt-5.3-codex-mini" disabled>gpt-5.3-codex-mini</option>
-          </select>
-        </div>
-        <div class="select">
-          <label>Reply</label>
-          <select id="novel-reply-reasoning">
-            <option value="medium" selected>medium</option>
-            <option value="low">low</option>
-            <option value="high">high</option>
-          </select>
-        </div>
-        <div class="select">
-          <label>Assistant</label>
-          <select id="novel-assistant-reasoning">
-            <option value="high" selected>high</option>
-            <option value="medium">medium</option>
-            <option value="xhigh">xhigh</option>
-          </select>
-        </div>
-
-        <div class="select">
-          <label data-i18n="ui.label.language">Language</label>
-          <select id="ui-lang">
-            <option value="zh-Hans">中文(简体)</option>
-            <option value="zh-Hant">中文(繁體)</option>
-            <option value="en" selected>English</option>
-            <option value="ja">日本語</option>
-            <option value="ko">한국어</option>
-            <option value="vi">Tiếng Việt</option>
-            <option value="ar">العربية</option>
-            <option value="fr">Français</option>
-            <option value="es">Español</option>
-          </select>
-        </div>
-
-        <button class="btn btn--primary" id="btn-start" data-i18n="ui.btn.start">Start</button>
-        <button class="btn" id="btn-pause" data-i18n="ui.btn.pause">Pause</button>
-        <button class="btn" id="btn-resume" data-i18n="ui.btn.resume">Resume</button>
-        <button class="btn btn--danger" id="btn-stop" data-i18n="ui.btn.stop">Stop</button>
-        <span class="ctrl-msg" id="ctrl-msg" aria-live="polite"></span>
-
-        <button class="btn btn--ghost" id="btn-theme">Light</button>
-      </div>
     </header>
 
     <main class="layout workspace-panel" data-novel-panel="setup" hidden aria-label="Autopilot setup workspace">
@@ -590,6 +531,110 @@
       </div>
     </section>
 
+    <section class="settings-screen workspace-panel" data-novel-panel="settings" hidden aria-label="Settings workspace">
+      <div class="settings-page-head">
+        <div>
+          <h2>Settings</h2>
+          <p>Agent, model, session sharing, language, theme, and pipeline controls.</p>
+        </div>
+        <button class="btn btn--ghost" type="button" data-agent-monitor>Monitor</button>
+      </div>
+
+      <div class="settings-grid" id="topbar-controls">
+        <section class="settings-panel">
+          <div class="settings-panel-head">
+            <h3>Agent</h3>
+            <p>Fast reply and background writer behavior.</p>
+          </div>
+          <div class="settings-fields">
+            <div class="select">
+              <label data-i18n="ui.label.agent">Agent</label>
+              <select id="agent-select">
+                <option value="codex">Codex</option>
+                <option value="copilot" disabled>Copilot (coming)</option>
+                <option value="gemini" disabled>Gemini (coming)</option>
+                <option value="claude" disabled>Claude (coming)</option>
+              </select>
+            </div>
+            <div class="select">
+              <label data-i18n="ui.label.model">Model</label>
+              <select id="model-select">
+                <option value="gpt-5.5" selected>gpt-5.5</option>
+                <option value="gpt-5.3-codex">gpt-5.3-codex</option>
+                <option value="gpt-5.3-codex-mini" disabled>gpt-5.3-codex-mini</option>
+              </select>
+            </div>
+            <div class="select">
+              <label>Reply</label>
+              <select id="novel-reply-reasoning">
+                <option value="medium" selected>medium</option>
+                <option value="low">low</option>
+                <option value="high">high</option>
+              </select>
+            </div>
+            <div class="select">
+              <label>Assistant</label>
+              <select id="novel-assistant-reasoning">
+                <option value="high" selected>high</option>
+                <option value="medium">medium</option>
+                <option value="xhigh">xhigh</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-panel">
+          <div class="settings-panel-head">
+            <h3>Session</h3>
+            <p>Share one writing conversation across all tabs, or split by tab.</p>
+          </div>
+          <label class="toggle-row">
+            <span>
+              <strong>Share Session</strong>
+              <small>On by default. Beats, Draft, Loop, and AP Setup use the same active chat.</small>
+            </span>
+            <input id="share-sessions-toggle" type="checkbox" checked />
+          </label>
+          <div class="settings-separator"></div>
+          <div class="settings-fields settings-fields--compact">
+            <div class="select">
+              <label data-i18n="ui.label.language">Language</label>
+              <select id="ui-lang">
+                <option value="zh-Hans">中文(简体)</option>
+                <option value="zh-Hant">中文(繁體)</option>
+                <option value="en" selected>English</option>
+                <option value="ja">日本語</option>
+                <option value="ko">한국어</option>
+                <option value="vi">Tiếng Việt</option>
+                <option value="ar">العربية</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+              </select>
+            </div>
+            <button class="btn btn--ghost settings-theme-btn" id="btn-theme" type="button">Light</button>
+          </div>
+        </section>
+
+        <section class="settings-panel settings-panel--wide">
+          <div class="settings-panel-head">
+            <h3>Pipeline</h3>
+            <p>Runtime controls use consistent sizing and clear separation from writing settings.</p>
+          </div>
+          <div class="pipeline-control-row">
+            <button class="btn btn--primary" id="btn-start" data-i18n="ui.btn.start">Start</button>
+            <button class="btn" id="btn-pause" data-i18n="ui.btn.pause">Pause</button>
+            <button class="btn" id="btn-resume" data-i18n="ui.btn.resume">Resume</button>
+            <button class="btn btn--danger" id="btn-stop" data-i18n="ui.btn.stop">Stop</button>
+          </div>
+          <div class="settings-separator"></div>
+          <span class="ctrl-msg" id="ctrl-msg" aria-live="polite"></span>
+          <div class="hintbox">
+            Pipeline controls start, pause, resume, and stop the configured autopilot runner. Chat session sharing only changes browser writing conversations.
+          </div>
+        </section>
+      </div>
+    </section>
+
     <aside class="agent-popover" id="agent-popover" hidden>
       <div class="writing-head">
         <div>
@@ -620,6 +665,7 @@
       <button class="novel-tab" type="button" data-novel-tab="draft">Draft Studio</button>
       <button class="novel-tab" type="button" data-novel-tab="loop">Autopilot Loop</button>
       <button class="novel-tab" type="button" data-novel-tab="setup">AP Setup</button>
+      <button class="novel-tab" type="button" data-novel-tab="settings">Settings</button>
     </nav>
   </body>
 </html>

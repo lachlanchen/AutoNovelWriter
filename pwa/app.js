@@ -80,6 +80,7 @@ const els = {
   novelPanels: document.querySelectorAll("[data-novel-panel]"),
   novelReplyReasoning: document.getElementById("novel-reply-reasoning"),
   novelAssistantReasoning: document.getElementById("novel-assistant-reasoning"),
+  shareSessionsToggle: document.getElementById("share-sessions-toggle"),
   beatsPreview: document.getElementById("beats-preview"),
   draftPreview: document.getElementById("draft-preview"),
   loopPreview: document.getElementById("loop-preview"),
@@ -888,6 +889,10 @@ function setNovelTab(key) {
   if (target === "beats" || target === "draft" || target === "loop" || target === "setup") {
     loadNovelPreview();
     loadChat();
+  } else if (target === "settings") {
+    loadSettings();
+    refreshHealth();
+    refreshStatus();
   }
 }
 
@@ -911,6 +916,15 @@ function activeChatMode() {
   return ["beats", "draft", "loop", "setup"].includes(mode) ? mode : "chat";
 }
 
+function shareSessionsEnabled() {
+  return !els.shareSessionsToggle || els.shareSessionsToggle.checked !== false;
+}
+
+function resetAllChatPaging() {
+  chatPaging = {};
+  chatOlderBusy = {};
+}
+
 function novelAgentOptions(mode) {
   const model = String((els.modelSelect && els.modelSelect.value) || "gpt-5.5").trim() || "gpt-5.5";
   const replyReasoning =
@@ -924,6 +938,7 @@ function novelAgentOptions(mode) {
     assistant_model: model,
     assistant_reasoning: assistantReasoning,
     assistant_enabled: true,
+    share_sessions: shareSessionsEnabled(),
   };
 }
 
@@ -995,6 +1010,7 @@ async function loadSettings() {
     const model = typeof cfg.model === "string" ? cfg.model : "";
     if (canSelectValue(els.agentSelect, agent)) els.agentSelect.value = agent;
     if (canSelectValue(els.modelSelect, model)) els.modelSelect.value = model;
+    if (els.shareSessionsToggle) els.shareSessionsToggle.checked = cfg.chat_share_sessions !== false;
   } catch (e) {
     console.warn("load settings failed", e);
   }
@@ -1004,8 +1020,12 @@ async function saveSettings() {
   if (!els.agentSelect || !els.modelSelect) return;
   const agent = String(els.agentSelect.value || "");
   const model = String(els.modelSelect.value || "");
+  const chatShareSessions = shareSessionsEnabled();
   try {
-    await api("/api/config", { method: "POST", body: JSON.stringify({ agent, model }) });
+    await api("/api/config", {
+      method: "POST",
+      body: JSON.stringify({ agent, model, chat_share_sessions: chatShareSessions }),
+    });
   } catch (e) {
     console.warn("save settings failed", e);
   }
@@ -2589,6 +2609,14 @@ function bindControls() {
 
   if (els.agentSelect) els.agentSelect.addEventListener("change", saveSettings);
   if (els.modelSelect) els.modelSelect.addEventListener("change", saveSettings);
+  if (els.shareSessionsToggle) {
+    els.shareSessionsToggle.addEventListener("change", async () => {
+      await saveSettings();
+      resetAllChatPaging();
+      await loadChat();
+      showToast(shareSessionsEnabled() ? "Share Session is on." : "Share Session is off.", { kind: "notice" });
+    });
+  }
 
   els.exportBtn.addEventListener("click", () => {
     els.export.hidden = false;
@@ -2787,12 +2815,7 @@ function bindControls() {
   }
   if (els.settingsToggle && els.topbar) {
     els.settingsToggle.addEventListener("click", () => {
-      const open = !els.topbar.classList.contains("is-settings-open");
-      els.topbar.classList.toggle("is-settings-open", open);
-      els.settingsToggle.setAttribute("aria-expanded", open ? "true" : "false");
-      window.requestAnimationFrame(setViewportVars);
-      window.requestAnimationFrame(() => window.requestAnimationFrame(setViewportVars));
-      window.setTimeout(setViewportVars, 120);
+      setNovelTab("settings");
     });
   }
 }

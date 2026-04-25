@@ -161,11 +161,15 @@ Browser chat now supports backend-owned sessions. Each writing mode can have its
 
 The first three writing tabs expose `New Chat` and `History` buttons. `New Chat` calls `POST /api/chat/sessions`, creates a new session for the current mode, marks it active on the backend, and reloads the chat. Because the active session is backend-owned, another open browser can pick it up on the next live sync for the same mode.
 
+`chat_share_sessions` defaults to `true` in `/api/config`. While it is on, all writing modes resolve through `chat_shared_session_id`, so the four writing tabs share one active chat conversation. When it is off, `chat_active_sessions.<mode>` is used per tab.
+
 New chat sessions also get separate Codex resume files under `runtime/novel/state/chat_sessions/<session_id>/`, so the quick reply and assistant writer do not have to keep using the legacy Codex thread. The `legacy` session preserves older global chat behavior and appears in Beats Board history when it contains earlier Beats-style notes.
 
 Like LazyBlog Studio, session titles start as `Untitled chat` and are renamed from the first user message. AutoNovelWriter strips internal mode prefixes before deriving the title. `POST /api/chat/sessions` also supports `action=rename` for explicit local title changes. The frontend History control is a clickable popover list, not a browser number prompt. Each writing tab renders only its own mode/session chat; cross-tab painting is treated as a UI bug.
 
 Message history is paged separately from session history. `GET /api/chat?mode=beats&limit=10&offset=0` returns the newest page plus `has_more` and `next_offset`. The writing tabs prepend older pages when the user clicks `More earlier messages` or scrolls near the top, preserving the scroll position after each prepend.
+
+Every reply/writer prompt includes a browser tab/session reference block with the current tab mode, current session id, and reply/writer Codex resume file paths for `beats`, `draft`, `loop`, and `setup`. This is present whether session sharing is on or off.
 
 ## Backend API Reference
 
@@ -284,6 +288,7 @@ Key functions in `pwa/app.js`:
 - `loadChat()`: loads only the active mode/session and renders it into that tab's chat log.
 - `loadOlderChat(mode)`: fetches the next older 10-message page and prepends it without disturbing the reader's position.
 - `showChatHistory(mode)`: opens the clickable history popover, lists session titles, and selects the requested backend-owned session.
+- `loadSettings()` / `saveSettings()`: keep the dedicated Settings page synchronized with backend config, including `chat_share_sessions`.
 - `refreshNovelAgentStatus()`: fills the Agent Monitor.
 - `setViewportVars()`: measures the topbar and updates `--topbar-h`.
 

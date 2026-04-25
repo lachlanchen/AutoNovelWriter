@@ -137,6 +137,7 @@ Recent shell cache bumps:
 - `autoappdev-shell-v24`: session titles from first user message, per-tab chat rendering, toolbar label updates, and History session switching.
 - `autoappdev-shell-v25`: clickable History popover and Beats Board legacy-history recovery.
 - `autoappdev-shell-v26`: lazy chat message paging and cleaner Autopilot Loop toolbar.
+- `autoappdev-shell-v27`: dedicated Settings page and default shared writing sessions.
 
 When shell behavior changes, bump `pwa/service-worker.js` again.
 
@@ -181,6 +182,14 @@ Beats Board also exposes the older `legacy` shared chat as `Legacy Chat (previou
 Writing-tab chat logs now lazy-load message history. `GET /api/chat` accepts `limit` and `offset`; the frontend first loads the newest 10 raw messages, renders a top `More earlier messages` control when older history exists, and automatically loads the next batch when the user scrolls near the top. The renderer preserves scroll position when prepending older messages, so reading back through history should not jump.
 
 Autopilot Loop no longer shows the shared Monitor button in its toolbar. The freed slot keeps `AP Setup` visible as the primary path into the Scratch-like pipeline editor. Other tabs still expose Monitor where it is useful.
+
+Settings is now a dedicated workspace page instead of an expandable topbar section. The topbar `Settings` button and bottom `Settings` tab open the same page. Controls are grouped into panels:
+
+- Agent: agent, model, reply reasoning, assistant reasoning.
+- Session: `Share Session`, language, theme.
+- Pipeline: Start, Pause, Resume, Stop with equal button height and a separated status/message area.
+
+`Share Session` defaults on. When enabled, `Beats Board`, `Draft Studio`, `Autopilot Loop`, and `AP Setup` resolve to the same active backend chat session. When disabled, each tab keeps its own active session, but the backend still injects all tab session ids and Codex resume file paths into reply/writer prompts so agents stay aware of adjacent tab context.
 
 ## Files Changed in These Updates
 

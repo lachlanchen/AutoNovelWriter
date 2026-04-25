@@ -39,6 +39,7 @@ RUNTIME_DIR: Path | None = None
 LOG_DIR: Path | None = None
 STARTED_AT_ISO = datetime.datetime.now(datetime.timezone.utc).isoformat()
 BUILD_ID = STARTED_AT_ISO
+WRITING_CHAT_MODES = ("beats", "draft", "loop", "setup")
 
 
 def _write_inbox_message(runtime_dir: Path, content: str) -> None:
@@ -66,6 +67,40 @@ def _normalize_chat_session_id(raw: Any) -> str:
         return "legacy"
     cleaned = re.sub(r"[^A-Za-z0-9_.:-]+", "_", sid)[:96]
     return cleaned or "legacy"
+
+
+def _chat_share_sessions_enabled(cfg: dict[str, Any] | None) -> bool:
+    if not isinstance(cfg, dict):
+        return True
+    return cfg.get("chat_share_sessions", True) is not False
+
+
+def _shared_chat_session_id_from_config(cfg: dict[str, Any] | None) -> str:
+    if not isinstance(cfg, dict):
+        return "legacy"
+    active = cfg.get("chat_active_sessions") if isinstance(cfg.get("chat_active_sessions"), dict) else {}
+    raw = cfg.get("chat_shared_session_id") or active.get("beats")
+    if not raw:
+        for mode in WRITING_CHAT_MODES:
+            if active.get(mode):
+                raw = active.get(mode)
+                break
+    return _normalize_chat_session_id(raw or "legacy")
+
+
+def _codex_session_file_paths(runtime_dir: Path, chat_session_id: str) -> dict[str, str]:
+    paths = _novel_paths(runtime_dir)
+    sid = _normalize_chat_session_id(chat_session_id)
+    if sid == "legacy":
+        return {
+            "reply_session_file": str(paths["reply_session"]),
+            "writer_session_file": str(paths["writer_session"]),
+        }
+    session_dir = paths["state"] / "chat_sessions" / sid
+    return {
+        "reply_session_file": str(session_dir / "codex_reply_session.txt"),
+        "writer_session_file": str(session_dir / "codex_writer_session.txt"),
+    }
 
 
 def _chat_session_title_from_message(content: str, mode: str) -> str:
@@ -96,6 +131,8 @@ async def _active_chat_session_id(storage: Storage, mode: str) -> str:
     clean_mode = _normalize_chat_mode(mode)
     default_session = "legacy" if clean_mode == "chat" else f"default_{clean_mode}"
     cfg = await storage.get_config()
+    if clean_mode in WRITING_CHAT_MODES and _chat_share_sessions_enabled(cfg):
+        return _shared_chat_session_id_from_config(cfg)
     active = cfg.get("chat_active_sessions") if isinstance(cfg, dict) else {}
     if isinstance(active, dict):
         sid = _normalize_chat_session_id(active.get(clean_mode) or default_session)
@@ -105,12 +142,68 @@ async def _active_chat_session_id(storage: Storage, mode: str) -> str:
 
 
 async def _set_active_chat_session_id(storage: Storage, mode: str, session_id: str) -> None:
+    clean_mode = _normalize_chat_mode(mode)
+    sid = _normalize_chat_session_id(session_id)
     cfg = await storage.get_config()
     active = cfg.get("chat_active_sessions") if isinstance(cfg, dict) else {}
     if not isinstance(active, dict):
         active = {}
-    active[_normalize_chat_mode(mode)] = _normalize_chat_session_id(session_id)
+    active[clean_mode] = sid
     await storage.set_config("chat_active_sessions", active)
+    if clean_mode in WRITING_CHAT_MODES and _chat_share_sessions_enabled(cfg):
+        await storage.set_config("chat_shared_session_id", sid)
+
+
+async def _list_chat_sessions_for_mode(storage: Storage, mode: str, limit: int = 30) -> list[dict[str, Any]]:
+    clean_mode = _normalize_chat_mode(mode)
+    cfg = await storage.get_config()
+    shared = clean_mode in WRITING_CHAT_MODES and _chat_share_sessions_enabled(cfg)
+    raw_sessions: list[dict[str, Any]] = []
+    if shared:
+        for item_mode in WRITING_CHAT_MODES:
+            raw_sessions.extend(await storage.list_chat_sessions(limit=limit, mode=item_mode))
+    else:
+        raw_sessions = await storage.list_chat_sessions(limit=limit, mode=clean_mode)
+
+    sessions: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for session in raw_sessions:
+        sid = str(session.get("id") or "")
+        if not sid or sid in seen:
+            continue
+        if str(session.get("title") or "").strip().lower() == "probe session":
+            continue
+        seen.add(sid)
+        sessions.append(dict(session))
+
+    if (shared or clean_mode == "beats") and "legacy" not in seen:
+        legacy_messages = await storage.list_chat_messages(limit=1, session_id="legacy")
+        if legacy_messages:
+            legacy_rows = await storage.list_chat_sessions(limit=50, mode="chat")
+            legacy = next((dict(row) for row in legacy_rows if str(row.get("id") or "") == "legacy"), None)
+            if legacy is None:
+                legacy = {
+                    "id": "legacy",
+                    "title": "Legacy Chat",
+                    "mode": "chat",
+                    "created_at": None,
+                    "updated_at": None,
+                }
+            if str(legacy.get("title") or "").strip() == "Legacy Chat":
+                legacy["title"] = "Legacy Chat (previous shared history)"
+            if not legacy.get("updated_at"):
+                legacy["updated_at"] = legacy_messages[-1].get("created_at")
+            sessions.append(legacy)
+
+    active_session_id = await _active_chat_session_id(storage, clean_mode)
+    sessions.sort(
+        key=lambda it: (
+            str(it.get("id") or "") == active_session_id,
+            str(it.get("updated_at") or it.get("created_at") or ""),
+        ),
+        reverse=True,
+    )
+    return sessions[: max(1, min(200, int(limit)))]
 
 
 def _novel_workspace_root() -> Path:
@@ -236,12 +329,11 @@ async def _run_codex_session(
     paths = _novel_paths(runtime_dir)
     role_key = "reply" if role == "reply" else "writer"
     normalized_session_id = _normalize_chat_session_id(chat_session_id)
-    if normalized_session_id == "legacy":
-        session_path = paths["reply_session"] if role_key == "reply" else paths["writer_session"]
-    else:
+    if normalized_session_id != "legacy":
         session_dir = paths["state"] / "chat_sessions" / normalized_session_id
         session_dir.mkdir(parents=True, exist_ok=True)
-        session_path = session_dir / f"codex_{role_key}_session.txt"
+    session_files = _codex_session_file_paths(runtime_dir, normalized_session_id)
+    session_path = Path(session_files[f"{role_key}_session_file"])
     sid = session_path.read_text("utf-8").strip() if session_path.exists() else ""
     log_path = paths["logs"] / f"codex_{role_key}_{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}_{uuid.uuid4().hex[:8]}.jsonl"
 
@@ -488,6 +580,7 @@ class ConfigHandler(BaseHandler):
 
     async def get(self) -> None:
         cfg = await self.storage.get_config()
+        cfg.setdefault("chat_share_sessions", True)
         self.write_json({"config": cfg})
 
     async def post(self) -> None:
@@ -495,8 +588,11 @@ class ConfigHandler(BaseHandler):
         if not isinstance(body, dict):
             self.write_json({"error": "invalid_body"}, status=400)
             return
+        old_cfg = await self.storage.get_config()
         for k, v in body.items():
             await self.storage.set_config(str(k), v)
+        if body.get("chat_share_sessions") is True and not old_cfg.get("chat_shared_session_id"):
+            await self.storage.set_config("chat_shared_session_id", _shared_chat_session_id_from_config(old_cfg))
         self.write_json({"ok": True})
 
 
@@ -1357,7 +1453,48 @@ class NovelCodexOrchestrator:
                 f"- outputs_root: {record.get('outputs_root', '')}",
                 f"- external_input_path: {record.get('external_input_path', '')}",
                 f"- interaction_path: {record.get('interaction_path', '')}",
+                f"- chat_mode: {record.get('chat_mode', 'chat')}",
                 f"- chat_session_id: {record.get('chat_session_id', 'legacy')}",
+            ]
+        )
+
+    async def _session_reference_context(
+        self,
+        record: dict[str, str],
+        options: dict[str, Any],
+        current_session_id: str,
+    ) -> str:
+        cfg = await self.storage.get_config()
+        shared = _chat_share_sessions_enabled(cfg)
+        current_mode = _normalize_chat_mode(record.get("chat_mode") or options.get("mode") or "chat")
+        lines = [
+            f"- share_sessions_across_tabs: {'on' if shared else 'off'}",
+            f"- current_tab_mode: {current_mode}",
+            f"- current_chat_session_id: {_normalize_chat_session_id(current_session_id)}",
+        ]
+        current_paths = _codex_session_file_paths(self.runtime_dir, current_session_id)
+        lines.append(f"- current_reply_session_file: {current_paths['reply_session_file']}")
+        lines.append(f"- current_writer_session_file: {current_paths['writer_session_file']}")
+        lines.append("- tab_session_map:")
+        for mode in WRITING_CHAT_MODES:
+            sid = await _active_chat_session_id(self.storage, mode)
+            paths = _codex_session_file_paths(self.runtime_dir, sid)
+            marker = " (current tab)" if mode == current_mode else ""
+            lines.append(f"  - {mode}{marker}:")
+            lines.append(f"    - chat_session_id: {sid}")
+            lines.append(f"    - reply_session_file: {paths['reply_session_file']}")
+            lines.append(f"    - writer_session_file: {paths['writer_session_file']}")
+        lines.append(
+            "- instruction: Always be aware that the browser has multiple writing tabs. "
+            "If share_sessions_across_tabs is off, do not ignore the other tab sessions; use the paths above as reference points."
+        )
+        return "\n".join(lines)
+
+    async def _prompt_context(self, record: dict[str, str], options: dict[str, Any], current_session_id: str) -> str:
+        return "\n\n".join(
+            [
+                self._shared_context(record),
+                "Browser tab/session references:\n" + await self._session_reference_context(record, options, current_session_id),
             ]
         )
 
@@ -1365,13 +1502,14 @@ class NovelCodexOrchestrator:
         async with self.reply_lock:
             chat_session_id = _normalize_chat_session_id(record.get("chat_session_id") or options.get("chat_session_id") or "legacy")
             self._set_state("reply", {"state": "running", "latest_input": record.get("interaction_path")})
+            project_context = await self._prompt_context(record, options, chat_session_id)
             prompt = f"""You are AutoNovelWriter's quick browser reply agent.
 
 You answer quickly in the browser. Do not edit files. A separate assistant writer task may already be queued and will do the real organization, drafting, and loop-script edits.
 Use the same language as the user when obvious. Keep the answer short, practical, and natural.
 
 Project context:
-{self._shared_context(record)}
+{project_context}
 
 Recent chat:
 {await self._recent_chat(session_id=chat_session_id)}
@@ -1461,13 +1599,14 @@ After repairing, save the complete corrected AAPS script back to {proposed}."""
         async with self.writer_lock:
             chat_session_id = _normalize_chat_session_id(record.get("chat_session_id") or options.get("chat_session_id") or "legacy")
             self._set_state("writer", {"state": "running", "latest_input": record.get("interaction_path")})
+            project_context = await self._prompt_context(record, options, chat_session_id)
             prompt = f"""You are AutoNovelWriter's long-running surrogate novel writer.
 
 You are paired with a browser UI. Reuse this Codex session over time, but ground every turn in files.
 Your goal is to organize the user's idea into durable material and write concrete novel prose when appropriate.
 
 Project context:
-{self._shared_context(record)}
+{project_context}
 
 Autopilot loop strict grammar target:
 - If the user asks to change the Autopilot Loop layout/script, write a complete AAPS v1 script to:
@@ -1535,7 +1674,7 @@ class ChatHandler(BaseHandler):
         page = await self.storage.list_chat_messages(limit=limit + 1, session_id=session_id, offset=offset)
         has_more = len(page) > limit
         items = page[1:] if has_more else page
-        sessions = await self.storage.list_chat_sessions(limit=30, mode=mode)
+        sessions = await _list_chat_sessions_for_mode(self.storage, mode, limit=30)
         self.write_json(
             {
                 "messages": items,
@@ -1570,6 +1709,7 @@ class ChatHandler(BaseHandler):
         _write_inbox_message(self.runtime_dir, content)
         record = _write_novel_interaction(self.runtime_dir, content)
         record["chat_session_id"] = session_id
+        record["chat_mode"] = mode
         options = {**options, "mode": mode, "chat_session_id": session_id}
         ack = "已收到。我会先保存这条输入；快速回复会尽快回来，复杂整理和写作会交给后台 assistant 任务继续处理。"
         if mode == "loop":
@@ -1595,30 +1735,7 @@ class ChatSessionsHandler(BaseHandler):
         limit = int(self.get_query_argument("limit", "30"))
         mode = _normalize_chat_mode(self.get_query_argument("mode", "chat"))
         active_session_id = await _active_chat_session_id(self.storage, mode)
-        sessions = await self.storage.list_chat_sessions(limit=limit, mode=mode)
-        sessions = [
-            session
-            for session in sessions
-            if str(session.get("title") or "").strip().lower() != "probe session"
-        ]
-        if mode == "beats" and not any(str(session.get("id") or "") == "legacy" for session in sessions):
-            legacy_messages = await self.storage.list_chat_messages(limit=1, session_id="legacy")
-            if legacy_messages:
-                legacy_rows = await self.storage.list_chat_sessions(limit=50, mode="chat")
-                legacy = next((dict(row) for row in legacy_rows if str(row.get("id") or "") == "legacy"), None)
-                if legacy is None:
-                    legacy = {
-                        "id": "legacy",
-                        "title": "Legacy Chat",
-                        "mode": "chat",
-                        "created_at": None,
-                        "updated_at": None,
-                    }
-                if str(legacy.get("title") or "").strip() == "Legacy Chat":
-                    legacy["title"] = "Legacy Chat (previous Beats history)"
-                if not legacy.get("updated_at"):
-                    legacy["updated_at"] = legacy_messages[-1].get("created_at")
-                sessions = [legacy] + sessions
+        sessions = await _list_chat_sessions_for_mode(self.storage, mode, limit=limit)
         self.write_json({"ok": True, "mode": mode, "active_session_id": active_session_id, "sessions": sessions})
 
     async def post(self) -> None:

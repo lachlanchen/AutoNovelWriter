@@ -22,8 +22,10 @@ from pathlib import Path
 
 COOKIE_NAME = "autonovelwriter_session"
 PUBLIC_ASSETS = {
+    "/autonovelwriter-icon.svg",
+    "/autonovelwriter-icon-192.png",
+    "/autonovelwriter-icon-512.png",
     "/favicon.svg",
-    "/lazyingart-logo.png",
     "/manifest.json",
 }
 

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="AutoNovelWriter icon">
+  <defs>
+    <linearGradient id="bg" x1="84" y1="38" x2="436" y2="472" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8fbff"/>
+      <stop offset="0.54" stop-color="#dfeaff"/>
+      <stop offset="1" stop-color="#ffe9c7"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="142" y1="132" x2="374" y2="376" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3b82ff"/>
+      <stop offset="1" stop-color="#2259d8"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="156" y1="316" x2="394" y2="394" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffbf2f"/>
+      <stop offset="1" stop-color="#ff7a45"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#14315f" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="400" cy="112" r="34" fill="#ffffff" opacity="0.72"/>
+  <circle cx="88" cy="386" r="54" fill="#ffffff" opacity="0.55"/>
+
+  <g filter="url(#softShadow)">
+    <path d="M121 159c0-24 18-43 42-43h64c21 0 41 9 55 25 14-16 34-25 55-25h40c24 0 42 19 42 43v210c0 15-14 26-28 22l-68-18c-24-6-50 1-67 19l-4 4-4-4c-17-18-43-25-67-19l-68 18c-14 4-28-7-28-22V159Z" fill="#ffffff"/>
+    <path d="M252 154v214" stroke="#d7e2ff" stroke-width="16" stroke-linecap="round"/>
+    <path d="M153 170c30-11 63-8 91 9v157c-28-16-61-19-91-8V170Z" fill="#edf4ff"/>
+    <path d="M271 179c28-17 61-20 91-9v158c-30-11-63-8-91 8V179Z" fill="#edf4ff"/>
+    <path d="M158 213h56M158 252h63M158 291h48" stroke="#8aa6de" stroke-width="14" stroke-linecap="round"/>
+    <path d="M297 214h42M297 253h54M297 292h39" stroke="#8aa6de" stroke-width="14" stroke-linecap="round"/>
+  </g>
+
+  <path d="M116 346c73-67 173-82 282-43" fill="none" stroke="url(#gold)" stroke-width="18" stroke-linecap="round"/>
+  <path d="M358 281l42 24-41 25-26-15 25-34Z" fill="url(#gold)"/>
+  <path d="M358 281l-25 34" stroke="#fff6df" stroke-width="8" stroke-linecap="round"/>
+
+  <g fill="url(#blue)">
+    <circle cx="168" cy="360" r="14"/>
+    <circle cx="252" cy="332" r="14"/>
+    <circle cx="336" cy="342" r="14"/>
+  </g>
+</svg>

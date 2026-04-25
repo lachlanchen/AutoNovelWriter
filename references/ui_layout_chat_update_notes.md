@@ -1,0 +1,209 @@
+# UI Layout, Chat Sync, and Toast Update Notes
+
+Date: 2026-04-25
+
+This document records the recent AutoNovelWriter browser updates so the same ideas can later be considered for AutoAppDev. It is a reference only. Do not apply changes to AutoAppDev from this document without an explicit separate task.
+
+## Change Batches
+
+### 1. Remote and PWA Foundation
+
+The public tunnel previously loaded the PWA over HTTPS while the frontend still tried to call `http://127.0.0.1:8788/api/...`. Browsers block that as mixed content on remote devices.
+
+The fix was to make the public proxy the same-origin API gateway:
+
+- `scripts/run_autonovelwriter_public_tmux.sh` writes `pwa/config.local.js`.
+- `config.local.js` sets `window.__AUTOAPPDEV_CONFIG__.API_BASE_URL = ""`.
+- Remote pages call `/api/...` through the authenticated public proxy.
+- Local `localhost` and `127.0.0.1` sessions can still use the local backend default.
+
+The service worker cache was bumped whenever shell behavior changed so hard refreshes and normal refreshes can pick up new `index.html`, `app.js`, and `styles.css`.
+
+### 2. First Major Layout Update: Desktop and Mobile
+
+The writing workspace moved from a stacked preview/chat layout to a two-mode responsive layout.
+
+Desktop:
+
+- `Beats Board`, `Draft Studio`, and `Autopilot Loop` use `.writing-screen` as a two-column grid.
+- Left column: preview panel for beats, draft, or loop script.
+- Right column: chat log and input.
+- This keeps material context visible while writing or chatting.
+- `Autopilot Setup` keeps the Scratch-like three-column blocks/program/inspector layout.
+
+Mobile:
+
+- The bottom tabs remain full width, mobile-app style.
+- Preview starts folded to preserve vertical room for chat.
+- `Preview` expands the preview; `Hide` folds it again.
+- Subtitles are hidden or ellipsized on narrow screens.
+- Chat and input get most of the height.
+- Padding, gaps, and bottom navigation height were reduced.
+- `html` and `body` prevent horizontal dragging with `overflow-x: hidden`, `overscroll-behavior-x: none`, and `touch-action: pan-y`.
+- Inputs use at least `16px` font size on mobile to prevent iOS/Safari input zoom.
+
+The key design principle is that mobile must feel like a real chat/writing app: one vertical flow, no side-scroll, no accidental zoom, and no huge empty chrome.
+
+### 3. Header and Monitor Fixes
+
+The mobile header had a failure mode where opening Settings expanded the topbar and closing it did not restore the workspace height. The frontend now recalculates `--topbar-h` with `setViewportVars()` immediately, on the next animation frames, and after a short timeout.
+
+The Agent Monitor changed from a hard-to-close popover to a normal overlay behavior:
+
+- click `Agent` to open,
+- click outside to close,
+- press `Escape` to close,
+- click `Close` if desired.
+
+The monitor remains shared across tabs and calls `/api/novel/agent/status`.
+
+### 4. Preview Button Overflow Fix
+
+After adding mobile folding, the preview header could push `Refresh` out of the viewport when `Preview` was clicked.
+
+The fix:
+
+- `.writing-head > div:first-child` now has `min-width: 0` and flexible shrink behavior.
+- `.writing-actions` stays on one row on mobile and has a bounded width.
+- action buttons can shrink, ellipsize, and keep their line height stable.
+- the folded and expanded preview states use similar header geometry.
+
+This avoids a layout jump where the right-side actions become wider than the viewport.
+
+### 5. Chat Presentation
+
+Chat now separates user and assistant/system messages visually:
+
+- user messages align right and use a green bubble,
+- assistant/system messages align left with a warm light bubble,
+- messages use `white-space: pre-wrap` so line breaks remain readable,
+- chat scrolls to the bottom after refresh.
+
+The same merged chat stream is rendered into Beats Board, Draft Studio, Autopilot Loop, Autopilot Setup, and the older internal chat panel.
+
+### 6. Cross-Device Live Sync
+
+The app now refreshes active browser state regularly:
+
+- `liveSync()` calls `loadChat()`, `loadNovelPreview()`, and `refreshNovelAgentStatus()`.
+- It runs about every 2.5 seconds while the document is visible.
+- It force-runs when a hidden tab becomes visible again.
+- It uses a `liveSyncBusy` guard so polling calls do not overlap.
+
+This means a message sent from a phone should appear on a desktop browser without manually refreshing, and vice versa. The preview already updated before; chat now follows the same model.
+
+### 7. Mechanical Ack as Toast
+
+The fixed acknowledgement:
+
+```text
+已收到。我会先保存这条输入；快速回复会尽快回来，复杂整理和写作会交给后台 assistant 任务继续处理。
+```
+
+was previously stored as an assistant chat message. That made the chat feel mechanical and made it hard to distinguish real agent writing from app plumbing.
+
+The backend now returns the fixed acknowledgement in the `POST /api/chat` response:
+
+```json
+{
+  "ok": true,
+  "record": { "...": "..." },
+  "agent_status": { "...": "..." },
+  "notice": {
+    "kind": "mechanical_ack",
+    "text": "已收到。..."
+  }
+}
+```
+
+The frontend displays that notice through `showToast()` and does not add it to the durable chat stream.
+
+Durable chat should contain:
+
+- user messages,
+- real quick replies from the reply Codex session,
+- real writer summaries from the assistant Codex session,
+- pipeline/outbox messages when they are meaningful.
+
+Mechanical fallback messages are also filtered from display for older stored records, so old fixed acknowledgements should stop cluttering the visible chat.
+
+### 8. Cache Versions
+
+Recent shell cache bumps:
+
+- `autoappdev-shell-v18`: desktop/mobile layout split and live chat sync.
+- `autoappdev-shell-v19`: preview action overflow fix and toast-based mechanical ack.
+
+When shell behavior changes, bump `pwa/service-worker.js` again.
+
+## Files Changed in These Updates
+
+Primary frontend files:
+
+- `pwa/index.html`
+- `pwa/styles.css`
+- `pwa/app.js`
+- `pwa/service-worker.js`
+
+Primary backend files:
+
+- `backend/app.py`
+
+Operational launcher/proxy files involved in the remote flow:
+
+- `scripts/run_autonovelwriter_public_tmux.sh`
+- `scripts/autonovelwriter_public_proxy.py`
+- `/home/lachlan/scripts/start_autonovelwriter_public_tmux.sh`
+
+## Verification Used
+
+Static checks:
+
+```bash
+python3 -m py_compile backend/app.py backend/storage.py backend/pipeline_parser.py
+node --check pwa/app.js
+node --check pwa/api-client.js
+node --check pwa/i18n.js
+python3 -m json.tool pwa/manifest.json
+python3 - <<'PY'
+from pathlib import Path
+css = Path("pwa/styles.css").read_text()
+assert css.count("{") == css.count("}")
+PY
+```
+
+Runtime checks:
+
+- restart `autonovelwriter_public` tmux session,
+- verify `http://127.0.0.1:8788/api/health`,
+- verify authenticated proxy serves `service-worker.js`, `app.js`, and `styles.css`,
+- verify ngrok serves the same updated assets.
+
+## AutoAppDev Adaptation Checklist
+
+This section is for future planning only. It intentionally does not edit AutoAppDev.
+
+Possible transfer targets:
+
+1. Same-origin remote API config for ngrok or public proxy.
+2. Mobile topbar height recalculation after settings collapse.
+3. Bottom navigation spacing and safe-area handling.
+4. Desktop split workspace where a preview/status area stays visible next to chat/logs.
+5. Mobile foldable preview panels with stable header actions.
+6. Chat bubble styling and durable-message rules.
+7. Toast channel for fixed mechanical acknowledgements.
+8. Cross-device polling or WebSocket live sync for chat/status/log surfaces.
+9. Service worker cache bump discipline for every shell update.
+
+When adapting to AutoAppDev, first identify which surfaces are equivalent:
+
+| AutoNovelWriter | Possible AutoAppDev Equivalent |
+|---|---|
+| Beats/Draft/Loop preview | task status, script preview, current run summary |
+| writing chat | inbox/outbox or control chat |
+| Agent Monitor | pipeline/agent monitor |
+| Autopilot Setup | existing Scratch-like pipeline editor |
+| mechanical ack toast | command accepted / run queued notice |
+
+Keep the core rule: user-visible chat should show meaningful conversation and results, while fixed app acknowledgements should be transient toast/status UI.
+

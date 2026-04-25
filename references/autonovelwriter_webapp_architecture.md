@@ -136,11 +136,13 @@ The backend immediately:
 1. stores the user chat message,
 2. stores an inbox message,
 3. writes an interaction file,
-4. adds a short acknowledgement message,
+4. returns a short mechanical acknowledgement as a toast-style `notice`,
 5. queues the assistant task if enabled,
 6. runs the quick reply session.
 
 The quick reply session must answer soon and must not edit files. The assistant/writer session can do durable work: update material files, write drafts, propose loop scripts, commit and push tracked changes if appropriate.
+
+Fixed acknowledgements are intentionally not durable chat messages. The chat stream should contain the user's messages, real quick replies, real writer summaries, and meaningful outbox messages. See `references/ui_layout_chat_update_notes.md` for the latest layout, live-sync, and toast behavior notes.
 
 The reason for two sessions is latency and separation of responsibility:
 
@@ -373,4 +375,3 @@ curl -sS http://127.0.0.1:8788/api/novel/preview
 ```
 
 6. Commit and push the app repo, then commit and push the parent `VoidAbyss` submodule pointer.
-

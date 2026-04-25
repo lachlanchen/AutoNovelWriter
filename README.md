@@ -21,6 +21,10 @@
   </p>
 </div>
 
+## 🖼️ Demo
+
+![AutoNovelWriter Autopilot Setup](demos/autonovelwriter-autopilot-setup.png)
+
 This repo also vendors `AutoAppDev/` as a submodule (reusable auto-development scripts).
 
 > [!TIP]

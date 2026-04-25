@@ -997,11 +997,18 @@ html[dir="rtl"] .msg--system {
     gap: 8px;
     padding: 9px 10px;
   }
+  .writing-head > div:first-child {
+    flex: 0 1 auto;
+    max-width: min(34vw, 132px);
+  }
   .writing-head h2 {
     font-size: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .writing-head p {
-    max-width: 100%;
+    max-width: min(9ch, 100%);
     margin-top: 3px;
     white-space: nowrap;
     overflow: hidden;

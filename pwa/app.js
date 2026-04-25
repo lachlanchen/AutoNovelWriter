@@ -103,6 +103,7 @@ const els = {
   agentPopoverClose: document.getElementById("agent-popover-close"),
   novelAgentStatus: document.getElementById("novel-agent-status"),
   novelAgentRefresh: document.getElementById("novel-agent-refresh"),
+  toastStack: document.getElementById("toast-stack"),
 };
 
 const UI_LANG_STORAGE_KEY = "autoappdev_ui_lang";
@@ -801,6 +802,34 @@ function closeAgentPopover() {
   if (els.agentPopover) els.agentPopover.hidden = true;
 }
 
+function isMechanicalAckMessage(message) {
+  const role = String((message && message.role) || "");
+  const text = String((message && message.content) || "").trim();
+  if (role !== "assistant") return false;
+  return (
+    text === "已收到。我会先保存这条输入；快速回复会尽快回来，复杂整理和写作会交给后台 assistant 任务继续处理。" ||
+    text === "已收到。我会先保存这条输入；快速回复会尽快回来，复杂整理和写作会交给后台 assistant 任务继续处理。 如果需要改 Autopilot Loop，后台只会接受通过 AAPS 语法检查的脚本。" ||
+    text === "I saved your note and queued the writer session. The detailed writing pass will update the novel materials and draft outputs." ||
+    text === "Writer session finished without a readable summary. Check the agent log path in the monitor."
+  );
+}
+
+function showToast(text, { kind = "notice", timeout = 4200 } = {}) {
+  const msg = String(text || "").trim();
+  if (!msg || !els.toastStack) return;
+  const node = document.createElement("div");
+  node.className = `toast toast--${kind}`;
+  node.textContent = msg;
+  els.toastStack.appendChild(node);
+  const remove = () => {
+    node.style.opacity = "0";
+    node.style.transform = "translateY(6px)";
+    window.setTimeout(() => node.remove(), 180);
+  };
+  node.addEventListener("click", remove, { once: true });
+  window.setTimeout(remove, timeout);
+}
+
 function setNovelTab(key) {
   const target = String(key || "beats");
   els.novelTabs.forEach((tab) => {
@@ -886,11 +915,14 @@ async function submitNovelText(prefix, textarea) {
   const mode = activeNovelMode();
   if (textarea) textarea.value = "";
   try {
-    await api("/api/chat", {
+    const res = await api("/api/chat", {
       method: "POST",
       timeout_ms: 8000,
       body: JSON.stringify({ content, agent_options: novelAgentOptions(mode) }),
     });
+    if (res && res.notice && res.notice.kind === "mechanical_ack") {
+      showToast(res.notice.text, { kind: "notice" });
+    }
     await Promise.all([loadChat(), refreshNovelAgentStatus(), loadNovelPreview()]);
   } catch (e) {
     if (els.ctrlMsg) {
@@ -2171,7 +2203,7 @@ async function loadChat() {
     const outbox = Array.isArray(outboxRes && outboxRes.messages) ? outboxRes.messages : [];
     const merged = [];
     let idx = 0;
-    chat.forEach((m) => merged.push({ m, idx: idx++ }));
+    chat.filter((m) => !isMechanicalAckMessage(m)).forEach((m) => merged.push({ m, idx: idx++ }));
     outbox.forEach((m) => merged.push({ m, idx: idx++ }));
 
     const parseTs = (it) => {
@@ -2227,11 +2259,14 @@ async function sendChat() {
   if (!content) return;
   els.chatInput.value = "";
   try {
-    await api("/api/chat", {
+    const res = await api("/api/chat", {
       method: "POST",
       timeout_ms: 8000,
       body: JSON.stringify({ content, agent_options: novelAgentOptions(activeNovelMode()) }),
     });
+    if (res && res.notice && res.notice.kind === "mechanical_ack") {
+      showToast(res.notice.text, { kind: "notice" });
+    }
   } catch (e) {
     console.warn(e);
   }

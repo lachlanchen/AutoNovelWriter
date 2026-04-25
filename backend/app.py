@@ -1319,9 +1319,13 @@ Reply in 2-5 concise sentences. Mention that the writer session is handling the 
                 timeout_s=90,
             )
             text = str(res.get("text") or "").strip()
-            if not text:
-                text = "I saved your note and queued the writer session. The detailed writing pass will update the novel materials and draft outputs."
-            await self.storage.add_chat_message("assistant", text)
+            if text:
+                await self.storage.add_chat_message("assistant", text)
+            else:
+                res["notice"] = {
+                    "kind": "mechanical_ack",
+                    "text": "Quick reply produced no readable text; the writer session is still queued in the background.",
+                }
             self._set_state("reply", {"state": "idle" if res.get("ok") else "error", "last_result": res})
 
     async def _validate_loop_script(self, record: dict[str, str], options: dict[str, Any], *, repair_once: bool = True) -> dict[str, Any]:
@@ -1429,12 +1433,16 @@ End with a concise summary of changed files and what the user should read next."
             loop_validation = await self._validate_loop_script(record, options)
             text = str(res.get("text") or "").strip()
             if not text:
-                text = "Writer session finished without a readable summary. Check the agent log path in the monitor."
-            if loop_validation.get("ok") and not loop_validation.get("skipped"):
+                res["notice"] = {
+                    "kind": "mechanical_ack",
+                    "text": "Writer session finished without a readable summary. Check the agent monitor for logs.",
+                }
+            if text and loop_validation.get("ok") and not loop_validation.get("skipped"):
                 text += f"\n\nAutopilot loop script accepted: {loop_validation.get('accepted')}."
             elif not loop_validation.get("ok"):
-                text += f"\n\nAutopilot loop script validation failed: {json.dumps(loop_validation, ensure_ascii=False)}"
-            await self.storage.add_chat_message("assistant", text)
+                text = (text + "\n\n" if text else "") + f"Autopilot loop script validation failed: {json.dumps(loop_validation, ensure_ascii=False)}"
+            if text:
+                await self.storage.add_chat_message("assistant", text)
             self._set_state("writer", {"state": "idle" if res.get("ok") else "error", "last_result": res})
 
 
@@ -1463,9 +1471,15 @@ class ChatHandler(BaseHandler):
         ack = "已收到。我会先保存这条输入；快速回复会尽快回来，复杂整理和写作会交给后台 assistant 任务继续处理。"
         if str(options.get("mode") or "").strip() == "loop":
             ack += " 如果需要改 Autopilot Loop，后台只会接受通过 AAPS 语法检查的脚本。"
-        await self.storage.add_chat_message("assistant", ack)
         asyncio.create_task(self.novel_orchestrator.handle_user_message(content, record, options))
-        self.write_json({"ok": True, "record": record, "agent_status": self.novel_orchestrator.status()})
+        self.write_json(
+            {
+                "ok": True,
+                "record": record,
+                "agent_status": self.novel_orchestrator.status(),
+                "notice": {"kind": "mechanical_ack", "text": ack},
+            }
+        )
 
 
 class NovelAgentStatusHandler(BaseHandler):

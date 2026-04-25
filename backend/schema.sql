@@ -8,10 +8,28 @@ create table if not exists app_config (
 
 create table if not exists chat_messages (
   id bigserial primary key,
+  session_id text not null default 'legacy',
   role text not null,
   content text not null,
   created_at timestamptz not null default now()
 );
+
+alter table if exists chat_messages add column if not exists session_id text not null default 'legacy';
+
+create table if not exists chat_sessions (
+  id text primary key,
+  title text not null,
+  mode text not null default 'chat',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists chat_messages_session_created_idx on chat_messages(session_id, created_at);
+create index if not exists chat_sessions_updated_at_idx on chat_sessions(updated_at);
+
+insert into chat_sessions(id, title, mode)
+values ('legacy', 'Legacy Chat', 'chat')
+on conflict(id) do nothing;
 
 create table if not exists inbox_messages (
   id bigserial primary key,

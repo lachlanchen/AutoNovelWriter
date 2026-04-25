@@ -149,6 +149,20 @@ The reason for two sessions is latency and separation of responsibility:
 - reply session: conversational feedback, low risk, quick browser UX,
 - assistant session: file edits, writing, loop updates, longer running work.
 
+## Chat Sessions
+
+Browser chat now supports backend-owned sessions. Each writing mode can have its own active session:
+
+- `beats`
+- `draft`
+- `loop`
+- `setup`
+- `chat`
+
+The first three writing tabs expose a `New Chat` button. Clicking it calls `POST /api/chat/sessions`, creates a new session for the current mode, marks it active on the backend, and reloads the chat. Because the active session is backend-owned, another open browser can pick it up on the next live sync for the same mode.
+
+New chat sessions also get separate Codex resume files under `runtime/novel/state/chat_sessions/<session_id>/`, so the quick reply and assistant writer do not have to keep using the legacy Codex thread. The `legacy` session preserves older global chat behavior.
+
 ## Backend API Reference
 
 ### Health and Config
@@ -164,6 +178,7 @@ The reason for two sessions is latency and separation of responsibility:
 | Method | Endpoint | Purpose |
 |---|---|---|
 | `GET/POST` | `/api/chat` | Browser chat history and new messages |
+| `GET/POST` | `/api/chat/sessions` | List sessions or create/select the active chat session |
 | `GET` | `/api/novel/agent/status` | Reply/writer/loop monitor state |
 | `GET` | `/api/novel/preview` | Beats, story state, latest draft, loop script, loop validation |
 | `POST` | `/api/novel/codex/reply` | Synchronous quick Codex reply API |

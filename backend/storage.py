@@ -576,19 +576,138 @@ class Storage:
         self._write_state(st)
         return len(items) != before
 
-    async def add_chat_message(self, role: str, content: str) -> None:
+    async def create_chat_session(self, session_id: str, title: str, mode: str = "chat") -> dict[str, Any]:
+        sid = str(session_id or "legacy").strip() or "legacy"
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        clean_title = str(title or "New Chat").strip() or "New Chat"
+        clean_mode = "chat" if sid == "legacy" else (str(mode or "chat").strip() or "chat")
+        if self._pool:
+            async with self._pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    "insert into chat_sessions(id, title, mode) values($1, $2, $3) "
+                    "on conflict(id) do update set title=excluded.title, mode=excluded.mode, updated_at=now() "
+                    "returning id, title, mode, created_at, updated_at",
+                    sid,
+                    clean_title,
+                    clean_mode,
+                )
+                assert row is not None
+                return {
+                    "id": str(row["id"] or ""),
+                    "title": str(row["title"] or ""),
+                    "mode": str(row["mode"] or ""),
+                    "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+                    "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
+                }
+        st = self._read_state()
+        items = st.get("chat_sessions", [])
+        if not isinstance(items, list):
+            items = []
+        found = None
+        for it in items:
+            if isinstance(it, dict) and str(it.get("id") or "") == sid:
+                found = it
+                break
+        if found is None:
+            found = {"id": sid, "created_at": now}
+            items.append(found)
+        found["title"] = clean_title
+        found["mode"] = clean_mode
+        found["updated_at"] = now
+        st["chat_sessions"] = items[-200:]
+        self._write_state(st)
+        return dict(found)
+
+    async def list_chat_sessions(self, limit: int = 50, mode: str | None = None) -> list[dict[str, Any]]:
+        lim = max(1, min(200, int(limit)))
+        clean_mode = str(mode or "").strip()
+        if self._pool:
+            async with self._pool.acquire() as conn:
+                if clean_mode:
+                    rows = await conn.fetch(
+                        "select id, title, mode, created_at, updated_at from chat_sessions "
+                        "where mode=$1 order by updated_at desc limit $2",
+                        clean_mode,
+                        lim,
+                    )
+                else:
+                    rows = await conn.fetch(
+                        "select id, title, mode, created_at, updated_at from chat_sessions "
+                        "order by updated_at desc limit $1",
+                        lim,
+                    )
+                return [
+                    {
+                        "id": str(r["id"] or ""),
+                        "title": str(r["title"] or ""),
+                        "mode": str(r["mode"] or ""),
+                        "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+                        "updated_at": r["updated_at"].isoformat() if r["updated_at"] else None,
+                    }
+                    for r in rows
+                ]
+        st = self._read_state()
+        items = st.get("chat_sessions", [])
+        if not isinstance(items, list):
+            items = []
+        if not any(isinstance(it, dict) and it.get("id") == "legacy" for it in items):
+            items = [{"id": "legacy", "title": "Legacy Chat", "mode": "chat", "created_at": None, "updated_at": None}] + items
+        out = [dict(it) for it in items if isinstance(it, dict) and (not clean_mode or str(it.get("mode") or "") == clean_mode)]
+        out.sort(key=lambda it: str(it.get("updated_at") or it.get("created_at") or ""), reverse=True)
+        return out[:lim]
+
+    async def touch_chat_session(self, session_id: str) -> None:
+        sid = str(session_id or "legacy").strip() or "legacy"
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         if self._pool:
             async with self._pool.acquire() as conn:
                 await conn.execute(
-                    "insert into chat_messages(role, content) values($1, $2)",
+                    "insert into chat_sessions(id, title, mode) values($1, $2, $3) "
+                    "on conflict(id) do update set updated_at=now()",
+                    sid,
+                    "Legacy Chat" if sid == "legacy" else "New Chat",
+                    "chat",
+                )
+            return
+        st = self._read_state()
+        items = st.get("chat_sessions", [])
+        if not isinstance(items, list):
+            items = []
+        found = None
+        for it in items:
+            if isinstance(it, dict) and str(it.get("id") or "") == sid:
+                found = it
+                break
+        if found is None:
+            found = {"id": sid, "title": "Legacy Chat" if sid == "legacy" else "New Chat", "mode": "chat", "created_at": now}
+            items.append(found)
+        found["updated_at"] = now
+        st["chat_sessions"] = items[-200:]
+        self._write_state(st)
+
+    async def add_chat_message(self, role: str, content: str, session_id: str = "legacy") -> None:
+        sid = str(session_id or "legacy").strip() or "legacy"
+        if self._pool:
+            async with self._pool.acquire() as conn:
+                await conn.execute(
+                    "insert into chat_messages(session_id, role, content) values($1, $2, $3)",
+                    sid,
                     role,
                     content,
+                )
+                await conn.execute(
+                    "insert into chat_sessions(id, title, mode) values($1, $2, $3) "
+                    "on conflict(id) do update set updated_at=now()",
+                    sid,
+                    "Legacy Chat" if sid == "legacy" else "New Chat",
+                    "chat",
                 )
             return
         st = self._read_state()
         st.setdefault("chat", [])
-        st["chat"].append({"role": role, "content": content})
-        st["chat"] = st["chat"][-200:]
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        st["chat"].append({"session_id": sid, "role": role, "content": content, "created_at": now})
+        st["chat"] = st["chat"][-500:]
         self._write_state(st)
 
     async def add_inbox_message(self, role: str, content: str) -> None:
@@ -621,17 +740,21 @@ class Storage:
         st["outbox"] = st["outbox"][-200:]
         self._write_state(st)
 
-    async def list_chat_messages(self, limit: int = 50) -> list[dict[str, Any]]:
+    async def list_chat_messages(self, limit: int = 50, session_id: str | None = None) -> list[dict[str, Any]]:
         lim = max(1, min(500, int(limit)))
+        sid = str(session_id or "legacy").strip() or "legacy"
         if self._pool:
             async with self._pool.acquire() as conn:
                 rows = await conn.fetch(
-                    "select id, role, content, created_at from chat_messages order by id desc limit $1",
+                    "select id, session_id, role, content, created_at from chat_messages "
+                    "where session_id=$1 order by id desc limit $2",
+                    sid,
                     lim,
                 )
                 items = [
                     {
                         "id": int(r["id"]),
+                        "session_id": str(r["session_id"] or "legacy"),
                         "role": r["role"],
                         "content": r["content"],
                         "created_at": r["created_at"].isoformat(),
@@ -644,7 +767,15 @@ class Storage:
         chat = st.get("chat", [])
         if not isinstance(chat, list):
             return []
-        return chat[-lim:]
+        out = []
+        for it in chat:
+            if not isinstance(it, dict):
+                continue
+            item_sid = str(it.get("session_id") or "legacy")
+            if item_sid != sid:
+                continue
+            out.append(it)
+        return out[-lim:]
 
     async def list_inbox_messages(self, limit: int = 50) -> list[dict[str, Any]]:
         lim = max(1, min(500, int(limit)))

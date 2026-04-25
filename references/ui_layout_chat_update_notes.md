@@ -133,8 +133,39 @@ Recent shell cache bumps:
 
 - `autoappdev-shell-v18`: desktop/mobile layout split and live chat sync.
 - `autoappdev-shell-v19`: preview action overflow fix and toast-based mechanical ack.
+- `autoappdev-shell-v20`: backend-owned chat sessions and `New Chat` buttons on the writing tabs.
 
 When shell behavior changes, bump `pwa/service-worker.js` again.
+
+### 9. Chat Session Management
+
+The first three writing tabs now have `New Chat` controls:
+
+- `Beats Board`
+- `Draft Studio`
+- `Autopilot Loop`
+
+Sessions are owned by the backend rather than only by browser `localStorage`. The backend stores the active session per mode in `app_config.chat_active_sessions`, and `GET /api/chat?mode=beats|draft|loop|setup|chat` returns the current session's messages.
+
+Creating a new session:
+
+```http
+POST /api/chat/sessions
+Content-Type: application/json
+
+{"action":"new","mode":"beats"}
+```
+
+The response includes `active_session_id`. Subsequent chat posts for that mode use the backend active session unless a specific `session_id` is passed.
+
+The Codex reply and writer sessions are also separated per chat session. New non-legacy sessions write resume ids below:
+
+```text
+runtime/novel/state/chat_sessions/<session_id>/codex_reply_session.txt
+runtime/novel/state/chat_sessions/<session_id>/codex_writer_session.txt
+```
+
+This keeps a new browser chat from automatically continuing the old Codex conversation thread. The `legacy` session keeps old global behavior and old messages readable.
 
 ## Files Changed in These Updates
 
@@ -206,4 +237,3 @@ When adapting to AutoAppDev, first identify which surfaces are equivalent:
 | mechanical ack toast | command accepted / run queued notice |
 
 Keep the core rule: user-visible chat should show meaningful conversation and results, while fixed app acknowledgements should be transient toast/status UI.
-

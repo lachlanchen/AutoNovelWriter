@@ -1011,7 +1011,7 @@ html[dir="rtl"] .msg--system {
     gap: 5px;
     flex: 0 1 auto;
     flex-wrap: nowrap;
-    max-width: min(58vw, 228px);
+    max-width: min(66vw, 268px);
   }
   .writing-actions .btn {
     flex: 0 1 auto;

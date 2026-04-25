@@ -55,6 +55,38 @@ def _codex_gate_enabled() -> bool:
     return str(raw).strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _normalize_chat_mode(raw: Any) -> str:
+    mode = str(raw or "chat").strip().lower()
+    return mode if mode in {"beats", "draft", "loop", "setup", "chat"} else "chat"
+
+
+def _normalize_chat_session_id(raw: Any) -> str:
+    sid = str(raw or "legacy").strip()
+    if not sid:
+        return "legacy"
+    cleaned = re.sub(r"[^A-Za-z0-9_.:-]+", "_", sid)[:96]
+    return cleaned or "legacy"
+
+
+async def _active_chat_session_id(storage: Storage, mode: str) -> str:
+    cfg = await storage.get_config()
+    active = cfg.get("chat_active_sessions") if isinstance(cfg, dict) else {}
+    if isinstance(active, dict):
+        sid = _normalize_chat_session_id(active.get(mode) or "legacy")
+    else:
+        sid = "legacy"
+    return sid
+
+
+async def _set_active_chat_session_id(storage: Storage, mode: str, session_id: str) -> None:
+    cfg = await storage.get_config()
+    active = cfg.get("chat_active_sessions") if isinstance(cfg, dict) else {}
+    if not isinstance(active, dict):
+        active = {}
+    active[_normalize_chat_mode(mode)] = _normalize_chat_session_id(session_id)
+    await storage.set_config("chat_active_sessions", active)
+
+
 def _novel_workspace_root() -> Path:
     return Path(safe_env("AUTONOVELWRITER_WORKSPACE_ROOT", str(REPO_ROOT.parent))).resolve()
 
@@ -170,13 +202,20 @@ async def _run_codex_session(
     reasoning: str,
     full_auto: bool,
     timeout_s: float,
+    chat_session_id: str = "legacy",
 ) -> dict[str, Any]:
     if not _codex_gate_enabled():
         return {"ok": False, "disabled": True, "error": "codex_gate_disabled"}
 
     paths = _novel_paths(runtime_dir)
     role_key = "reply" if role == "reply" else "writer"
-    session_path = paths["reply_session"] if role_key == "reply" else paths["writer_session"]
+    normalized_session_id = _normalize_chat_session_id(chat_session_id)
+    if normalized_session_id == "legacy":
+        session_path = paths["reply_session"] if role_key == "reply" else paths["writer_session"]
+    else:
+        session_dir = paths["state"] / "chat_sessions" / normalized_session_id
+        session_dir.mkdir(parents=True, exist_ok=True)
+        session_path = session_dir / f"codex_{role_key}_session.txt"
     sid = session_path.read_text("utf-8").strip() if session_path.exists() else ""
     log_path = paths["logs"] / f"codex_{role_key}_{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}_{uuid.uuid4().hex[:8]}.jsonl"
 
@@ -215,6 +254,7 @@ async def _run_codex_session(
     return {
         "ok": int(proc.returncode or 0) == 0,
         "role": role_key,
+        "chat_session_id": normalized_session_id,
         "returncode": int(proc.returncode or 0),
         "thread_id": summary.get("thread_id") or sid,
         "text": summary.get("text") or "",
@@ -1246,16 +1286,19 @@ class NovelCodexOrchestrator:
             "assistant_model": str(opts.get("assistant_model") or safe_env("AUTONOVELWRITER_CODEX_WRITER_MODEL", "gpt-5.5")).strip() or "gpt-5.5",
             "assistant_reasoning": assistant_reasoning,
             "assistant_enabled": opts.get("assistant_enabled") is not False,
-            "mode": str(opts.get("mode") or "chat").strip() or "chat",
+            "mode": _normalize_chat_mode(opts.get("mode") or "chat"),
+            "chat_session_id": _normalize_chat_session_id(opts.get("chat_session_id") or opts.get("session_id") or "legacy"),
         }
 
     async def handle_user_message(self, content: str, record: dict[str, str], options: dict[str, Any] | None = None) -> None:
         opts = self._agent_options(options)
         self._set_state("settings", opts)
+        chat_session_id = _normalize_chat_session_id(record.get("chat_session_id") or opts.get("chat_session_id") or "legacy")
         if not _codex_gate_enabled():
             await self.storage.add_chat_message(
                 "assistant",
                 "Codex browser writing agents are disabled. Start the server with AUTONOVELWRITER_ENABLE_CODEX=1 to enable quick reply and writer sessions.",
+                session_id=chat_session_id,
             )
             return
 
@@ -1264,9 +1307,9 @@ class NovelCodexOrchestrator:
             asyncio.create_task(self._run_writer(content, record, opts))
         await self._run_reply(content, record, opts)
 
-    async def _recent_chat(self, limit: int = 18) -> str:
+    async def _recent_chat(self, limit: int = 18, session_id: str = "legacy") -> str:
         try:
-            items = await self.storage.list_chat_messages(limit=limit)
+            items = await self.storage.list_chat_messages(limit=limit, session_id=session_id)
         except Exception:
             items = []
         lines = []
@@ -1288,11 +1331,13 @@ class NovelCodexOrchestrator:
                 f"- outputs_root: {record.get('outputs_root', '')}",
                 f"- external_input_path: {record.get('external_input_path', '')}",
                 f"- interaction_path: {record.get('interaction_path', '')}",
+                f"- chat_session_id: {record.get('chat_session_id', 'legacy')}",
             ]
         )
 
     async def _run_reply(self, content: str, record: dict[str, str], options: dict[str, Any]) -> None:
         async with self.reply_lock:
+            chat_session_id = _normalize_chat_session_id(record.get("chat_session_id") or options.get("chat_session_id") or "legacy")
             self._set_state("reply", {"state": "running", "latest_input": record.get("interaction_path")})
             prompt = f"""You are AutoNovelWriter's quick browser reply agent.
 
@@ -1303,7 +1348,7 @@ Project context:
 {self._shared_context(record)}
 
 Recent chat:
-{await self._recent_chat()}
+{await self._recent_chat(session_id=chat_session_id)}
 
 Latest user message:
 {content}
@@ -1317,10 +1362,11 @@ Reply in 2-5 concise sentences. Mention that the writer session is handling the 
                 reasoning=options["reply_reasoning"],
                 full_auto=False,
                 timeout_s=90,
+                chat_session_id=chat_session_id,
             )
             text = str(res.get("text") or "").strip()
             if text:
-                await self.storage.add_chat_message("assistant", text)
+                await self.storage.add_chat_message("assistant", text, session_id=chat_session_id)
             else:
                 res["notice"] = {
                     "kind": "mechanical_ack",
@@ -1387,6 +1433,7 @@ After repairing, save the complete corrected AAPS script back to {proposed}."""
 
     async def _run_writer(self, content: str, record: dict[str, str], options: dict[str, Any]) -> None:
         async with self.writer_lock:
+            chat_session_id = _normalize_chat_session_id(record.get("chat_session_id") or options.get("chat_session_id") or "legacy")
             self._set_state("writer", {"state": "running", "latest_input": record.get("interaction_path")})
             prompt = f"""You are AutoNovelWriter's long-running surrogate novel writer.
 
@@ -1404,7 +1451,7 @@ Autopilot loop strict grammar target:
 - Do not mutate the frontend program directly. Treat the AAPS script as the schema-checked source.
 
 Recent chat:
-{await self._recent_chat(limit=30)}
+{await self._recent_chat(limit=30, session_id=chat_session_id)}
 
 Latest user message:
 {content}
@@ -1429,6 +1476,7 @@ End with a concise summary of changed files and what the user should read next."
                 reasoning=options["assistant_reasoning"],
                 full_auto=True,
                 timeout_s=900,
+                chat_session_id=chat_session_id,
             )
             loop_validation = await self._validate_loop_script(record, options)
             text = str(res.get("text") or "").strip()
@@ -1442,7 +1490,7 @@ End with a concise summary of changed files and what the user should read next."
             elif not loop_validation.get("ok"):
                 text = (text + "\n\n" if text else "") + f"Autopilot loop script validation failed: {json.dumps(loop_validation, ensure_ascii=False)}"
             if text:
-                await self.storage.add_chat_message("assistant", text)
+                await self.storage.add_chat_message("assistant", text, session_id=chat_session_id)
             self._set_state("writer", {"state": "idle" if res.get("ok") else "error", "last_result": res})
 
 
@@ -1454,8 +1502,12 @@ class ChatHandler(BaseHandler):
 
     async def get(self) -> None:
         limit = int(self.get_query_argument("limit", "50"))
-        items = await self.storage.list_chat_messages(limit=limit)
-        self.write_json({"messages": items})
+        mode = _normalize_chat_mode(self.get_query_argument("mode", "chat"))
+        requested_session = self.get_query_argument("session_id", "").strip()
+        session_id = _normalize_chat_session_id(requested_session) if requested_session else await _active_chat_session_id(self.storage, mode)
+        items = await self.storage.list_chat_messages(limit=limit, session_id=session_id)
+        sessions = await self.storage.list_chat_sessions(limit=30, mode=mode)
+        self.write_json({"messages": items, "session_id": session_id, "mode": mode, "sessions": sessions})
 
     async def post(self) -> None:
         body = json.loads(self.request.body or b"{}")
@@ -1464,22 +1516,68 @@ class ChatHandler(BaseHandler):
             self.write_json({"error": "empty"}, status=400)
             return
         options = body.get("agent_options") if isinstance(body.get("agent_options"), dict) else {}
-        await self.storage.add_chat_message("user", content)
+        mode = _normalize_chat_mode(options.get("mode") or body.get("mode") or "chat")
+        requested_session = body.get("session_id") or body.get("chat_session_id") or options.get("session_id") or options.get("chat_session_id")
+        session_id = _normalize_chat_session_id(requested_session) if requested_session else await _active_chat_session_id(self.storage, mode)
+        await self.storage.create_chat_session(session_id, "Legacy Chat" if session_id == "legacy" else "New Chat", mode)
+        await self.storage.add_chat_message("user", content, session_id=session_id)
         await self.storage.add_inbox_message("user", content)
         _write_inbox_message(self.runtime_dir, content)
         record = _write_novel_interaction(self.runtime_dir, content)
+        record["chat_session_id"] = session_id
+        options = {**options, "mode": mode, "chat_session_id": session_id}
         ack = "已收到。我会先保存这条输入；快速回复会尽快回来，复杂整理和写作会交给后台 assistant 任务继续处理。"
-        if str(options.get("mode") or "").strip() == "loop":
+        if mode == "loop":
             ack += " 如果需要改 Autopilot Loop，后台只会接受通过 AAPS 语法检查的脚本。"
         asyncio.create_task(self.novel_orchestrator.handle_user_message(content, record, options))
         self.write_json(
             {
                 "ok": True,
                 "record": record,
+                "session_id": session_id,
+                "mode": mode,
                 "agent_status": self.novel_orchestrator.status(),
                 "notice": {"kind": "mechanical_ack", "text": ack},
             }
         )
+
+
+class ChatSessionsHandler(BaseHandler):
+    def initialize(self, storage: Storage) -> None:
+        self.storage = storage
+
+    async def get(self) -> None:
+        limit = int(self.get_query_argument("limit", "30"))
+        mode = _normalize_chat_mode(self.get_query_argument("mode", "chat"))
+        active_session_id = await _active_chat_session_id(self.storage, mode)
+        sessions = await self.storage.list_chat_sessions(limit=limit, mode=mode)
+        self.write_json({"ok": True, "mode": mode, "active_session_id": active_session_id, "sessions": sessions})
+
+    async def post(self) -> None:
+        body = json.loads(self.request.body or b"{}")
+        if not isinstance(body, dict):
+            self.write_json({"error": "invalid_body"}, status=400)
+            return
+        mode = _normalize_chat_mode(body.get("mode") or "chat")
+        action = str(body.get("action") or "new").strip().lower()
+        if action == "select":
+            session_id = _normalize_chat_session_id(body.get("session_id") or "")
+            if not session_id:
+                self.write_json({"error": "empty_session_id"}, status=400)
+                return
+            await _set_active_chat_session_id(self.storage, mode, session_id)
+            self.write_json({"ok": True, "mode": mode, "active_session_id": session_id})
+            return
+
+        ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        session_id = _normalize_chat_session_id(body.get("session_id") or f"chat_{mode}_{ts}_{uuid.uuid4().hex[:8]}")
+        title = str(body.get("title") or "").strip()
+        if not title:
+            label = {"beats": "Beats", "draft": "Draft", "loop": "Loop", "setup": "Setup"}.get(mode, "Chat")
+            title = f"{label} Chat {ts}"
+        session = await self.storage.create_chat_session(session_id, title, mode)
+        await _set_active_chat_session_id(self.storage, mode, session_id)
+        self.write_json({"ok": True, "mode": mode, "active_session_id": session_id, "session": session})
 
 
 class NovelAgentStatusHandler(BaseHandler):
@@ -1994,6 +2092,7 @@ async def make_app(runtime_dir: Path, log_dir: Path) -> tornado.web.Application:
             (r"/api/actions/([0-9]+)/clone", ActionCloneHandler, {"storage": storage}),
             (r"/api/actions/([0-9]+)", ActionHandler, {"storage": storage}),
             (r"/api/actions/update-readme", UpdateReadmeHandler, {"runtime_dir": runtime_dir}),
+            (r"/api/chat/sessions", ChatSessionsHandler, {"storage": storage}),
             (r"/api/chat", ChatHandler, {"storage": storage, "runtime_dir": runtime_dir, "novel_orchestrator": novel_orchestrator}),
             (r"/api/novel/agent/status", NovelAgentStatusHandler, {"novel_orchestrator": novel_orchestrator}),
             (r"/api/novel/preview", NovelPreviewHandler, {"runtime_dir": runtime_dir}),

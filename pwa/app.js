@@ -98,6 +98,7 @@ const els = {
   novelSetup: document.getElementById("novel-setup"),
   novelSetupSend: document.getElementById("novel-setup-send"),
   previewToggleButtons: document.querySelectorAll("[data-preview-toggle]"),
+  newChatButtons: document.querySelectorAll("[data-new-chat]"),
   agentMonitorButtons: document.querySelectorAll("[data-agent-monitor]"),
   agentPopover: document.getElementById("agent-popover"),
   agentPopoverClose: document.getElementById("agent-popover-close"),
@@ -109,6 +110,7 @@ const els = {
 const UI_LANG_STORAGE_KEY = "autoappdev_ui_lang";
 let uiLang = "en";
 let liveSyncBusy = false;
+let activeChatSessions = {};
 
 function normalizeUiLang(raw) {
   const i18n = window.AutoAppDevI18n && typeof window.AutoAppDevI18n === "object" ? window.AutoAppDevI18n : null;
@@ -845,7 +847,10 @@ function setNovelTab(key) {
   try {
     localStorage.setItem("autonovelwriter_novel_tab", target);
   } catch {}
-  if (target === "beats" || target === "draft" || target === "loop" || target === "setup") loadNovelPreview();
+  if (target === "beats" || target === "draft" || target === "loop" || target === "setup") {
+    loadNovelPreview();
+    loadChat();
+  }
 }
 
 async function refreshNovelAgentStatus() {
@@ -861,6 +866,11 @@ async function refreshNovelAgentStatus() {
 function activeNovelMode() {
   const active = Array.from(els.novelPanels || []).find((panel) => panel && !panel.hidden && panel.dataset.novelPanel);
   return active ? String(active.dataset.novelPanel || "chat") : "chat";
+}
+
+function activeChatMode() {
+  const mode = activeNovelMode();
+  return ["beats", "draft", "loop", "setup"].includes(mode) ? mode : "chat";
 }
 
 function novelAgentOptions(mode) {
@@ -2194,10 +2204,12 @@ function bindTabs() {
 
 async function loadChat() {
   try {
+    const mode = activeChatMode();
     const [chatRes, outboxRes] = await Promise.all([
-      api("/api/chat?limit=120").catch(() => ({ messages: [] })),
+      api(`/api/chat?limit=120&mode=${encodeURIComponent(mode)}`).catch(() => ({ messages: [] })),
       api("/api/outbox?limit=40").catch(() => ({ messages: [] })),
     ]);
+    if (chatRes && chatRes.session_id) activeChatSessions[mode] = String(chatRes.session_id);
 
     const chat = Array.isArray(chatRes && chatRes.messages) ? chatRes.messages : [];
     const outbox = Array.isArray(outboxRes && outboxRes.messages) ? outboxRes.messages : [];
@@ -2251,6 +2263,22 @@ async function liveSync({ force = false } = {}) {
     await Promise.all([loadChat(), loadNovelPreview(), refreshNovelAgentStatus()]);
   } finally {
     liveSyncBusy = false;
+  }
+}
+
+async function startNewChat(mode = activeChatMode()) {
+  const cleanMode = ["beats", "draft", "loop", "setup"].includes(mode) ? mode : "chat";
+  try {
+    const res = await api("/api/chat/sessions", {
+      method: "POST",
+      timeout_ms: 6000,
+      body: JSON.stringify({ action: "new", mode: cleanMode }),
+    });
+    if (res && res.active_session_id) activeChatSessions[cleanMode] = String(res.active_session_id);
+    showToast("New chat session started.", { kind: "notice" });
+    await loadChat();
+  } catch (e) {
+    showToast(`New chat failed: ${(e && e.message) || String(e)}`, { kind: "notice", timeout: 6500 });
   }
 }
 
@@ -2506,6 +2534,9 @@ function bindControls() {
       setPreviewExpanded(screen, !screen.classList.contains("is-preview-expanded"));
       window.requestAnimationFrame(setViewportVars);
     });
+  });
+  els.newChatButtons.forEach((btn) => {
+    btn.addEventListener("click", () => startNewChat(activeChatMode()));
   });
   els.agentMonitorButtons.forEach((btn) => {
     btn.addEventListener("click", (ev) => {

@@ -8,7 +8,7 @@ Usage: scripts/run_autonovelwriter_public_tmux.sh [options]
 Starts AutoNovelWriter in one tmux session:
   pane 0: Tornado backend (:8788)
   pane 1: authenticated public proxy (:18080 by default)
-  pane 2: ngrok tunnel to the public proxy
+  pane 2: ngrok tunnel to the public proxy, unless --no-ngrok is set
   pane 3: backend log tail
 
 Options:
@@ -19,6 +19,7 @@ Options:
   --public-port <n>      authenticated proxy port (default: 18080; use 80 only if permitted)
   --ngrok-url <domain>   fixed ngrok domain (default: dullish-amee-multiovulate.ngrok-free.dev)
   --conda-env <name>     conda env (default: autoappdev)
+  --no-ngrok             skip the ngrok pane so an outer stack launcher can own the tunnel
   --kill                 kill existing tmux session first
   --attach               attach after starting
   -h, --help             show help
@@ -39,6 +40,7 @@ ngrok_url="dullish-amee-multiovulate.ngrok-free.dev"
 conda_env="autoappdev"
 kill_existing=0
 attach=0
+start_ngrok=1
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -49,6 +51,7 @@ while [ $# -gt 0 ]; do
     --public-port) public_port="${2:-}"; shift 2 ;;
     --ngrok-url) ngrok_url="${2:-}"; shift 2 ;;
     --conda-env|--env) conda_env="${2:-}"; shift 2 ;;
+    --no-ngrok) start_ngrok=0; shift ;;
     --kill|--restart) kill_existing=1; shift ;;
     --attach) attach=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -99,7 +102,7 @@ if tmux has-session -t "$session" 2>/dev/null; then
   fi
 fi
 
-if [ "$kill_existing" -eq 1 ]; then
+if [ "$kill_existing" -eq 1 ] && [ "$start_ngrok" -eq 1 ]; then
   while IFS= read -r pid; do
     [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
   done < <(pgrep -f "[n]grok http --url=${ngrok_url} ${public_port}" || true)
@@ -135,8 +138,10 @@ tmux send-keys -t "$proxy_pane" "cd \"$repo_root\"" C-m
 tmux send-keys -t "$proxy_pane" "echo '[public proxy] http://$public_host:$public_port -> backend :$backend_port'" C-m
 tmux send-keys -t "$proxy_pane" "$proxy_cmd" C-m
 
-ngrok_pane="$(tmux split-window -v -t "$proxy_pane" -c "$repo_root" -P -F "#{pane_id}" "bash")"
-tmux send-keys -t "$ngrok_pane" "$ngrok_cmd" C-m
+if [ "$start_ngrok" -eq 1 ]; then
+  ngrok_pane="$(tmux split-window -v -t "$proxy_pane" -c "$repo_root" -P -F "#{pane_id}" "bash")"
+  tmux send-keys -t "$ngrok_pane" "$ngrok_cmd" C-m
+fi
 
 log_pane="$(tmux split-window -v -t "$backend_pane" -c "$repo_root" -P -F "#{pane_id}" "bash")"
 tmux send-keys -t "$log_pane" "$log_cmd" C-m
@@ -144,7 +149,11 @@ tmux send-keys -t "$log_pane" "$log_cmd" C-m
 tmux select-layout -t "$session:0" tiled
 
 echo "AutoNovelWriter public proxy: http://$public_host:$public_port"
-echo "ngrok target:                 ngrok http --url=$ngrok_url $public_port"
+if [ "$start_ngrok" -eq 1 ]; then
+  echo "ngrok target:                 ngrok http --url=$ngrok_url $public_port"
+else
+  echo "ngrok target:                 disabled (--no-ngrok)"
+fi
 echo "tmux attach -t $session"
 
 if [ "$attach" -eq 1 ]; then
